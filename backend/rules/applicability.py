@@ -1026,25 +1026,45 @@ def render(rule: ApplicabilityRule, cfg: AircraftConfig, ev: Evaluation, T: Opti
         ap = pages.cite(T[rule.span[0]:rule.span[1]], rule.span[0], rule.span[1], "(c)")
     first = next((e for s in steps for e in s.evidence), None)
     page = first.fr_page if first and first.fr_page else (ap.fr_page if ap else None)
-    vol, final = None, False
+    vol, final, dcls = None, False, None
     try:
         row = _retry(lambda: _connect().execute("select volume, doc_class from documents where fr_docnum=?",
                                                 (rule.fr_docnum,)).fetchone())
         if row:
-            vol, final = row[0], row[1] == "FINAL_RULE"
+            vol, final, dcls = row[0], row[1] == "FINAL_RULE", row[1]
     except Exception:
         pass
+    basis = "PROPOSED_RULE" if dcls in ("NPRM", "SNPRM") else ("FINAL_RULE" if final else "UNKNOWN")
     cite_s = f"{vol} FR {page}" if vol and page else (f"FR page {page}" if page else "applicability paragraph")
-    would, would_not = (("the AD as published in this final rule applies to", "the AD as published in this final rule does not apply to")
-                        if final else ("the proposed AD would apply to", "the proposed AD would not apply to"))
+    if basis == "FINAL_RULE":
+        would, would_not = ("the AD as published in this final rule applies to", "the AD as published in this final rule does not apply to")
+        lead, sfx = "", ""
+        lab_t, lab_f = "Applicable under the published final rule", "Not applicable under the published final rule"
+    elif basis == "PROPOSED_RULE":
+        # proposal: never wording that implies a binding requirement
+        would, would_not = ("the proposed AD would apply to", "the proposed AD would not apply to")
+        lead, sfx = "Under the proposed rule (not an enforceable AD; enforceability not verified), ", " [proposal only]"
+        lab_t, lab_f = "Applicable under the proposed rule", "Not applicable under the proposed rule"
+    else:
+        would, would_not = ("the document's applicability paragraph applies to", "the document's applicability paragraph does not apply to")
+        lead, sfx = "", " (regulatory stage of this document not determined)"
+        lab_t, lab_f = "Applicable per the document text (regulatory stage not determined)", "Not applicable per the document text (regulatory stage not determined)"
     if ev.value == "T":
-        txt = (f"Based on paragraph (c) of FR {rule.fr_docnum} ({cite_s}), {would} {mdl} S/N {ser}: {ev.reason}.")
+        txt = f"{lead}based on paragraph (c) of FR {rule.fr_docnum} ({cite_s}), {would} {mdl} S/N {ser}: {ev.reason}.{sfx}"
+        label = lab_t
     elif ev.value == "F":
-        txt = (f"Based on paragraph (c) of FR {rule.fr_docnum} ({cite_s}), {would_not} {mdl} S/N {ser}: {ev.reason}.")
+        txt = f"{lead}based on paragraph (c) of FR {rule.fr_docnum} ({cite_s}), {would_not} {mdl} S/N {ser}: {ev.reason}.{sfx}"
+        label = lab_f
     else:
         txt = f"Applicability cannot be determined from the source: {ev.reason}. Needed: {', '.join(ev.missing) if ev.missing else 'n/a'}."
+        label = "Applicability not determined"
+    if lead:
+        txt = txt[0].upper() + txt[1:]
+    elif txt.startswith("based on"):
+        txt = "B" + txt[1:]
     return ApplicabilityResult(value=value, template_text=txt, explanation=steps, missing=ev.missing,
-                               rule_parse_status=rule.parse_status, evaluated_document=rule.fr_docnum, applicability_text=ap)
+                               rule_parse_status=rule.parse_status, evaluated_document=rule.fr_docnum, applicability_text=ap,
+                               basis=basis, label=label)
 
 
 def evaluate_document(fr_docnum: str, cfg: AircraftConfig, revision_overlay: Optional[list] = None) -> ApplicabilityResult:

@@ -14,7 +14,7 @@ from backend.config import INDEXES
 from backend.retrieval import embeddings as emb
 from backend.retrieval.bm25 import SEARCH_DB, bm25_search
 from backend.retrieval.chunker import canon_docket, extract_dockets
-from backend.retrieval.id_router import IDRouter
+from backend.retrieval.id_router import IDRouter, load_record_map
 
 RRF_K = 60
 TOP_N = 50
@@ -55,7 +55,7 @@ class Index:
         if self.vecs is None or meta["chunk_ids"] != [r["chunk_id"] for r in self.rows]:
             raise RuntimeError("embeddings cache missing/out of sync with search.sqlite; run scripts/build_index.py")
         known = [r[0] for r in self.conn.execute("select distinct ad_number from ad_mentions")]
-        self.router = IDRouter(list(self.docs.values()), self._ad_lookup, known)
+        self.router = IDRouter(list(self.docs.values()), self._ad_lookup, known, record_ids=load_record_map())
         self.dates = np.array([r["publication_date"] or "" for r in self.rows])
 
     def docs_models(self, dn):

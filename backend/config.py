@@ -31,3 +31,12 @@ LLM_MODEL = "claude-sonnet-5-5"
 LLM_TIMEOUT_S = 20
 LLM_MAX_TOKENS = 1200
 EXTRACTIVE_MAX_CLAIMS = 3
+
+# --- organiser update v2 (index workbook) ---
+INDEX_XLSX = RAW / "organiser_v2" / "challenge4_index" / "challenge4_ad_index.xlsx"
+INDEX_SHA256 = "10b46b2b9f3a48760b4f62fa1a656fdeeb697205e4b5fc4ab830d93213206678"
+INDEX_N_RECORDS = 431
+INDEX_N_CHAIN_DOCKETS = 99
+INDEX_N_CHAIN_ROWS = 207
+EXTERNAL_MANIFEST = PROCESSED / "external_data_manifest.json"
+SEARCH_DB_PATH = INDEXES / "search.sqlite"

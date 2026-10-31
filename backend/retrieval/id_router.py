@@ -35,6 +35,8 @@ def _legacy_norm(m):
 
 # legacy dockets: separators may be '-', space, '_' or absent ("2000 NM 168 AD", "2000NM168AD")
 _DOCKET_LEGACY = re.compile(r"(?<![\w-])(\d{2,4})[-\s_]*([A-Z]{2,4})[-\s_]*(\d{1,4})(?:[-\s_]*AD)?(?:[-\s]*R(\d))?(?![\w-])", re.I)
+# organiser record ids: NPRM-1, NPRM-001, nprm-001, "NPRM 001", NPRM_001
+_RECORD_ID = re.compile(r"(?<![\w-])NPRM[-\s_]*0*(\d{1,4})(?![\w-])", re.I)
 _CLASS_RANK = {"NPRM": 0, "SNPRM": 0, "WITHDRAWAL": 1, "CORRECTION": 2}
 _AD_NUM = re.compile(r"(?<![\w-])((?:19|20)\d{2}-\d{2}-\d{2})(?![\w-])")
 _DOCNUMS = [
@@ -44,6 +46,24 @@ _DOCNUMS = [
     re.compile(r"(?<![\w-])(\d{2}-\d{3,5})(?![\w-])"),                 # 01-10467
     re.compile(r"(?<![\w-])(\d{4}-\d{2})(?![\w-])"),                   # 2011-54
 ]
+
+
+def canon_record_id(n: int) -> str:
+    return f"NPRM-{int(n):03d}"
+
+
+def load_record_map(db_path=None) -> dict[str, str | None]:
+    """record_id -> fr_docnum from organiser_index (read-only). Empty when the table/DB is absent."""
+    import sqlite3
+    from backend import config
+    try:
+        c = sqlite3.connect(f"file:{db_path or config.DB_PATH}?mode=ro", uri=True)
+        try:
+            return {r[0]: r[1] for r in c.execute("SELECT record_id, fr_docnum FROM organiser_index ORDER BY record_id")}
+        finally:
+            c.close()
+    except sqlite3.Error:
+        return {}
 
 
 def edit1(a: str, b: str) -> bool:
@@ -76,7 +96,7 @@ class RouteResult:
 
 
 class IDRouter:
-    def __init__(self, docs: list[dict], ad_mention_lookup=None, known_ad_numbers=()):
+    def __init__(self, docs: list[dict], ad_mention_lookup=None, known_ad_numbers=(), record_ids: dict | None = None):
         """docs: dicts with fr_docnum, volume, start_page, end_page, publication_date, dockets.
         ad_mention_lookup(ad_number) -> [(fr_docnum, chunk_idx)]."""
         self.docs = {d["fr_docnum"]: d for d in docs}
@@ -90,6 +110,7 @@ class IDRouter:
             v[:] = sorted(set(v), key=self._group_key)
         self.ad_lookup = ad_mention_lookup
         self.known_ads = sorted(known_ad_numbers)
+        self.records = dict(record_ids or {})   # "NPRM-001" -> fr_docnum (None = metadata-only record)
 
     def _group_key(self, dn):
         """Deterministic in-group order: NPRM/SNPRM, then withdrawals, then corrections, then others; by date."""
@@ -121,6 +142,8 @@ class IDRouter:
                 return m.group(0)
             work = rx.sub(rep, work)
 
+        if self.records:
+            consume(_RECORD_ID, "record_id", lambda m: canon_record_id(m.group(1)))
         consume(_FR_CITE, "fr_citation", lambda m: (int(m.group(1)), int(m.group(2))))
         consume(_DOCKET_FAA, "docket", lambda m: f"FAA-{m.group(1)}-{m.group(2)}")
         consume(_DOCKET_PROJ, "docket", lambda m: canon_docket(m.group(1)))
@@ -145,7 +168,19 @@ class IDRouter:
 
         for d in det:
             typ, n, raw = d["id_type"], d["normalized"], d["value"]
-            if typ == "fr_citation":
+            if typ == "record_id":
+                dn = self.records.get(n)
+                if n in self.records:
+                    if dn:
+                        add(dn, typ, n, f"organiser record {n}")
+                else:
+                    num = int(n.split("-")[1])
+                    cands = [k for k in sorted(self.records) if edit1(k, n)]
+                    # numerically adjacent ids are also plausible typos
+                    cands += [k for k in sorted(self.records, key=lambda k: (abs(int(k.split("-")[1]) - num), k))[:1] if k not in cands]
+                    for k in cands[:near_limit]:
+                        res.near_miss.append(dict(id_type=typ, query_id=raw.strip(), suggestion=k, fr_docnum=self.records[k], near_miss=True))
+            elif typ == "fr_citation":
                 vol, page = n
                 hits = [x for x in self.docs.values() if x["volume"] == vol and x["start_page"] is not None
                         and x["start_page"] <= page <= x["end_page"]]

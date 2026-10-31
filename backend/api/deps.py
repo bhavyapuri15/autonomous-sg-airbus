@@ -72,7 +72,7 @@ class Catalog:
 
     def __init__(self):
         from backend.retrieval.chunker import load_doc_meta
-        from backend.retrieval.id_router import IDRouter
+        from backend.retrieval.id_router import IDRouter, load_record_map
         conn = db()
         try:
             self.meta = load_doc_meta(conn)
@@ -85,7 +85,8 @@ class Catalog:
             conn.close()
         self.meta_only = [r for r in self.recs if not r["fr_docnum"]]
         known = sorted(self._ad)
-        self.router = IDRouter(list(self.meta.values()), lambda ad: [(d, None) for d in self._ad.get(ad, [])], known)
+        self.router = IDRouter(list(self.meta.values()), lambda ad: [(d, None) for d in self._ad.get(ad, [])], known,
+                               record_ids=load_record_map())
         self.by_docket: dict[str, list[str]] = {}
         for dn, m in self.meta.items():
             for k in m["dockets"]:

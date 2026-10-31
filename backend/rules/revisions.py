@@ -15,7 +15,9 @@ import sqlite3
 from collections import defaultdict
 
 from backend import config
-from backend.api.schemas import CitationRef, RevisionEdge, RevisionResult, RevisionStatus, SourceTier
+from backend.api.schemas import (CitationRef, DatasetHistory, DatasetVersionEntry, Enforceability, ProposedSupersession,
+                                 RegulatoryStage, RevisionEdge, RevisionResult, RevisionStatus, SourceTier)
+from backend.citation_meta import stage_for
 from backend.ingestion import final_rules as o1, pdf_parser as pp
 
 MONTHS = o1.MONTHS
@@ -314,8 +316,15 @@ def revision_status(fr_docnum, conn=None) -> RevisionResult:
             sents.append("Current status of the final AD was not verified. " + WARN_FINALIZED)
         if wd_by and fin_by:
             sents.append("Conflict: a final-rule link also exists for this withdrawn proposal; not resolved (see revision warnings).")
-    for r in V("PROPOSES_TO_SUPERSEDE", "src"):
-        sents.append(f"This proposal proposes to supersede {r[1][3:] and 'AD ' + r[1][3:]} (proposal only; no effective change is claimed).")
+    fin_src = V("FINALIZES", "src")        # this document is itself a final rule that VERIFIED-finalizes a dataset proposal
+    stage = stage_for(doc[0] if doc else None)
+    psup = proposed_supersedes(conn, fr_docnum, edges, fin_by)
+    for ps in psup:
+        if ps.operative_supersession_verified:
+            sents.append(f"This proposal proposes to supersede AD {ps.ad_number} (proposal); the text of verified final rule "
+                         f"FR {ps.operative_final_rule} states that it supersedes AD {ps.ad_number}. {WARN_FINALIZED}")
+        else:
+            sents.append(f"This proposal proposes to supersede AD {ps.ad_number} (proposal; not an operative supersession).")
     for r in V("SUPERSEDES", "src"):
         sents.append(f"The final rule's text states it supersedes AD {r[1][3:]}.")
     cand = [r for r in rows if r[3] == "CANDIDATE" and r[2] in ("SAME_DOCKET", "FINALIZES", "WITHDRAWS", "SUPPLEMENTS")]
@@ -324,8 +333,250 @@ def revision_status(fr_docnum, conn=None) -> RevisionResult:
         sents.append("Related documents (same docket or unconfirmed link), relationship unverified: " + ", ".join(others[:6]) + ("..." if len(others) > 6 else "") + ".")
     if status != RevisionStatus.FINALIZED:
         sents.append("Current regulatory status was not verified.")
+
+    # ---- organiser update: stage, enforceability, dataset history, flags --------------------------------------------
+    # PROPOSAL_WITHDRAWN / FINAL_RULE_PUBLISHED_VERIFIED only from VERIFIED edges (or the doc being a withdrawal). An
+    # organiser ad_number NEVER changes enforceability. A conflict (verified withdrawal AND verified final rule) is not
+    # resolved: enforceability stays NOT_VERIFIED and the conflict is stated.
+    withdrawn = bool(wd_by or is_wd)
+    final_ok = bool(fin_by or fin_src)
+    if withdrawn and final_ok:
+        enf = Enforceability.NOT_VERIFIED
+    elif withdrawn:
+        enf = Enforceability.PROPOSAL_WITHDRAWN
+    elif final_ok:
+        enf = Enforceability.FINAL_RULE_PUBLISHED_VERIFIED
+    else:
+        enf = Enforceability.NOT_VERIFIED
+    hist = dataset_history(conn, fr_docnum, doc, rows)
+    flags = []
+    if hist is not None:
+        flags.extend(_dataset_flags(hist))
+    if withdrawn:
+        flags.append("WITHDRAWN_IN_DATASET")
+    # CORRECTED: this document is the subject of, or is itself, a VERIFIED correction (CORRECTS edge on either side)
+    if any(r[2] == "CORRECTS" and r[3] == "VERIFIED" for r in rows):
+        flags.append("CORRECTED")
+    if final_ok:
+        flags.append("FINAL_RULE_VERIFIED")
+    flags.append("CURRENT_AUTHORITATIVE_STATUS_UNKNOWN")
+    sents.append(_stage_sentence(stage, enf, hist))
     return RevisionResult(status=status, current_authoritative_status_verified=False, edges=edges, template_text=" ".join(sents),
-                          latest_in_dataset=_latest(conn, fr_docnum) if doc else None)
+                          latest_in_dataset=_latest(conn, fr_docnum) if doc else None, regulatory_stage=stage, enforceability=enf,
+                          status_flags=flags, dataset_history=hist, proposed_supersedes=psup)
+
+
+# ------------------------------------------------------------------------------------------ organiser update helpers
+_STAGE_TXT = {RegulatoryStage.PROPOSED_RULE: "Proposed rule (NPRM)", RegulatoryStage.SUPPLEMENTAL_PROPOSAL: "Supplemental proposed rule (SNPRM)",
+              RegulatoryStage.WITHDRAWAL_NOTICE: "Withdrawal notice", RegulatoryStage.CORRECTION: "Correction",
+              RegulatoryStage.FINAL_RULE: "Final rule (Federal Register document)", RegulatoryStage.OTHER: "Other document type"}
+_ENF_TXT = {Enforceability.NOT_VERIFIED: "not verified",
+            Enforceability.PROPOSAL_WITHDRAWN: "proposal withdrawn (verified); it imposes no requirement",
+            Enforceability.FINAL_RULE_PUBLISHED_VERIFIED: "a final rule citing this proposal was published (verified); later amendment or "
+                                                         "supersession of the final AD not checked"}
+_ISO = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def _stage_sentence(stage, enf, hist) -> str:
+    if hist is None:
+        latest = "Latest version in the supplied dataset: not available (organiser revision data not loaded)."
+    elif hist.dataset_status == "NOT_IN_DATASET":
+        latest = "Latest version in the supplied dataset: not applicable (this document is not an organiser dataset record)."
+    else:
+        e = next((x for x in hist.history if x.record_id == hist.latest_record_id), None)
+        tie = any(w.startswith("TIE:") for w in hist.warnings)
+        if e is None:
+            latest = "Latest version in the supplied dataset: could not be determined (see dataset_history warnings)."
+        else:
+            latest = (f"Latest version in the supplied dataset{' (organiser marker; tied on publication date)' if tie else ''}: "
+                      f"{e.record_id} ({e.publish_date or 'date missing'}).")
+    return f"Regulatory stage: {_STAGE_TXT[stage]}. {latest} Current enforceability: {_ENF_TXT[enf]}."
+
+
+def _oi_cols(conn):
+    if not _has(conn, "organiser_index"):
+        return None
+    return {r[1] for r in conn.execute("pragma table_info(organiser_index)")}
+
+
+def _organiser_rows(conn, fr_docnum):
+    """organiser_index rows for an FR document (dicts), [] when the table is absent / has no mapping."""
+    cols = _oi_cols(conn)
+    if not cols or "fr_docnum" not in cols:
+        return []
+    want = [c for c in ("record_id", "sheet_row", "docket_number", "publish_date", "supersedes_ad", "ad_number") if c in cols]
+    return [dict(zip(want, r)) for r in conn.execute(
+        f"select {','.join(want)} from organiser_index where fr_docnum=? order by record_id", (fr_docnum,))]
+
+
+def _valid_date(d):
+    return bool(d) and bool(_ISO.match(str(d)))
+
+
+def dataset_history(conn, fr_docnum, doc, rows=None):
+    """Organiser revision_chains view of this document's docket (dataset fact; never legal currency). None when the organiser
+    tables are not in the DB. Ties / missing dates / disagreement with VERIFIED evidence become warnings; never auto-resolved."""
+    if _oi_cols(conn) is None:
+        return None
+    if doc and doc[2] == "fr_final_rule_lookup":
+        return DatasetHistory(docket=_doc_docket(conn, fr_docnum), versions_total=0, dataset_status="NOT_IN_DATASET",
+                              note="Final-rule lookup document; not a record of the supplied dataset.")
+    recs = _organiser_rows(conn, fr_docnum)
+    if not recs:
+        w = [f"No organiser record_id maps to FR {fr_docnum}; dataset history unavailable."] if doc else []
+        return DatasetHistory(docket=_doc_docket(conn, fr_docnum), versions_total=0, dataset_status="NOT_IN_DATASET", warnings=w)
+    mine = {r["record_id"] for r in recs}
+    dockets = sorted({r.get("docket_number") for r in recs if r.get("docket_number")})
+    warns: list[str] = []
+    if not dockets:
+        return DatasetHistory(versions_total=0, dataset_status="NOT_IN_DATASET",
+                              warnings=[f"Organiser record(s) {sorted(mine)} have no docket_number; dataset history unavailable."])
+    docket = dockets[0]
+    if len(dockets) > 1:
+        warns.append(f"This document's organiser records span several dockets {dockets}; history shown for {docket}.")
+    oi_fr = {r[0]: r[1] for r in conn.execute("select record_id,fr_docnum from organiser_index")} if _oi_cols(conn) and "fr_docnum" in _oi_cols(conn) else {}
+    oi_date = {r[0]: r[1] for r in conn.execute("select record_id,publish_date from organiser_index")} if "publish_date" in _oi_cols(conn) else {}
+    cls = {r[0]: r[1] for r in conn.execute("select fr_docnum,doc_class from documents")}
+    chain = conn.execute("select record_id,version,versions_total,status,publish_date from revision_chains where docket_number=?",
+                         (docket,)).fetchall() if _has(conn, "revision_chains") else []
+    ents: list[DatasetVersionEntry] = []
+    total = 1
+    if chain:
+        total = max([c[2] or 0 for c in chain] + [len(chain)])
+        if any((c[2] or len(chain)) != len(chain) for c in chain):
+            warns.append(f"revision_chains lists {len(chain)} rows for {docket} but versions_total says "
+                         f"{sorted({c[2] for c in chain if c[2] is not None})}.")
+        for rid, ver, _vt, st, pd in chain:
+            d = pd or oi_date.get(rid)
+            ents.append(DatasetVersionEntry(record_id=rid, fr_docnum=oi_fr.get(rid), publish_date=d, doc_class=cls.get(oi_fr.get(rid)),
+                                            version=ver, is_latest=(st or "").lower() == "latest"))
+        marked = [e for e in ents if e.is_latest]
+    else:
+        rs = conn.execute("select record_id from organiser_index where docket_number=? order by record_id", (docket,)).fetchall()
+        for (rid,) in rs:
+            ents.append(DatasetVersionEntry(record_id=rid, fr_docnum=oi_fr.get(rid), publish_date=oi_date.get(rid),
+                                            doc_class=cls.get(oi_fr.get(rid))))
+        if len(ents) <= 1:
+            for e in ents:
+                e.version, e.is_latest = 1, True
+            marked = list(ents)
+        else:
+            warns.append(f"Docket {docket} has {len(ents)} organiser records but is absent from revision_chains; "
+                         "latest-in-dataset derived from publish dates only (not an organiser marker).")
+            total = len(ents)
+            best = max((e.publish_date for e in ents if _valid_date(e.publish_date)), default=None)
+            for e in ents:
+                e.is_latest = bool(best) and e.publish_date == best
+            marked = [e for e in ents if e.is_latest]
+    ents.sort(key=lambda e: (not _valid_date(e.publish_date), e.publish_date or "", e.version or 0, e.record_id))
+    # --- conservative checks ------------------------------------------------------------------------------------------
+    missing = [e.record_id for e in ents if not _valid_date(e.publish_date)]
+    if missing:
+        warns.append(f"MISSING_DATE: publish date missing or malformed for {missing}; their order/latest status relies on the organiser's version numbers only.")
+    dated = [e for e in ents if _valid_date(e.publish_date)]
+    maxd = max((e.publish_date for e in dated), default=None)
+    tied = [e.record_id for e in dated if e.publish_date == maxd] if maxd else []
+    if len(tied) > 1:
+        mk = [e.record_id for e in marked]
+        warns.append(f"TIE: records {tied} share the latest publish date {maxd}; not resolved by date. "
+                     f"Organiser 'latest' marker kept: {mk or 'none'}.")
+    if len(marked) > 1 and len(ents) > 1 and chain:
+        warns.append(f"Organiser marks several records as 'latest': {[e.record_id for e in marked]}; not resolved.")
+    if not marked:
+        warns.append(f"No record of docket {docket} carries an organiser 'latest' marker.")
+    elif len(marked) == 1 and maxd and _valid_date(marked[0].publish_date) and marked[0].publish_date < maxd:
+        warns.append(f"DISAGREEMENT: organiser marks {marked[0].record_id} ({marked[0].publish_date}) as latest but "
+                     f"{[e.record_id for e in dated if e.publish_date == maxd]} is dated later ({maxd}); not resolved.")
+    # disagreement with VERIFIED evidence ordering (src document is later than dst document)
+    by_doc: dict[str, list[DatasetVersionEntry]] = defaultdict(list)
+    for e in ents:
+        if e.fr_docnum:
+            by_doc[e.fr_docnum].append(e)
+    if len(by_doc) > 1:
+        q = ",".join("?" * len(by_doc))
+        ev = conn.execute(f"select src,dst,type from relations where confidence='VERIFIED' and type in "
+                          f"('WITHDRAWS','SUPPLEMENTS','FINALIZES','CORRECTS') and src in ({q}) and dst in ({q}) order by src,dst",
+                          list(by_doc) * 2).fetchall()
+        for s_, d_, t_ in ev:
+            es, ed = by_doc[s_][0], by_doc[d_][0]
+            if es.record_id == ed.record_id:
+                continue
+            if (es.version and ed.version and es.version < ed.version) or any(x.is_latest for x in by_doc[d_]):
+                warns.append(f"DISAGREEMENT: verified evidence says {es.record_id} ({t_}) comes after {ed.record_id}, but the organiser "
+                             f"chain has {es.record_id} as version {es.version}{' and ' + ed.record_id + ' as latest' if ed.is_latest else ''}; not resolved.")
+    # --- this document's position ----------------------------------------------------------------------------------------
+    own = [e for e in ents if e.record_id in mine]
+    if not own:
+        warns.append(f"This document's organiser record(s) {sorted(mine)} are not listed in the chain for {docket}.")
+        status = "SINGLE_PUBLICATION" if len(ents) <= 1 else "SUPERSEDED_IN_DATASET"
+    elif len(ents) <= 1:
+        status = "SINGLE_PUBLICATION"
+    elif all(e.is_latest for e in own):
+        status = "LATEST_IN_DATASET"
+    else:
+        status = "SUPERSEDED_IN_DATASET"
+        if any(e.is_latest for e in own):
+            warns.append(f"This document maps to several records with mixed latest status ({[e.record_id for e in own]}).")
+    latest = marked[0].record_id if len(marked) == 1 else None
+    extra = {} if chain else dict(source="organiser_index (docket is not in the revision_chains worksheet: single publication)"
+                                  if len(ents) <= 1 else "organiser_index publish dates (docket missing from revision_chains)")
+    return DatasetHistory(docket=docket, versions_total=total, this_version=min((e.version for e in own if e.version), default=None),
+                          dataset_status=status, latest_record_id=latest, history=ents, warnings=warns, **extra)
+
+
+def _doc_docket(conn, dn):
+    r = conn.execute("select docket_ids_json from documents where fr_docnum=?", (dn,)).fetchone()
+    try:
+        dk = json.loads(r[0] or "[]") if r else []
+    except ValueError:
+        dk = []
+    return (dk[0][len("Docket No. "):] if dk and dk[0].startswith("Docket No. ") else (dk[0] if dk else None))
+
+
+def _dataset_flags(h):
+    if h.dataset_status in ("LATEST_IN_DATASET", "SINGLE_PUBLICATION"):
+        return ["LATEST_IN_DATASET"]
+    if h.dataset_status == "SUPERSEDED_IN_DATASET":
+        return ["SUPERSEDED_IN_DATASET"]
+    return []
+
+
+def _norm_ad(x):
+    m = _AD.search(x or "")
+    return m.group(0) if m else (x or "").strip()
+
+
+def proposed_supersedes(conn, fr_docnum, edges, fin_by):
+    """One entry per AD: organiser `supersedes_ad` field and/or text-derived PROPOSES_TO_SUPERSEDE edge. Deduplicated; the
+    document_text evidence is preferred and the other source's evidence is kept in additional_evidence. Operative only when a
+    VERIFIED final rule for this document has a VERIFIED SUPERSEDES edge to the same AD."""
+    found: dict[str, dict] = {}
+    for e in edges:
+        if e.type == "PROPOSES_TO_SUPERSEDE" and e.confidence == "VERIFIED" and e.src == fr_docnum:
+            ad = _norm_ad(e.dst[3:])
+            found.setdefault(ad, dict(text=[], org=[], edge=True))["text"].extend(e.evidence)
+    for rec in _organiser_rows(conn, fr_docnum):
+        for raw in [rec.get("supersedes_ad")] if rec.get("supersedes_ad") else []:
+            ads = _AD.findall(str(raw)) or [str(raw).strip()]
+            for ad in ads:
+                ev = CitationRef(citation_id=hashlib.sha256(f"org_supersedes|{rec['record_id']}|{ad}".encode()).hexdigest()[:12],
+                                 fr_docnum=fr_docnum, section_path="sheet/supersedes_ad", label="supersedes_ad (organiser index)",
+                                 quote=f"supersedes_ad: {raw}", source_tier=SourceTier.SHEET_METADATA, sheet_row=rec.get("sheet_row"),
+                                 record_ids=[rec["record_id"]])
+                found.setdefault(ad, dict(text=[], org=[], edge=False))["org"].append(ev)
+    final_sup: dict[str, str] = {}
+    for r in fin_by:
+        for (dst,) in conn.execute("select dst from relations where type='SUPERSEDES' and confidence='VERIFIED' and src=?", (r[0],)):
+            final_sup.setdefault(_norm_ad(dst[3:]), r[0])
+    out = []
+    for ad in sorted(found):
+        f = found[ad]
+        srcs = (["document_text"] if f.get("edge") else []) + (["organiser_supersedes_ad_field"] if f["org"] else [])
+        primary = f["text"] or f["org"]
+        other = f["org"] if f["text"] else []
+        out.append(ProposedSupersession(ad_number=ad, source=srcs[0], evidence=primary[0] if primary else None, sources=srcs, additional_evidence=other[:1],
+                                        operative_supersession_verified=ad in final_sup, operative_final_rule=final_sup.get(ad)))
+    return out
 
 
 def _successor_outcomes(conn, start):
@@ -376,7 +627,7 @@ def revision_overlay(fr_docnum, conn=None) -> list[str]:
         if e.dst == fr_docnum:
             out.append(f"A final rule (FR {e.src}) was published; evaluate the final rule's applicability, not this proposal's.")
     for e in ver("PROPOSES_TO_SUPERSEDE"):
-        out.append(f"Proposes to supersede {e.dst} (proposal only).")
+        out.append(f"Proposes to supersede {e.dst} (proposal; not an operative supersession).")
     if res.status == RevisionStatus.FINALIZED:
         out.append(WARN_FINALIZED)
     elif res.status != RevisionStatus.WITHDRAWN:

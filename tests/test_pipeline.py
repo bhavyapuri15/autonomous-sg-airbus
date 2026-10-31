@@ -242,3 +242,49 @@ def test_corpus_wide_answer_cites_single_directive():
     if r.answer_claims:
         assert any("best-matching directive" in w for w in r.warnings)
         assert all(c.citations[0].section_path not in ("preamble/header", "closing") for c in r.answer_claims)
+
+
+# ---- organiser update: regulatory-stage warning + central citation enrichment ----------------------------
+def _real_organiser():
+    import sqlite3
+    from backend.config import DB_PATH
+    c = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
+    try:
+        return c.execute("select 1 from sqlite_master where name='organiser_index'").fetchone() is not None
+    finally:
+        c.close()
+
+
+def _complete_cit(c, dataset=True):
+    return bool(c.federal_register_citation and c.section and c.source_url and (c.record_ids or not dataset))
+
+
+@pytest.mark.skipif(not _real_organiser(), reason="organiser tables not built")
+def test_proposal_answer_has_stage_warning_and_complete_citations():
+    r = pipeline.answer(req("Does this proposed AD apply to my aircraft?", directive_id="FAA-2026-11814",
+                            aircraft=AircraftConfig(model="AS355NP", serial="1234"), use_llm=False))
+    assert r.status == AnswerStatus.ANSWERED
+    assert pipeline.WARN_PROPOSAL in r.warnings
+    assert r.applicability.label == "Applicable under the proposed rule" and r.applicability.basis == "PROPOSED_RULE"
+    assert r.directive.record_ids == ["NPRM-001"] and r.directive.regulatory_stage == "PROPOSED_RULE" and r.directive.source_url
+    assert r.revision.regulatory_stage.value == "PROPOSED_RULE" and r.revision.enforceability.value == "NOT_VERIFIED"
+    assert r.citations and all(_complete_cit(c) for c in r.citations)
+    ev = [c for ex in r.applicability.explanation for c in ex.evidence] + [r.applicability.applicability_text]
+    assert ev and all(_complete_cit(c) for c in ev)
+
+
+@pytest.mark.skipif(not _real_organiser(), reason="organiser tables not built")
+def test_withdrawn_directive_answer_has_withdrawal_warning_and_enriched_edge_evidence():
+    r = pipeline.answer(req("Has this proposal been withdrawn?", directive_id="E9-26683", use_llm=False))
+    assert r.revision is not None and r.revision.enforceability.value == "PROPOSAL_WITHDRAWN"
+    assert pipeline.WARN_WITHDRAWN in r.warnings and pipeline.WARN_PROPOSAL not in r.warnings
+    edge_ev = [c for e in r.revision.edges for c in e.evidence]
+    assert edge_ev and all(_complete_cit(c) for c in edge_ev)
+    assert all(_complete_cit(c) for c in r.citations)
+
+
+def test_stage_warning_helper_on_abstention_with_directive():
+    from backend.api.schemas import DirectiveInfo, QueryResponse
+    r = QueryResponse(status=AnswerStatus.ABSTAINED, directive=DirectiveInfo(fr_docnum="X", regulatory_stage="PROPOSED_RULE"))
+    assert pipeline.stage_warnings(r) == [pipeline.WARN_PROPOSAL]
+    assert pipeline.stage_warnings(QueryResponse(status=AnswerStatus.ABSTAINED)) == []

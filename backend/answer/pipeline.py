@@ -189,7 +189,38 @@ def _dedupe(cits: list[CitationRef]) -> list[CitationRef]:
     return out
 
 
+WARN_PROPOSAL = "This is a proposed rule (NPRM), not an enforceable AD; current enforceability not verified."
+WARN_WITHDRAWN = ("This is a withdrawn proposed rule (NPRM) or a withdrawal notice, not an enforceable AD; "
+                  "the proposal was withdrawn and imposes no requirement.")
+_PROPOSAL_STAGES = ("PROPOSED_RULE", "SUPPLEMENTAL_PROPOSAL")
+
+
+def stage_warnings(resp: QueryResponse) -> list[str]:
+    """Regulatory-stage warning for answers about a proposal-stage or withdrawn directive (organiser update)."""
+    rev, d = resp.revision, resp.directive
+    stage = (rev.regulatory_stage.value if rev else None) or (d.regulatory_stage if d else None)
+    if rev is not None:
+        if rev.enforceability.value == "PROPOSAL_WITHDRAWN" or rev.regulatory_stage.value == "WITHDRAWAL_NOTICE":
+            return [WARN_WITHDRAWN]
+        if rev.regulatory_stage.value in _PROPOSAL_STAGES and rev.enforceability.value == "NOT_VERIFIED":
+            return [WARN_PROPOSAL]
+        return []
+    if d is not None and stage in _PROPOSAL_STAGES:
+        return [WARN_PROPOSAL]
+    if d is not None and stage == "WITHDRAWAL_NOTICE":
+        return [WARN_WITHDRAWN]
+    return []
+
+
 def _finish(resp: QueryResponse, t0: float, timings: dict) -> QueryResponse:
+    """Single response-assembly point: every CitationRef / DirectiveInfo leaving the pipeline is enriched here
+    (record_ids, docket, FR citation, section, source_url) and the regulatory-stage warning is added."""
+    from backend import citation_meta
+    citation_meta.enrich_model(resp)
+    resp.citations = _dedupe(resp.citations)
+    for w in stage_warnings(resp):
+        if w not in resp.warnings:
+            resp.warnings.append(w)
     timings["total"] = (time.perf_counter() - t0) * 1000
     resp.timings_ms = Timings(**{k: round(v, 2) for k, v in timings.items()})
     return resp

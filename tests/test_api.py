@@ -117,3 +117,65 @@ def test_search_unavailable_is_structured():
         pytest.skip("index present")
     r = client.post("/search", json={"query": "x"})
     assert r.status_code == 503 and r.json()["error"] == "retrieval_unavailable"
+
+
+# ---- organiser update ------------------------------------------------------------------------------
+def _has_organiser():
+    c = deps.db()
+    try:
+        return deps.has_table(c, "organiser_index") and deps.has_table(c, "revision_chains")
+    finally:
+        c.close()
+
+
+def _complete(c):
+    return bool(c["federal_register_citation"] and c["section"] and c["source_url"] and c["record_ids"])
+
+
+@pytest.mark.skipif(not _has_organiser(), reason="organiser tables not built")
+def test_directive_detail_has_dataset_history_and_record_ids():
+    j = client.get("/directives/FAA-2007-27715").json()
+    assert "NPRM-270" in j["record_ids"] and j["documents"][0]["record_ids"]
+    rev = j["revision"]
+    assert rev["dataset_history"]["versions_total"] == 4 and rev["regulatory_stage"] in ("PROPOSED_RULE", "WITHDRAWAL_NOTICE", "SUPPLEMENTAL_PROPOSAL")
+    assert rev["current_authoritative_status_verified"] is False and "CURRENT_AUTHORITATIVE_STATUS_UNKNOWN" in rev["status_flags"]
+    assert all(s["record_id"] for s in j["sheet_rows"])
+    j = client.get("/directives/2026-21387").json()
+    assert j["record_ids"] == ["NPRM-001"] and _complete(j["applicability_text"])
+    assert all(_complete(c) for e in j["revision"]["edges"] for c in e["evidence"])
+
+
+@pytest.mark.skipif(not _has_organiser(), reason="organiser tables not built")
+def test_query_citations_and_directive_block_complete():
+    j = client.post("/query", json={"question": "Does this proposed AD apply to my aircraft?", "directive_id": "FAA-2026-11814",
+                                    "aircraft": {"model": "AS355NP", "serial": "1234"}, "use_llm": False}).json()
+    assert j["directive"]["record_ids"] == ["NPRM-001"] and j["directive"]["regulatory_stage"] == "PROPOSED_RULE"
+    assert j["citations"] and all(_complete(c) for c in j["citations"])
+    assert any("not an enforceable AD" in w for w in j["warnings"])
+    assert j["applicability"]["label"] == "Applicable under the proposed rule"
+
+
+@pytest.mark.skipif(not (HAVE_INDEX and _has_organiser()), reason="index/organiser tables not built")
+def test_search_hits_enriched():
+    j = client.post("/search", json={"query": "unsafe condition cracking", "top_k": 5}).json()
+    assert j["hits"]
+    assert all(_complete(h["citation"]) or h["citation"]["record_ids"] == [] for h in j["hits"])   # [] only for final-rule docs
+    assert all(h["citation"]["federal_register_citation"] and h["citation"]["section"] and h["citation"]["source_url"] for h in j["hits"])
+
+
+@pytest.mark.skipif(not _has_organiser(), reason="organiser tables not built")
+def test_applicability_check_label_and_warning():
+    j = client.post("/applicability/check", json={"directive_id": "FAA-2026-11814", "aircraft": {"model": "A320-214"}}).json()
+    assert j["applicability"]["label"] == "Not applicable under the proposed rule"
+    assert any("not an enforceable AD" in w for w in j["warnings"])
+    assert j["directive"]["record_ids"] == ["NPRM-001"]
+
+
+def test_record_id_resolves_via_api():
+    # organiser update: stable record_id is a lookup key (orchestrator integration fix)
+    from fastapi.testclient import TestClient
+    from backend.api.main import app
+    r = TestClient(app).post("/query", json={"question": "What unsafe condition does this proposal address?",
+                                             "directive_id": "NPRM-001", "use_llm": False}).json()
+    assert r["directive"]["fr_docnum"] == "2026-21387"
+    assert "NPRM-001" in r["directive"]["record_ids"]

@@ -130,6 +130,9 @@ class ProposedSupersession(BaseModel):
     source: Literal["organiser_supersedes_ad_field", "document_text"]
     evidence: Optional[CitationRef] = None
     operative_supersession_verified: bool = False    # True only if a VERIFIED final rule's text supersedes it
+    sources: list[str] = []                          # every source that lists this AD (after de-duplication)
+    additional_evidence: list[CitationRef] = []      # evidence from the other source(s); `evidence` is the preferred one
+    operative_final_rule: Optional[str] = None       # fr_docnum of the VERIFIED final rule whose text supersedes it
 
 
 class RevisionEdge(BaseModel):
@@ -309,6 +312,7 @@ class DocumentMeta(BaseModel):
     extraction_status: Optional[str] = None
     pdf_cached: bool = False
     page_count: int = 0
+    record_ids: list[str] = []
 
 
 class SheetRow(BaseModel):
@@ -323,6 +327,7 @@ class SheetRow(BaseModel):
     ad_number: Optional[str] = None
     citation: Optional[str] = None
     summary: Optional[str] = None
+    record_id: Optional[str] = None
 
 
 class DirectiveDetail(BaseModel):
@@ -334,6 +339,7 @@ class DirectiveDetail(BaseModel):
     applicability_text: Optional[CitationRef] = None
     warnings: list[str] = []
     candidates: list[DirectiveInfo] = []
+    record_ids: list[str] = []
 
 
 class PageResponse(BaseModel):

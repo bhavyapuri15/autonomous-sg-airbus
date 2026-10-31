@@ -95,3 +95,112 @@ Verdict counts: fr_link_suspect=3, fr_link_suspect(stale col R link)=8, sheet_pa
 
 These are evidence-based assessments, not corrections: no sheet value or FR link is modified; the rows keep the flags `sheet_fr_date_mismatch` / `sheet_fr_pages_mismatch` in `records.dq_flags_json`.
 
+## 0. Corpus counts (index-aligned)
+
+| quantity | count |
+|---|---|
+| organiser records (organiser_index) | 431 |
+| unique dockets (index docket_number) | 323 |
+| unique FR documents (organiser_sheet documents) | 420 |
+| downloaded XML files (organiser docs) | 420 |
+| downloaded PDFs (organiser docs) | 420 |
+| parsed documents (extraction_status ok) | 420 |
+| indexed pages (organiser docs, pages table) | 1324 |
+| indexed chunks, organiser docs (search.sqlite) | 11200 |
+| indexed chunks, all (organiser + final-rule enrichment; search.sqlite) | 13513 |
+| failed downloads (ingest_failures.json) | 0 |
+| metadata-only records (no FR document) | 3 |
+| enrichment: final-rule documents / pages (source fr_final_rule_lookup) | 75 / 272 |
+
+## 6. Index vs original workbook: record_id mapping
+
+Hypothesis NPRM-001 = sheet row 2, in order, is verified per row: a row is `positional_verified` only if docket, ISO publish date, pages and subject all equal the original row; otherwise a unique content match is searched (`content_unique`); anything else is reported. Nothing is assumed.
+
+| match_method | records |
+|---|---|
+| positional_verified | 431 |
+
+Unique record_ids: 431; unique original sheet rows mapped: 431; `records.record_id` populated for 431 rows.
+
+Per-field discrepancies (index vs original sheet, from `organiser_index.discrepancies_json`):
+
+| field | records |
+|---|---|
+| federal_register_link_compound | 25 |
+| federal_register_link_not_a_url | 169 |
+
+`federal_register_link_compound` = the index cell holds several URLs (typically the NPRM link followed by `Withdrawal:` and another URL) or trailing text; it is stored verbatim, and the link docnums are listed in the discrepancy. `federal_register_link_not_a_url` = the cell holds pasted document text instead of a URL (so the '406 filled links' include rows that carry no usable link).
+
+Publish-date differences (index ISO vs our parsed `records.publish_date`): 0. 
+
+Index ISO publish dates are canonical for organiser records (`organiser_index.publish_date`); `records.publish_date` is left as parsed.
+
+## 7. Index `federal_register_link` vs our resolved FR docnums
+
+| comparison | records |
+|---|---|
+| index has a link | 406 |
+| we resolved a docnum | 428 |
+| agree (our docnum == first URL docnum) | 236 |
+| agree only via a later URL in a compound cell | 1 |
+| disagree (our docnum not in any index URL) | 0 |
+| we resolved a docnum but the index has no parseable FR URL | 191 |
+|   of which the index cell is non-empty pasted document text (no URL) | 169 |
+|   of which the index cell is empty | 22 |
+| index cells holding a parseable FR URL | 237 |
+| index has a link but we have no docnum | 0 |
+| neither | 3 |
+
+| record_id | kind | our docnum | index link docnums |
+|---|---|---|---|
+| NPRM-287 | later_url | 2016-05517 | E9-14356,2016-05517 |
+
+Records with our docnum but no index URL (cell empty or pasted text): NPRM-237, NPRM-238, NPRM-239, NPRM-240, NPRM-241, NPRM-242, NPRM-243, NPRM-244, NPRM-245, NPRM-246, NPRM-247, NPRM-248 ...
+
+## 8. revision_chains checks
+
+| check | result |
+|---|---|
+| dockets in revision_chains | 99 (chain rows 207) |
+| dockets with more than 1 record in the original sheet | 99 |
+| chain dockets with fewer than 2 records | 0 |
+| dockets without exactly one `latest` | 0 |
+| ties on publish_date inside a docket | 0 |
+| dockets with a missing/non-ISO date | 0 |
+| `latest` date != max publish_date | 0 |
+| `latest` is not the highest version number | 0 |
+| versions_total != rows in chain | 0 |
+| chain record set != original-sheet rows sharing the docket | 0 |
+| chain row docket/date/subject != organiser_index row | 0 |
+
+## 9. `supersedes_ad` (index) vs text-derived PROPOSES_TO_SUPERSEDE edges
+
+Compared per record on the set of AD numbers (two-digit years canonicalised). The index field is a proposed supersession only and is never treated as operative.
+
+| comparison | records |
+|---|---|
+| records with index supersedes_ad | 62 |
+| agree (sets intersect) | 54 |
+| index-only (index has it, our text edges do not agree) | 8 |
+| text-only (we have a PROPOSES_TO_SUPERSEDE edge, index empty) | 15 |
+
+Examples agree: NPRM-002: ['2026-09-02']; NPRM-003: ['2025-09-07']; NPRM-005: ['2024-05-06']; NPRM-009: ['2024-18-01']
+
+Examples index-only: NPRM-011: index ['2014-16-22'] vs text none; NPRM-153: index ['2023-08-04'] vs text none; NPRM-157: index ['2020-26-16'] vs text none; NPRM-162: index ['2022-19-15'] vs text none; NPRM-193: index ['2011-18-52'] vs text none; NPRM-218: index ['2007-25-08'] vs text none
+
+Examples text-only: NPRM-160: text ['2020-26-16']; NPRM-169: text ['1999-23-18', '2005-03-07', '2013-12-07', '2014-04-07']; NPRM-274: text ['2009-22-13']; NPRM-285: text ['2002-20-01']; NPRM-302: text ['2006-09-07']; NPRM-333: text ['1973-18-03']
+
+## 10. `mentions_serial_numbers` flag vs our applicability data
+
+Our data = the FR full-text Applicability paragraph (section parse) containing 'serial number' / S/N. The flag is a summary-level hint only, never evidence.
+
+| comparison | records |
+|---|---|
+| flag = yes | 16 |
+| flag = yes and our Applicability text mentions serial numbers | 4 |
+| flag = yes but our Applicability text has no serial reference | 12 |
+| flag = no but our Applicability text mentions serial numbers | 58 |
+| flag = yes and the index summary itself mentions serial numbers | 16 |
+
+Flagged without serial text in our Applicability paragraph: NPRM-002, NPRM-073, NPRM-087, NPRM-200, NPRM-244, NPRM-268, NPRM-296, NPRM-320, NPRM-325, NPRM-346, NPRM-369, NPRM-429
+

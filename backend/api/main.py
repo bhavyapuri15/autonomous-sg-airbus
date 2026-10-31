@@ -15,6 +15,7 @@ from backend.answer import llm as llm_mod
 from backend.answer import pipeline
 from backend.api import deps
 from backend.api import schemas as S
+from backend import citation_meta
 from backend.config import ROOT
 
 log = logging.getLogger("api")
@@ -74,7 +75,7 @@ def health():
 @app.post("/query", response_model=S.QueryResponse)
 def query(req: S.QueryRequest):
     log.info("query use_llm=%s directive_id=%s qlen=%d", req.use_llm, req.directive_id, len(req.question))
-    return pipeline.answer(req)
+    return citation_meta.enrich_model(pipeline.answer(req))   # idempotent; pipeline._finish already enriches
 
 
 @app.post("/search", response_model=S.SearchResponse)
@@ -89,6 +90,8 @@ def search(req: S.SearchRequest):
     except Exception as e:
         log.exception("search failed")
         return _err(503, "retrieval_unavailable", f"{type(e).__name__}")
+    for h in hits:
+        h.citation = citation_meta.enrich(h.citation)
     return S.SearchResponse(hits=hits, timings_ms=S.Timings(retrieval=round((time.perf_counter() - t) * 1000, 2),
                                                           total=round((time.perf_counter() - t) * 1000, 2)))
 
@@ -108,7 +111,12 @@ def applicability_check(req: S.ApplicabilityCheckRequest):
         return _err(503, "applicability_unavailable", "Applicability engine not available.")
     qreq = S.QueryRequest(question="applicability", directive_id=docnum, aircraft=req.aircraft, use_llm=False)
     app_res, rev = pipeline._run_engines(docnum, qreq, warnings)
-    return S.ApplicabilityCheckResponse(directive=cat.info(docnum), applicability=app_res, revision=rev, warnings=warnings)
+    resp = S.ApplicabilityCheckResponse(directive=cat.info(docnum), applicability=app_res, revision=rev, warnings=warnings)
+    citation_meta.enrich_model(resp)
+    for w in pipeline.stage_warnings(resp):    # same stage warning as /query
+        if w not in resp.warnings:
+            resp.warnings.append(w)
+    return resp
 
 
 # --------------------------------------------------------------------------------------------
@@ -214,9 +222,21 @@ def directive_detail(directive_id: str):
             warnings.append(f"Revision engine failed ({type(e).__name__}).")
     elif primary:
         warnings.append("Revision engine unavailable.")
-    return S.DirectiveDetail(query_id=directive_id, documents=docs, sheet_rows=[_sheet_row(r) for r in rows], revision=revision,
-                             relations=relations, applicability_text=deps.applicability_quote(primary) if primary else None,
-                             warnings=warnings, candidates=[])
+    c = deps.db()
+    try:
+        for m in docs:
+            m.record_ids = citation_meta.record_ids_for(c, m.fr_docnum) if m.source != "fr_final_rule_lookup" else []
+        sheet = [_sheet_row(r) for r in rows]
+        for sr in sheet:
+            ids = citation_meta.record_ids_for(c, None, sr.row)
+            sr.record_id = ids[0] if ids else None
+    finally:
+        c.close()
+    rids = sorted({i for m in docs for i in m.record_ids} | {sr.record_id for sr in sheet if sr.record_id})
+    detail = S.DirectiveDetail(query_id=directive_id, documents=docs, sheet_rows=sheet, revision=revision,
+                               relations=relations, applicability_text=deps.applicability_quote(primary) if primary else None,
+                               warnings=warnings, candidates=[], record_ids=rids)
+    return citation_meta.enrich_model(detail)
 
 
 def _valid_doc(docnum: str) -> bool:

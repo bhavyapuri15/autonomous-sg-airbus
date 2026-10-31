@@ -11,7 +11,13 @@ CREATE TABLE records(
  subject TEXT, status_raw TEXT, issue_date TEXT, publish_date TEXT, comments_due_date TEXT,
  make_raw TEXT, make_norm TEXT, models_raw TEXT, models_json TEXT, product_type TEXT, product_subtype TEXT,
  ad_number TEXT, citation TEXT, page_number_raw TEXT, summary TEXT, col_r_raw TEXT, col_r_kind TEXT, drs_url TEXT,
- comments TEXT, dq_flags_json TEXT, match_verified INTEGER, match_verify_detail TEXT);
+ comments TEXT, dq_flags_json TEXT, match_verified INTEGER, match_verify_detail TEXT, record_id TEXT);
+CREATE TABLE organiser_index(
+ record_id TEXT PRIMARY KEY, sheet_row INTEGER, docket_number TEXT, subject TEXT, issue_date TEXT, publish_date TEXT, make TEXT, model TEXT,
+ product_type TEXT, product_subtype TEXT, ad_number TEXT, supersedes_ad TEXT, mentions_serial_numbers INTEGER, citation TEXT, pages TEXT,
+ federal_register_link TEXT, summary TEXT, fr_docnum TEXT, match_method TEXT, discrepancies_json TEXT);
+CREATE TABLE revision_chains(
+ docket_number TEXT, version INTEGER, versions_total INTEGER, status TEXT, record_id TEXT, publish_date TEXT, subject TEXT);
 CREATE TABLE documents(
  fr_docnum TEXT PRIMARY KEY, title TEXT, fr_type TEXT, action_raw TEXT, doc_class TEXT, publication_date TEXT, volume INTEGER,
  start_page INTEGER, end_page INTEGER, page_length INTEGER, docket_ids_json TEXT, cfr_refs_json TEXT, correction_of_json TEXT,
@@ -29,7 +35,8 @@ CREATE TABLE pages(
 CREATE TABLE ingest_log(id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, stage TEXT, fr_docnum TEXT, level TEXT, message TEXT);
 """
 CONTENT_TABLES = {"records": "row", "documents": "fr_docnum", "doc_text": "fr_docnum", "sections": "id", "pages": "fr_docnum,pdf_page",
-                  "final_rule_info": "fr_docnum", "final_rule_links": "dataset_docnum,rule_docnum", "relations": "id", "revision_warnings": "id"}
+                  "final_rule_info": "fr_docnum", "final_rule_links": "dataset_docnum,rule_docnum", "relations": "id", "revision_warnings": "id",
+                  "organiser_index": "record_id", "revision_chains": "docket_number,version,record_id"}
 
 # ---- doc_class rule table (ordered; first match wins). Applied to lower-cased FR `action`, then title. -----------------
 DOC_CLASS_RULES = [
@@ -201,13 +208,14 @@ def build(db_path=None, verbose=True):
             verified = int(ok); detail = json.dumps(det, sort_keys=True)
             flags.append("match_verified=true" if ok else "match_verified=false:" + ",".join(det["failed"]))
             inferred["true" if ok else "false"] += 1
-        conn.execute("INSERT INTO records VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
+        conn.execute("INSERT INTO records VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL)", (
             rec["row"], rec["docket_raw"], rec["docket_norm"], dn, src or None, conf, rec["subject"], rec["status_raw"],
             rec["issue_date"], rec["publish_date"], rec["comments_due_date"], rec["make_raw"], rec["make_norm"], rec["models_raw"],
             json.dumps(rec["models"]), rec["product_type"], rec["product_subtype"], rec["ad_number"], rec["citation"],
             rec["page_number_raw"], rec["summary"], rec["col_r_raw"], rec["col_r_kind"], rec["drs_url"], rec["comments"],
             json.dumps(sorted(flags)), verified, detail))
     log(conn, "build", f"inferred match verification {inferred}")
+    idx_stats = load_organiser_index(conn)
     fr_stats = ingest_final_rule_links(conn, config.PROCESSED / "final_rule_links.json")
     from backend.rules import revisions
     rev_stats = revisions.build_graph(conn)
@@ -217,7 +225,35 @@ def build(db_path=None, verbose=True):
     h = content_hash(conn)
     conn.close()
     os.replace(db_path, final_path)
-    return dict(db=str(final_path), content_sha256=h, failures=failures, inferred=inferred, final_rules=fr_stats, revisions=rev_stats)
+    return dict(db=str(final_path), content_sha256=h, failures=failures, inferred=inferred, final_rules=fr_stats, revisions=rev_stats, index=idx_stats)
+
+
+def load_organiser_index(conn):
+    """organiser_index + revision_chains tables; records.record_id from the VERIFIED record_id -> sheet-row mapping."""
+    from backend.ingestion import index_loader as il
+    if not config.INDEX_XLSX.exists():
+        return dict(skipped="index workbook absent")
+    sha = il.verify_sha()
+    log(conn, "build", f"index workbook sha256 verified {sha}")
+    data = il.load_index()
+    if len(data["records"]) != config.INDEX_N_RECORDS or len(data["chains"]) != config.INDEX_N_CHAIN_ROWS:
+        raise RuntimeError(f"index workbook counts changed: {len(data['records'])} records, {len(data['chains'])} chain rows")
+    conn.row_factory = sqlite3.Row
+    recs = [dict(r) for r in conn.execute("SELECT * FROM records ORDER BY row")]
+    conn.row_factory = None
+    docnum_by_row = {r["row"]: r["fr_docnum"] for r in recs}
+    mapped = il.map_records(data["records"], recs)
+    methods = {}
+    for x, row, method, disc in mapped:
+        conn.execute("INSERT INTO organiser_index VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", il.to_row(x, row, method, disc, docnum_by_row))
+        if row is not None:
+            conn.execute("UPDATE records SET record_id=? WHERE row=?", (x["record_id"], row["row"]))
+        methods[method] = methods.get(method, 0) + 1
+    for c in data["chains"]:
+        conn.execute("INSERT INTO revision_chains VALUES(?,?,?,?,?,?,?)", (
+            c["docket_number"], int(c["version"]), int(c["versions_total"]), c["status"], c["record_id"], c["publish_date"], c["subject"]))
+    log(conn, "build", f"organiser index: {len(mapped)} records, mapping methods {methods}, {len(data['chains'])} chain rows")
+    return dict(records=len(mapped), methods=methods, chain_rows=len(data["chains"]))
 
 
 def ingest_final_rule_links(conn, path):

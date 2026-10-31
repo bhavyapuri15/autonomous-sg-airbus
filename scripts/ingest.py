@@ -31,6 +31,10 @@ def main():
     (config.PROCESSED / "ingest_failures.json").write_text(json.dumps(
         dict(download_failures=dfail, build_failures=res["failures"], parse_coverage=cov), indent=1, sort_keys=True))
     print("== reconcile"); print(json.dumps(reconcile.reconcile()))
+    print("== external data manifest")
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import build_manifest
+    print(json.dumps(build_manifest.build()["counts"]))
     print("NETWORK_CALLS", dl.NET["calls"])
 
 
