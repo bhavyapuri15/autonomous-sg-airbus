@@ -152,7 +152,8 @@ def run_f2(cases):
     doc_r5, doc_rr, ch_r5, per, fails = [], [], [], {}, []
     for c in cases:
         e = c["expected"]
-        gold = set(e["fr_docnums"]) | set(e.get("alternates") or [])
+        # alternates may be plain docnums or gold-evidence dicts ({fr_docnum, section_path, ...})
+        gold = set(e["fr_docnums"]) | {a["fr_docnum"] if isinstance(a, dict) else a for a in (e.get("alternates") or [])}
         dl = hs.search(c["query"], top_k=10, doc_level=True)
         docs = [h["fr_docnum"] for h in dl]
         chunks = hs.search(c["query"], top_k=10)
