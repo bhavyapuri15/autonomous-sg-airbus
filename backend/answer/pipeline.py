@@ -52,24 +52,71 @@ def _content(s: str) -> set[str]:
     return {w.lower().rstrip("s") for w in _words(s) if w.lower() not in _STOP and len(w) > 2}
 
 
+_IDF: dict | None = None
+
+
+def _corpus_idf() -> tuple[dict, float]:
+    """Document-frequency of content lemmas over all section texts in ad.sqlite (computed once, cached)."""
+    global _IDF
+    if _IDF is None:
+        import math
+        df: dict[str, int] = {}
+        conn = deps.db()
+        try:
+            n = 0
+            for (t,) in conn.execute("select text from sections"):
+                n += 1
+                for w in _content(t or ""):
+                    df[w] = df.get(w, 0) + 1
+        finally:
+            conn.close()
+        _IDF = ({w: math.log((n + 1) / (c + 1)) + 1.0 for w, c in df.items()}, math.log(n + 1) + 1.0)
+    return _IDF
+
+
+# question type -> regex over the hit's section path/heading that earns a bonus
+_SECTION_BONUS = [
+    (re.compile(r"unsafe condition|could happen|what caused|prompted|what (?:wiring |)problem|result in", re.I),
+     re.compile(r"unsafe condition|\(e\)|background|summary", re.I)),
+    (re.compile(r"compliance|within|how long|how many (?:flight )?(?:hours|cycles|months|days)|when must|before the", re.I),
+     re.compile(r"compliance|required actions|\(g\)|\(h\)|proposed ad requirements", re.I)),
+    (re.compile(r"part number|p/n|which .{0,30}part", re.I), re.compile(r"parts installation|required actions|\(g\)|\(h\)", re.I)),
+    (re.compile(r"affected|which models|which serial|serial number|subject to|applies?\b", re.I),
+     re.compile(r"applicab|\(c\)", re.I)),
+    (re.compile(r"why .{0,30}(?:withdrawn|pulled|dropped|withdraw)|withdr[ae]w", re.I),
+     re.compile(r"discussion|determination|withdraw|summary", re.I)),
+]
+_SECTION_BONUS_W = 0.35   # fraction of the sentence's own IDF mass added when the section matches
+
+
 def extractive_claims(question: str, hits: list[dict], max_claims: int = config.EXTRACTIVE_MAX_CLAIMS):
-    """Top sentences by query-term overlap. Returns [(sentence, chunk_id)]; sentences are exact substrings."""
+    """Top sentences by IDF-weighted overlap with the question + a section-type bonus.
+    Returns [(sentence, chunk_id)]; sentences are exact substrings of their chunk."""
     qset = _content(question)
+    idf, default = _corpus_idf()
+    bonus_rx = [b for q, b in _SECTION_BONUS if q.search(question)]
     scored = []
     for rank, h in enumerate(hits):
+        where = " ".join(str(h.get(k) or "") for k in ("section_path", "heading", "label"))
+        sec = bool(bonus_rx) and any(b.search(where) for b in bonus_rx)
         for sent in re.split(r"(?<=[.;])\s+|\n\s*\n", h["text"]):
             sent = " ".join(sent.split()) if "\n" in sent else sent.strip()
             if sent not in h["text"]:           # keep exact-substring property (whitespace-collapse breaks it)
                 continue
             n = len(_words(sent))
-            if n < 6 or n > 80 or _ENGINE_TOPIC.search(sent):
+            table = " | " in sent
+            if (n < 6 and not table) or n > 80 or _ENGINE_TOPIC.search(sent):
                 continue
-            ov = len(qset & _content(sent))
-            if ov >= 2:
-                scored.append((ov, -rank, sent, h["chunk_id"]))
+            common = qset & _content(sent)
+            if len(common) < 2:
+                continue
+            score = sum(idf.get(w, default) for w in common)
+            if sec:
+                score *= 1 + _SECTION_BONUS_W
+            scored.append((score, -rank, sent, h["chunk_id"]))
     scored.sort(key=lambda t: (-t[0], -t[1]))
     out, seen = [], set()
-    for ov, _, sent, cid in scored:
+    for sc, _, sent, cid in scored:
         if sent in seen:
             continue
         seen.add(sent)
@@ -185,7 +232,12 @@ def answer(req: QueryRequest) -> QueryResponse:
 
     ac = req.aircraft
     docnums = list(res.docnums)
+    scoped = bool(docnums)           # directive explicitly resolved (directive_id or exact ID in the question)
     inferred = False
+    if not docnums and pq.comparison:
+        cands = _candidates(req, tm)
+        return _finish(ab.abstain(ab.DIRECTIVE_AMBIGUOUS, status=AnswerStatus.NEEDS_MORE_INFORMATION, candidates=cands,
+                                  missing=["directive_id"], warnings=pq.hints), t0, tm)
     if not docnums and pq.intent == "applicability":
         cands = _candidates(req, tm)
         if len(cands) > 1:
@@ -193,6 +245,12 @@ def answer(req: QueryRequest) -> QueryResponse:
                                       missing=["directive_id"], warnings=pq.hints), t0, tm)
         if len(cands) == 1:
             docnums, inferred = [cands[0].fr_docnum], True
+    if len(docnums) > 1 and pq.intent == "applicability":
+        proposals = [d for d in docnums if cat.meta[d]["doc_class"] in ("NPRM", "SNPRM")]
+        # prefer proposals with an Applicability paragraph; older NPRMs may lack the heading, then use the proposals alone
+        narrowed = [d for d in proposals if deps.applicability_quote(d)] or proposals
+        if len(narrowed) == 1:
+            docnums = narrowed
     if len(docnums) > 1:
         return _finish(ab.abstain(ab.DIRECTIVE_AMBIGUOUS, status=AnswerStatus.NEEDS_MORE_INFORMATION,
                                   candidates=[i for i in (cat.info(d) for d in docnums[:10]) if i],
@@ -204,6 +262,10 @@ def answer(req: QueryRequest) -> QueryResponse:
     docnum = docnums[0] if docnums else None
     group = cat.group_for(docnum) if docnum else None
     docket = (cat.meta[docnum]["dockets"] or [None])[0] if docnum else None
+    if docnum:
+        w = _metadata_conflict_warning(docnum)
+        if w:
+            warnings.append(w)
     if inferred:
         warnings.append(f"Directive {docnum} was inferred from retrieval, not specified; confirm it is the intended one.")
 
@@ -225,10 +287,10 @@ def answer(req: QueryRequest) -> QueryResponse:
             log.exception("retrieval failed")
             warnings.append(f"Retrieval unavailable ({type(e).__name__}).")
         tm["retrieval"] = (time.perf_counter() - t) * 1000
-    if not skip_generation and not engines_used and _below_threshold(hits):
+    if not skip_generation and not engines_used and not scoped and _below_threshold(hits):
         return _finish(ab.abstain(ab.NO_SUPPORTING_EVIDENCE, warnings=warnings, directive=cat.info(docnum) if docnum else None,
                                   revision=revision), t0, tm)
-    if not skip_generation and engines_used and _below_threshold(hits):
+    if not skip_generation and engines_used and not scoped and _below_threshold(hits):
         hits = []   # engines still answer; no passages to cite
 
     # --- 5/6/7. generation + verification --------------------------------------------------------
@@ -285,6 +347,38 @@ def answer(req: QueryRequest) -> QueryResponse:
                          directive=cat.info(docnum) if docnum else None, citations=_dedupe(cits), warnings=warnings,
                          missing_information=missing, verification=vinfo)
     return _finish(resp, t0, tm)
+
+
+_CONFLICT_FLAGS = {"sheet_fr_date_mismatch": "publication date", "sheet_fr_pages_mismatch": "page range",
+                   "sheet_fr_docket_format_mismatch": "docket format"}
+
+
+def _metadata_conflict_warning(docnum: str) -> str | None:
+    """Warn when a sheet row for this document carries a reconciliation mismatch vs the Federal Register record.
+    Only sheet-vs-FR mismatch flags count (publish_date_differs_from_citation_text_date etc. are sheet-internal noise)."""
+    import json
+    conn = deps.db()
+    try:
+        rows = conn.execute("select row, dq_flags_json from records where fr_docnum=?", (docnum,)).fetchall()
+    except Exception:
+        return None
+    finally:
+        conn.close()
+    what, nrows = [], []
+    for r in rows:
+        try:
+            flags = json.loads(r["dq_flags_json"] or "[]")
+        except ValueError:
+            continue
+        hit = [_CONFLICT_FLAGS[f] for f in flags if f in _CONFLICT_FLAGS]
+        if hit:
+            nrows.append(r["row"])
+            what.extend(h for h in hit if h not in what)
+    if not what:
+        return None
+    return (f"Spreadsheet metadata for this directive conflicts with the Federal Register record "
+            f"({', '.join(what)} mismatch; sheet row{'s' if len(nrows) > 1 else ''} {', '.join(str(n) for n in nrows)}); "
+            "FR values are shown.")
 
 
 def _verify(cit_m, drafts, retrieved, mode):

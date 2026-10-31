@@ -261,10 +261,22 @@ def test_v6_two_facts_without_union():
     "The final rule requires the wing fittings inspection.",
 ])
 def test_v7_reserved(claim):
+    # Policy (orchestrator review): a verbatim excerpt of the source may quote applicability / revision /
+    # finality wording (it is the document's own text); current-status wording stays blocked even verbatim.
+    # Paraphrases on any reserved topic are rejected (tested below with a non-verbatim quote).
+    from backend.verification.citations import reserved_topic
+    from backend.verification.normalize import normalize
     t = claim
     r = run(claim, claim.rstrip("."), text=t) if len(claim.split()) >= 6 else None
     if r is not None:
-        fails(r, "V7")
+        if reserved_topic(normalize(claim)) == "status":
+            fails(r, "V7")
+        else:
+            assert not isinstance(r, RejectedClaim), r.failed_check
+    # the same reserved claim supported only by a *different* (non-verbatim) quote must be rejected
+    other = "The operator must accomplish the actions specified in the service bulletin for each airplane listed."
+    r2 = run(claim, other, text=t + " " + other)
+    assert isinstance(r2, RejectedClaim)
 
 
 def test_v7_lexicon_direct_and_false_positives():
@@ -428,3 +440,16 @@ def test_review_covers_paraphrase_is_reserved():
     from backend.verification.citations import reserved_topic
     from backend.verification.normalize import normalize
     assert reserved_topic(normalize(claim)) == "applicability"
+
+
+def test_review_repeated_words_identical_claim_passes():
+    t = "Replace the part with a new part and inspect the part before further flight of the airplane."
+    r = run(t, t, text=t)
+    assert not isinstance(r, RejectedClaim), getattr(r, "failed_check", None)
+
+
+def test_review_verbatim_applicability_quote_allowed_paraphrase_rejected():
+    t = "(c) Applicability. This AD applies to Model R22 series helicopters, serial numbers 0002 through 2519."
+    q = "This AD applies to Model R22 series helicopters, serial numbers 0002 through 2519."
+    assert not isinstance(run(q, q, text=t), RejectedClaim)          # verbatim excerpt of the source
+    fails(run("This AD applies to R22 helicopters with serial numbers 0002 through 2519.", q, text=t), "V")  # paraphrase

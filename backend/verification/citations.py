@@ -286,11 +286,20 @@ def order_agreement(claim_n: str, quote_n: str):
 
     Catches role swaps ("replace X with Y" vs "replace Y with X") that bag-of-words coverage misses.
     Returns None when there are too few pairs to judge."""
-    qpos = {}
     words = lambda t: [w for w in content_lemmas(t) if not any(c.isdigit() for c in w)]
+    qpos = {}
     for i, w in enumerate(words(quote_n)):
-        qpos.setdefault(w, i)
-    seq = [qpos[w] for w in words(claim_n) if w in qpos]
+        qpos.setdefault(w, []).append(i)
+    # Greedy forward alignment: each claim word takes the next occurrence after the previous match, so
+    # repeated words ("replace the part with a new part") do not count as reordering.
+    seq, last = [], -1
+    for w in words(claim_n):
+        ps = qpos.get(w)
+        if not ps:
+            continue
+        nxt = next((x for x in ps if x > last), ps[0])
+        seq.append(nxt)
+        last = nxt
     pairs = [(a, b) for a, b in zip(seq, seq[1:]) if a != b]
     if len(pairs) < 4:
         return None
@@ -460,8 +469,14 @@ def verify_claim(claim: DraftClaim, retrieved: dict, model_index: Optional[set] 
     # V7
     if any(contains_injection_markers(ch.text[s:e]) for ch, s, e, _ in located):
         return _reject(claim, "V7_RESERVED_TOPIC:injection")
+    # A claim that is a verbatim excerpt of its quote is source text, not a system conclusion, so reserved
+    # topics (e.g. the paragraph (c) sentence "This AD applies to ...") may be quoted. Paraphrased claims on
+    # reserved topics are still rejected; conclusions come only from the deterministic templates.
+    verbatim = len(claim_n) > 0 and claim_n.strip(" .;:") in quote_n
     kind = reserved_topic(claim_n)
-    if kind:
+    # Current-status wording ("in effect", "currently required") stays blocked even verbatim: a dated document
+    # quoted today could mislead about present status.
+    if kind and (not verbatim or kind == "status"):
         return _reject(claim, "V7_RESERVED_TOPIC")
     # V8
     qnums = numbers(quote_n)

@@ -93,8 +93,71 @@ def test_below_threshold_abstains(monkeypatch):
     h = dict(real_hits()[0], bm25_score=9.0, dense_cosine=0.1, match_sources=["dense"])
     monkeypatch.setattr(pipeline, "_search", lambda *a, **k: [h])
     monkeypatch.setattr(pipeline, "_run_engines", lambda *a, **k: (pipeline.ApplicabilityResult(), None))
-    r = pipeline.answer(req("tell me about the widget torque", directive_id="2026-21387"))
+    # corpus-wide query: the relevance gate still applies
+    r = pipeline.answer(req("tell me about the widget torque"))
     assert r.abstention_reason == "NO_SUPPORTING_EVIDENCE"
+
+
+def test_directive_scoped_skips_gate(monkeypatch):
+    """Fix 1: an explicit directive bypasses the cosine gate; abstention comes from verification."""
+    h = dict(real_hits()[0], bm25_score=9.0, dense_cosine=0.1, match_sources=["dense"])
+    monkeypatch.setattr(pipeline, "_search", lambda *a, **k: [h])
+    monkeypatch.setattr(pipeline, "_run_engines", lambda *a, **k: (pipeline.ApplicabilityResult(), None))
+    r = pipeline.answer(req("tell me about the widget torque", directive_id="2026-21387"))
+    assert r.abstention_reason == "NO_VERIFIED_CLAIMS"
+
+
+@pytest.mark.skipif(not HAVE_INDEX, reason="search index not built")
+def test_unsafe_condition_scoped_regression():
+    r = pipeline.answer(req("What unsafe condition does this proposed AD address?", directive_id="FAA-2026-11814"))
+    assert r.status == AnswerStatus.ANSWERED and r.answer_claims
+    assert any("unsafe condition" in c.text.lower() or (c.citations[0].section_path or "").startswith("proposed_ad/(e)")
+               for c in r.answer_claims)
+
+
+# ---- intent routing / ambiguity / metadata (fixes 2, 5, 6) ----------------------------------
+def test_factual_affected_is_not_applicability():
+    from backend.answer.query_parse import parse
+    assert parse(req("Which models are affected by the 2026 proposal for Airbus helicopters?")).intent == "factual"
+    assert parse(req("Which airplanes does the proposal apply to?")).intent == "factual"
+    assert parse(req("Does this AD apply to my helicopter?")).intent == "applicability"
+    assert parse(req("Is my aircraft affected?")).intent == "applicability"
+    assert parse(req("Is this applicable to S/N 123?")).intent == "applicability"
+    assert parse(req("What does it say?", aircraft=AircraftConfig(model="AS355NP"))).intent == "applicability"
+
+
+@pytest.mark.skipif(not HAVE_INDEX, reason="search index not built")
+def test_multi_doc_docket_prefers_proposal_then_missing_model():
+    # FAA-2007-27495 resolves to an NPRM plus its withdrawal: the NPRM is used, so MISSING_MODEL (not AMBIGUOUS)
+    r = pipeline.answer(req("Am I required to comply with the proposed directive FAA-2007-27495?"))
+    assert r.abstention_reason == "MISSING_MODEL" and r.status == AnswerStatus.NEEDS_MORE_INFORMATION
+    assert r.directive.fr_docnum == "07-1167"
+
+
+@pytest.mark.parametrize("q", [
+    "What does the Airbus proposal require, and does it differ from the Boeing one?",
+    "Airbus vs Boeing: what do they require?",
+    "What is the difference between the Airbus one or the Boeing one?",
+    "Summarise the proposed AD about the cracks, whichever one you think I mean.",
+    "What does it require?",
+])
+def test_comparison_or_vague_is_ambiguous(q):
+    r = pipeline.answer(req(q))
+    assert r.status == AnswerStatus.NEEDS_MORE_INFORMATION and r.abstention_reason == "DIRECTIVE_AMBIGUOUS"
+
+
+def test_explicit_directive_not_ambiguous_for_it():
+    r = pipeline.answer(req("What does it require?", directive_id="2026-21387"))
+    assert r.abstention_reason != "DIRECTIVE_AMBIGUOUS"
+
+
+@pytest.mark.skipif(not HAVE_INDEX, reason="search index not built")
+def test_metadata_conflict_warning():
+    w = pipeline._metadata_conflict_warning("2018-12886")
+    assert w and "conflicts with the Federal Register record" in w and "FR values are shown" in w
+    assert pipeline._metadata_conflict_warning("2026-21387") is None
+    r = pipeline.answer(req("What does this proposed AD require?", directive_id="2018-12886"))
+    assert any("conflicts with the Federal Register record" in x for x in r.warnings)
 
 
 # ---- generation / verification ------------------------------------------------------------
