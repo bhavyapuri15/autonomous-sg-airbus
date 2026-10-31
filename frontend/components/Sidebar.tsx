@@ -2,14 +2,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BarChart3, Database, FileSearch, Info, Search } from "lucide-react";
+import { BarChart3, Database, FileSearch, Info, LayoutDashboard, Search, SlidersHorizontal } from "lucide-react";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { isRec } from "@/lib/loose";
 
 const NAV = [
-  { href: "/search", label: "Search & verify", icon: Search },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/search", label: "AI Search", icon: Search },
   { href: "/directives", label: "Directives", icon: FileSearch },
+  { href: "/applicability", label: "Applicability", icon: SlidersHorizontal },
   { href: "/evaluation", label: "Evaluation", icon: BarChart3 },
 ];
 
@@ -46,18 +48,18 @@ export function Sidebar() {
   return (
     <aside className="sidebar-scroll flex h-screen w-[232px] shrink-0 flex-col gap-4 overflow-y-auto bg-navy py-4 text-slate-200 max-[1099px]:w-16" aria-label="Sidebar">
       <div className="px-4 max-[1099px]:px-0 max-[1099px]:text-center">
-        <div className="flex items-center gap-2 max-[1099px]:justify-center">
+        <Link href="/" aria-label="AD Trace home" className="flex items-center gap-2 rounded-md max-[1099px]:justify-center">
           <span className="grid h-7 w-7 place-items-center rounded-md bg-blue-600 text-xs font-bold text-white" aria-hidden>AD</span>
           <span className="text-base font-semibold tracking-tight text-white max-[1099px]:hidden">AD Trace</span>
-        </div>
+        </Link>
         <div className="mt-1 text-[11px] leading-tight text-slate-400 max-[1099px]:hidden">FAA AD proposals · Federal Register</div>
       </div>
       <nav aria-label="Main" className="flex flex-col gap-0.5 px-2">
         {NAV.map(({ href, label, icon: Icon }) => {
-          const active = path.startsWith(href);
+          const active = path === href || path.startsWith(`${href}/`);
           return (
             <Link key={href} href={href} title={label} aria-current={active ? "page" : undefined}
-              className={cn("flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium max-[1099px]:justify-center max-[1099px]:px-0", active ? "bg-blue-600/20 text-white ring-1 ring-inset ring-blue-400/40" : "text-slate-300 hover:bg-white/5 hover:text-white")}>
+              className={cn("flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium max-[1099px]:justify-center max-[1099px]:px-0", "relative", active ? "bg-blue-600/20 text-white before:absolute before:inset-y-1 before:left-0 before:w-[3px] before:rounded-full before:bg-blue-400" : "text-slate-300 hover:bg-white/5 hover:text-white")}>
               <Icon size={16} aria-hidden /><span className="max-[1099px]:hidden">{label}</span>
             </Link>
           );

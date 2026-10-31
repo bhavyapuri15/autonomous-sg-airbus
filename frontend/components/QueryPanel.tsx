@@ -1,7 +1,8 @@
 "use client";
 import type { FormEvent, KeyboardEvent } from "react";
 import { Loader2, Search } from "lucide-react";
-import { Button, Card, Input, Textarea } from "@/components/ui";
+import { Button, Input, Textarea } from "@/components/ui";
+import StarBorder from "@/components/reactbits/StarBorder";
 
 export interface QueryForm {
   question: string; directiveId: string; model: string; serial: string; make: string; useLlm: boolean;
@@ -17,14 +18,15 @@ export function QueryPanel({ form, setForm, onSubmit, loading }: {
   const submit = (e: FormEvent) => { e.preventDefault(); go(); };
   const key = (e: KeyboardEvent) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); go(); } };
   return (
-    <Card className="p-0">
+    <StarBorder as="div" theme="light" color="#38bdf8" trailColor="#2563eb" thickness={1} radius={8} glow={0.35} duration={6} hover="none" clickPulse={false}
+      backgroundColor="#ffffff" borderColor="#cbd5e1" className="!flex w-full !flex-col !items-stretch !justify-start !gap-0 !p-0 text-left shadow-card" data-testid="query-card">
       <form onSubmit={submit} onKeyDown={key} className="space-y-3 p-4" aria-label="Query">
         <div>
           <label className={label} htmlFor="q">Question</label>
           <Textarea id="q" rows={3} maxLength={2000} required value={form.question} onChange={(e) => set("question", e.target.value)}
-            className="text-base" placeholder="e.g. Does this proposed AD apply to my airplane?" />
+            className="text-base" placeholder="Ask about an FAA directive, aircraft configuration, or applicability condition..." />
         </div>
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-2 md:grid-cols-4">
           <div><label className={label} htmlFor="did">Directive ID</label><Input id="did" maxLength={100} placeholder="docket, FR doc, AD no." value={form.directiveId} onChange={(e) => set("directiveId", e.target.value)} className="font-mono" /></div>
           <div><label className={label} htmlFor="md">Model</label><Input id="md" maxLength={100} value={form.model} onChange={(e) => set("model", e.target.value)} className="font-mono" /></div>
           <div><label className={label} htmlFor="sn">Serial (MSN)</label><Input id="sn" maxLength={100} value={form.serial} onChange={(e) => set("serial", e.target.value)} className="font-mono" /></div>
@@ -43,6 +45,6 @@ export function QueryPanel({ form, setForm, onSubmit, loading }: {
           </Button>
         </div>
       </form>
-    </Card>
+    </StarBorder>
   );
 }

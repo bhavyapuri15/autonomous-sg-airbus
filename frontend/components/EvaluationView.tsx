@@ -101,7 +101,7 @@ export function EvaluationView({ data }: { data: unknown }) {
   const empty = data === null || data === undefined || (isRec(data) && Object.keys(data).length === 0) || (Array.isArray(data) && data.length === 0);
   const title = (
     <div>
-      <h1 className="text-xl font-semibold">Evaluation</h1>
+      <h2 className="text-base font-semibold">Latest result file (raw)</h2>
       <p className="text-sm text-slate-600">Measured results from the evaluation harness.</p>
     </div>
   );

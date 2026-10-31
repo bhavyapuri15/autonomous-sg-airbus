@@ -93,10 +93,15 @@ python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
 bash scripts/run_api.sh                   # API on http://127.0.0.1:8000
 cd frontend && npm install && npm run dev # UI on http://localhost:3000
 ```
+UI routes: `/` landing page, `/dashboard`, `/search` (AI search workspace with the source viewer; accepts
+`?q=&directive=&model=&serial=&make=` to pre-fill and run), `/directives`, `/applicability`, `/evaluation`.
+The API allows CORS from port 3000 only.
 Tests and evaluation:
 ```bash
 .venv/bin/pytest tests/ -q
 cd frontend && npx vitest run
+cd frontend && npm run build && npx playwright test   # end-to-end, real API on :8000 must be running; uses installed Chrome
+cd frontend && SCREENSHOTS=1 npx playwright test e2e/screenshots.spec.ts --project=desktop  # refresh docs/screenshots
 .venv/bin/python evaluation/evaluate.py --split dev
 ```
 - `ANTHROPIC_API_KEY` is optional. Without it the extractive mode works (no LLM). `scripts/run_api.sh` loads a `.env` file if present.

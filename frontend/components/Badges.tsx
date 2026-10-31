@@ -1,4 +1,4 @@
-import { CircleHelp, Info, MinusCircle, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { CircleHelp, Info, MinusCircle, ShieldCheck, Target } from "lucide-react";
 import type { ApplicabilityValue, CitationRef, SourceTier } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { Badge } from "@/components/ui";
@@ -25,7 +25,7 @@ export function TierBadge({ tier }: { tier: SourceTier }) {
 
 export function ApplicabilityBadge({ value, label, basis }: { value: ApplicabilityValue; label?: string | null; basis?: string | null }) {
   const m: Record<ApplicabilityValue, { Icon: typeof Info; title: string; sub: string; cls: string }> = {
-    APPLICABLE: { Icon: CheckCircle2, title: "Applicable under the proposed rule", sub: "Per the proposed rule text and the configuration given. Not an enforceable requirement.", cls: "bg-blue-50 border-blue-600 text-blue-950" },
+    APPLICABLE: { Icon: Target, title: "Applicable under the proposed rule", sub: "Per the proposed rule text and the configuration given. Not an enforceable requirement.", cls: "bg-blue-50 border-blue-600 text-blue-950" },
     NOT_APPLICABLE: { Icon: MinusCircle, title: "Not applicable under the proposed rule", sub: "Per the proposed rule text and the configuration given.", cls: "bg-slate-100 border-slate-500 text-slate-900" },
     UNKNOWN: { Icon: CircleHelp, title: "Applicability not determined", sub: "The evidence available does not settle this. It is NOT a negative result. Review the source text.", cls: "bg-amber-50 border-amber-500 border-dashed text-amber-950" },
     NOT_EVALUATED: { Icon: Info, title: "Applicability not evaluated", sub: "No applicability check was run for this answer", cls: "bg-white border-slate-300 border-dashed text-slate-700" },

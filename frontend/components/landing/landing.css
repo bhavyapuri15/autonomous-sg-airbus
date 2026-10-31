@@ -1,0 +1,61 @@
+/* Landing-only styles. Imported by app/(marketing)/layout.tsx. */
+html:has(.landing-root) { scroll-behavior: smooth; }
+.landing-root { background: #081328; color: #e2e8f0; overflow-x: clip; }
+.landing-root [id] { scroll-margin-top: 80px; }
+.landing-root :focus-visible { outline: 2px solid #22b8cf; outline-offset: 3px; }
+.landing-root .on-light :focus-visible { outline-color: #2563eb; }
+
+/* Subtle dot-grid texture (CSS only), faded toward the edges. */
+.dot-grid {
+  background-image: radial-gradient(rgba(148, 163, 184, 0.22) 1px, transparent 1px);
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, #000 30%, transparent 100%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, #000 30%, transparent 100%);
+}
+
+/* Static fallback / base layer beneath the WebGL aurora. */
+.hero-gradient {
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgba(37, 99, 235, 0.38), transparent 70%),
+    radial-gradient(40% 40% at 78% 8%, rgba(34, 184, 207, 0.2), transparent 70%),
+    #081328;
+}
+.cta-gradient {
+  background:
+    radial-gradient(55% 80% at 50% 0%, rgba(37, 99, 235, 0.3), transparent 70%),
+    radial-gradient(35% 60% at 85% 20%, rgba(34, 184, 207, 0.14), transparent 70%),
+    #0b1830;
+}
+.grad-text {
+  background-image: linear-gradient(90deg, #3b82f6, #22b8cf);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* PipelineFlow: connector rails with a travelling pulse. */
+.pf-rail { position: absolute; background: rgba(148, 163, 184, 0.25); overflow: hidden; border-radius: 2px; }
+.pf-rail::after {
+  content: ""; position: absolute; border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #22b8cf, transparent);
+  box-shadow: 0 0 12px 2px rgba(34, 184, 207, 0.6);
+}
+.pf-rail-h { left: 12.5%; right: 12.5%; top: 27px; height: 2px; }
+.pf-rail-h::after { top: 0; height: 2px; width: 90px; animation: pf-h 4.8s linear infinite; }
+.pf-rail-v { left: 27px; top: 28px; bottom: 28px; width: 2px; }
+.pf-rail-v::after { left: 0; width: 2px; height: 70px; background: linear-gradient(180deg, transparent, #22b8cf, transparent); animation: pf-v 4.8s linear infinite; }
+@keyframes pf-h { from { left: -90px; } to { left: 100%; } }
+@keyframes pf-v { from { top: -70px; } to { top: 100%; } }
+.pf-node { animation: pf-ping 4.8s ease-in-out infinite; }
+@keyframes pf-ping {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 184, 207, 0); }
+  8% { box-shadow: 0 0 0 6px rgba(34, 184, 207, 0.22); }
+  20% { box-shadow: 0 0 0 0 rgba(34, 184, 207, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:has(.landing-root) { scroll-behavior: auto; }
+  .pf-rail::after { display: none; }
+  .pf-node { animation: none; }
+}

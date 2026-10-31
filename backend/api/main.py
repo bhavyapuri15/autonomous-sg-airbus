@@ -285,6 +285,24 @@ def document_page(docnum: str, pdf_page: int):
                           is_image_only=bool(r["is_image_only"]))
 
 
+@app.get("/evaluation/runs")
+def evaluation_runs():
+    """Every timestamped result file (latest_* aliases skipped), oldest first. Additive; values are read verbatim."""
+    d = ROOT / "evaluation" / "results"
+    out = []
+    for p in sorted(d.glob("2*.json")) if d.is_dir() else []:
+        try:
+            j = json.loads(p.read_text())
+        except (ValueError, OSError):
+            continue
+        if not isinstance(j, dict):
+            continue
+        out.append({"file": p.name, "split": j.get("split"), "timestamp": j.get("timestamp"),
+                    "families": j.get("families") or [], "runtime_s": j.get("runtime_s"),
+                    "metrics": j.get("metrics") or {}})
+    return out  # file names (YYYYMMDD-HHMMSS_split.json) sort chronologically
+
+
 @app.get("/evaluation/summary")
 def evaluation_summary():
     files = sorted((ROOT / "evaluation" / "results").glob("*.json"), key=lambda p: p.stat().st_mtime) \

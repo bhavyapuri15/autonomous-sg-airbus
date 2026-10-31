@@ -70,6 +70,17 @@ def test_evaluation_summary_never_fabricates():
     assert r.status_code == 200 and isinstance(r.json(), dict)
 
 
+def test_evaluation_runs_lists_timestamped_files():
+    r = client.get("/evaluation/runs")
+    assert r.status_code == 200
+    runs = r.json()
+    assert isinstance(runs, list)
+    assert all(not x["file"].startswith("latest_") and x["file"].startswith("2") for x in runs)
+    assert all(set(x) == {"file", "split", "timestamp", "families", "runtime_s", "metrics"} for x in runs)
+    stamps = [x["timestamp"] or x["file"] for x in runs]
+    assert stamps == sorted(stamps)
+
+
 def test_query_validation_and_cors():
     r = client.post("/query", json={"question": ""})
     assert r.status_code == 422 and r.json()["error"] == "validation_error"

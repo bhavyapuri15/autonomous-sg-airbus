@@ -72,5 +72,6 @@ export const api = {
   page: (docnum: string, pdfPage: number) =>
     request<LooseRecord>(`/documents/${encodeURIComponent(docnum)}/pages/${pdfPage}`),
   pdfUrl: (docnum: string) => `${API_BASE}/documents/${encodeURIComponent(docnum)}/pdf`,
+  evaluationRuns: () => request<unknown>("/evaluation/runs"),
   evaluation: () => request<unknown>("/evaluation/summary"),
 };

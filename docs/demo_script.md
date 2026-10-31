@@ -4,7 +4,7 @@ All scenarios use **real records** from the organiser dataset, all in the dev sp
 - Run with **LLM summary off** for scenarios A–D (B2 is applicability-only), so the demo is deterministic and works offline from the API.
 - Optionally turn the summary on once in scenario A to show LLM claims passing the verifier.
 
-**Setup:** `bash scripts/run_api.sh` (port 8000) and `cd frontend && npm run dev` (port 3000). Open http://localhost:3000.
+**Setup:** `bash scripts/run_api.sh` (port 8000) and `cd frontend && npm run dev` (port 3000). Open http://localhost:3000 (landing page), then **Launch Workspace** → Dashboard. The scenarios below run in **AI Search** (`/search`); the Dashboard's "Try a real query" links open them pre-filled. Scenario B2 can also be shown in the **Applicability** checker (`/applicability`).
 
 ---
 

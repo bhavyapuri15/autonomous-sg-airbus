@@ -106,7 +106,7 @@ function TextView({ citation, page }: { citation: CitationRef; page: number | nu
   );
 }
 
-export function DocumentViewer({ citation, onClose, stage }: { citation: CitationRef; onClose: () => void; stage?: string | null }) {
+export function DocumentViewer({ citation, onClose, stage, title, docket }: { citation: CitationRef; onClose: () => void; stage?: string | null; title?: string | null; docket?: string | null }) {
   const [tab, setTab] = useState<"pdf" | "text">("pdf");
   const [hl, setHl] = useState<HlState>("pending");
   const [page, setPage] = useState<number>(citation.pdf_page ?? 1);
@@ -124,8 +124,10 @@ export function DocumentViewer({ citation, onClose, stage }: { citation: Citatio
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <span className="font-mono text-sm font-semibold">FR Doc. {citation.fr_docnum}</span>
               {citation.record_ids?.length ? <span className="font-mono text-xs text-slate-600">{citation.record_ids.join(", ")}</span> : null}
+              {docket && <span className="font-mono text-xs text-slate-600">Docket {docket}</span>}
               {stage && <StagePill stage={stage} />}
             </div>
+            {title && <div className="mt-1 line-clamp-2 text-sm font-medium text-slate-900" title={title}>{title}</div>}
             <div className="mt-1 flex flex-wrap items-center gap-2"><CitationLine c={citation} /></div>
           </div>
           <Button size="sm" variant="ghost" onClick={onClose} aria-label="Close viewer"><X size={14} aria-hidden />Close</Button>

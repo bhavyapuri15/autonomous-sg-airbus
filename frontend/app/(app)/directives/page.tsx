@@ -11,24 +11,24 @@ import { SourceBadge } from "@/components/Badges";
 import { stageFromDocClass, StagePill } from "@/components/Provenance";
 import { Button, Card, Input, Skeleton } from "@/components/ui";
 
-const LIMIT = 50;
+const PAGE_SIZES = [25, 50, 100];
 const CLASSES = ["NPRM", "SNPRM", "WITHDRAWAL", "CORRECTION", "FINAL_RULE", "OTHER"];
 const col = createColumnHelper<DirectiveListItem>();
 const mono = "font-mono text-xs";
 
 const columns = [
-  col.accessor((r) => (r.record_ids ?? []).join(", "), { id: "record", header: "Record", cell: (c) => <span className={`${mono} font-semibold`}>{c.getValue() || <span className="text-slate-400">—</span>}</span> }),
+  col.accessor((r) => (r.record_ids ?? []).join(", "), { id: "record", header: "Record ID", cell: (c) => <span className={`${mono} font-semibold`}>{c.getValue() || <span className="text-slate-400">—</span>}</span> }),
   col.accessor((r) => r.docket ?? "", { id: "docket", header: "Docket", cell: (c) => <span className={mono}>{c.getValue()}</span> }),
-  col.accessor((r) => r.fr_docnum ?? "", { id: "fr_docnum", header: "FR Doc", cell: (c) => c.getValue() ? <span className={`${mono} text-blue-700`}>{c.getValue()}</span> : <span className="text-xs text-slate-500">No FR text</span> }),
   col.accessor((r) => (r.make ?? []).join(", "), { id: "make", header: "Make", cell: (c) => <span className="text-xs">{c.getValue()}</span> }),
   col.accessor((r) => joinModels(r.models), { id: "models", header: "Models", enableSorting: false, cell: (c) => <span className="text-xs text-slate-600">{c.getValue()}</span> }),
-  col.accessor((r) => stageFromDocClass(r.doc_class) ?? "", { id: "stage", header: "Stage", cell: (c) => <StagePill stage={c.getValue()} compact /> }),
-  col.accessor((r) => r.publication_date ?? "", { id: "date", header: "Date", cell: (c) => <span className="whitespace-nowrap text-xs">{c.getValue()}</span> }),
+  col.accessor((r) => stageFromDocClass(r.doc_class) ?? "", { id: "stage", header: "Regulatory stage", cell: (c) => <StagePill stage={c.getValue()} compact /> }),
+  col.accessor((r) => r.publication_date ?? "", { id: "date", header: "Publication date", cell: (c) => <span className="whitespace-nowrap text-xs">{c.getValue()}</span> }),
   col.display({
     id: "source", header: "Source",
     cell: (c) => (
       <div className="flex flex-col items-start gap-1">
         <SourceBadge source={c.row.original.source} />
+        {c.row.original.fr_docnum ? <span className={`${mono} text-blue-700`}>FR Doc. {c.row.original.fr_docnum}</span> : <span className="text-xs text-slate-500">No FR text</span>}
         {c.row.original.fr_docnum && <a href={`https://www.federalregister.gov/d/${encodeURIComponent(c.row.original.fr_docnum)}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}
           className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline">Official <ExternalLink size={11} aria-hidden /></a>}
       </div>
@@ -41,6 +41,7 @@ export default function Directives() {
   const [q, setQ] = useState(""); const [make, setMake] = useState(""); const [dc, setDc] = useState("");
   const [includeFr, setIncludeFr] = useState(false);
   const [offset, setOffset] = useState(0);
+  const [limit, setLimit] = useState(50);
   const [rows, setRows] = useState<DirectiveListItem[]>([]);
   const [total, setTotal] = useState<number | null>(null);
   const [err, setErr] = useState<unknown>(null); const [loading, setLoading] = useState(false);
@@ -49,11 +50,11 @@ export default function Directives() {
   const load = useCallback(async () => {
     setLoading(true); setErr(null);
     try {
-      const d = await api.directives({ q, make, doc_class: dc, source: includeFr ? undefined : "organiser_sheet", limit: LIMIT, offset });
+      const d = await api.directives({ q, make, doc_class: dc, source: includeFr ? undefined : "organiser_sheet", limit, offset });
       setRows(Array.isArray(d.items) ? d.items : []);
       setTotal(typeof d.total === "number" ? d.total : null);
     } catch (e) { setErr(e); setRows([]); } finally { setLoading(false); }
-  }, [q, make, dc, includeFr, offset]);
+  }, [q, make, dc, includeFr, offset, limit]);
   useEffect(() => { const t = setTimeout(load, 250); return () => clearTimeout(t); }, [load]);
 
   const data = useMemo(() => rows, [rows]);
@@ -78,7 +79,7 @@ export default function Directives() {
           </div>
           <Input aria-label="Make" placeholder="Make (e.g. Airbus)" className="w-44" value={make} onChange={(e) => { setOffset(0); setMake(e.target.value); }} />
           <select aria-label="Document class" className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/30" value={dc} onChange={(e) => { setOffset(0); setDc(e.target.value); }}>
-            <option value="">All classes</option>
+            <option value="">All classes / stages</option>
             {CLASSES.map((c) => <option key={c}>{c}</option>)}
           </select>
           <label className="flex items-center gap-2 text-sm text-slate-700">
@@ -123,12 +124,17 @@ export default function Directives() {
             </tbody>
           </table>
         </div>
-        {!err && !loading && rows.length === 0 && <p className="p-4 text-sm text-slate-600">No directives match.</p>}
+        {!err && !loading && rows.length === 0 && <p className="p-4 text-sm text-slate-600">No directives match these filters. Clear the search or filters, or include final-rule lookup documents.</p>}
         <div className="flex items-center gap-3 border-t border-slate-200 px-3 py-2 text-sm text-slate-600">
-          <Button size="sm" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - LIMIT))}><ChevronLeft size={14} aria-hidden />Previous</Button>
+          <Button size="sm" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - limit))}><ChevronLeft size={14} aria-hidden />Previous</Button>
           <span role="status">{loading ? "Loading…" : `Showing ${rows.length ? offset + 1 : 0}–${offset + rows.length}${total !== null ? ` of ${total}` : ""}`}</span>
-          <Button size="sm" disabled={rows.length < LIMIT || (total !== null && offset + rows.length >= total)} onClick={() => setOffset(offset + LIMIT)}>Next<ChevronRight size={14} aria-hidden /></Button>
-          <span className="ml-auto hidden text-xs text-slate-500 md:inline">Sorting applies to the rows on this page.</span>
+          <Button size="sm" disabled={rows.length < limit || (total !== null && offset + rows.length >= total)} onClick={() => setOffset(offset + limit)}>Next<ChevronRight size={14} aria-hidden /></Button>
+          <label className="ml-auto flex items-center gap-1.5 text-xs">Rows per page
+            <select aria-label="Rows per page" className="h-7 rounded-lg border border-slate-300 bg-white px-1 text-xs" value={limit} onChange={(e) => { setOffset(0); setLimit(Number(e.target.value)); }}>
+              {PAGE_SIZES.map((n) => <option key={n} value={n}>{n}</option>)}
+            </select>
+          </label>
+          <span className="hidden text-xs text-slate-500 md:inline">Sorting applies to the rows on this page.</span>
         </div>
       </Card>
     </div>

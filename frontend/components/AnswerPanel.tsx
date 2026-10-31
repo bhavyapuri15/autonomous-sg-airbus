@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { ApplicabilityResult, CitationRef, QueryResponse, RevisionEdge, RevisionResult, StepOutcome } from "@/lib/types";
 import type { ReactNode } from "react";
 import { AlertTriangle, BookOpen, Quote, Ban, CheckCircle2, Copy, ExternalLink, HelpCircle, History, Info, ListChecks, ShieldCheck, XCircle } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/cn";
 import { Badge, Button, Card, CardTitle } from "@/components/ui";
 import { ApplicabilityBadge, DocClassPill, TierBadge, pageLabel } from "./Badges";
@@ -22,7 +23,7 @@ function Banner({ tone, icon: Icon, children, testId = "status-banner" }: { tone
   );
 }
 
-function StatusBanner({ r, onPick }: { r: QueryResponse; onPick?: (id: string) => void }) {
+export function StatusBanner({ r, onPick }: { r: QueryResponse; onPick?: (id: string) => void }) {
   if (r.status === "ANSWERED")
     return (
       <Banner tone="blue" icon={ShieldCheck}>
@@ -115,7 +116,7 @@ function EvidenceLink({ c, onOpen }: { c: CitationRef; onOpen: Open }) {
   );
 }
 
-function ApplicabilityCard({ a, title, testId, onOpen }: { a: ApplicabilityResult; title: string; testId: string; onOpen: Open }) {
+export function ApplicabilityCard({ a, title, testId, onOpen }: { a: ApplicabilityResult; title: string; testId: string; onOpen: Open }) {
   const cnt = conditionCount(a);
   return (
     <Card aria-label={title} data-testid={testId}>
@@ -244,6 +245,7 @@ export function AnswerPanel({ response: r, onOpenCitation, onPickCandidate, onRe
   response: QueryResponse; onOpenCitation: Open; onPickCandidate?: (id: string) => void;
   onRecheck?: (facts: Record<string, boolean>) => void;
 }) {
+  const reduce = useReducedMotion();
   const factKeys = onRecheck ? needsFacts(r) : [];
   // Global citation numbering: response.citations first, then any claim citations not already listed.
   const all: CitationRef[] = [...r.citations];
@@ -291,7 +293,7 @@ export function AnswerPanel({ response: r, onOpenCitation, onPickCandidate, onRe
           <CardTitle icon={<BookOpen size={14} aria-hidden />}>Citations</CardTitle>
           <ol className="space-y-3">
             {all.map((c, i) => (
-              <li key={c.citation_id} className="rounded-lg border border-slate-200 p-3 text-sm">
+              <motion.li key={c.citation_id} className="rounded-lg border border-slate-200 p-3 text-sm" initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: reduce ? 0 : Math.min(i, 8) * 0.05 }}>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold">[{i + 1}]</span>
                   <CitationLine c={c} />
@@ -312,7 +314,7 @@ export function AnswerPanel({ response: r, onOpenCitation, onPickCandidate, onRe
                     </a>
                   )}
                 </div>
-              </li>
+              </motion.li>
             ))}
           </ol>
         </Card>

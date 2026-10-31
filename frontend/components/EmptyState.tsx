@@ -1,25 +1,8 @@
 import { FileSearch, Sparkles } from "lucide-react";
 import type { QueryForm } from "@/components/QueryPanel";
 import { Card } from "@/components/ui";
+import { EXAMPLES } from "@/lib/demo";
 
-// Real demo queries against the live dataset (not mock data): they are submitted to the API like any other query.
-export const EXAMPLES: { title: string; hint: string; form: QueryForm }[] = [
-  {
-    title: "Does this proposed AD apply to my airplane?",
-    hint: "FAA-2022-0222 · PA-34-200 · s/n 34-7250001",
-    form: { question: "Does this proposed AD apply to my airplane?", directiveId: "FAA-2022-0222", model: "PA-34-200", serial: "34-7250001", make: "", useLlm: false },
-  },
-  {
-    title: "What unsafe condition does this proposed AD address?",
-    hint: "NPRM-001",
-    form: { question: "What unsafe condition does this proposed AD address?", directiveId: "NPRM-001", model: "", serial: "", make: "", useLlm: false },
-  },
-  {
-    title: "Which AD is the most dangerous?",
-    hint: "No directive ID: expect the system to abstain",
-    form: { question: "Which AD is the most dangerous?", directiveId: "", model: "", serial: "", make: "", useLlm: false },
-  },
-];
 
 export function EmptyState({ onPick }: { onPick: (f: QueryForm) => void }) {
   return (

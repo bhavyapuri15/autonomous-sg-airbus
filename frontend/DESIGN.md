@@ -13,12 +13,23 @@ Radius: 4px everywhere (`rounded-md` and `rounded-lg` both map to 4px). Shadow: 
 Focus: global `:focus-visible` 2px blue outline, 2px offset; inputs also get a blue ring.
 
 ## Components (`components/ui/index.tsx`, helpers `lib/cn.ts`, `lib/useMedia.ts`)
-Button (primary/secondary/ghost/danger; sm/md/lg), Card, CardTitle, Badge (tones slate/blue/amber/red/violet/outline), Input, Textarea, Skeleton, Separator, Tooltip (native title), Tabs (role=tablist), Mono. Feature components: Sidebar, QueryPanel, FactsInput, AnswerPanel, Provenance, DocumentViewer, EvaluationView, EmptyState, ResultSkeleton, ErrorState, Disclaimer, Badges.
+Button (primary/secondary/ghost/danger; sm/md/lg), Card, CardTitle, Badge (tones slate/blue/amber/red/violet/outline), Input, Textarea, Skeleton, Separator, Tooltip (native title), Tabs (role=tablist), Mono. Feature components: Sidebar, QueryPanel, FactsInput, AnswerPanel, Provenance, DocumentViewer, EvaluationView, EmptyState, ErrorState, Disclaimer, Badges.
 
 ## Layout
 - Sidebar: 232px navy rail with nav and real corpus counts from `/health`; below 1100px it collapses to a 64px icon rail (labels hidden, `title` tooltips kept).
 - Search workspace (`/`): three resizable panes (react-resizable-panels): query/facts, answer and provenance, source viewer (default about 480px). Below 768px (`useMedia`) the panes stack vertically and the page scrolls.
 - No horizontal page scroll at 768, 1024, 1280, 1440; wide content (tables, mono identifiers) scrolls inside its own container or wraps.
+
+## Application routes and added components
+Routes (`app/(app)`): `/dashboard` (live /health corpus counts, headline metrics from `GET /evaluation/runs`, quick actions, real demo queries as deep links), `/search` (Regulatory Intelligence Workspace; deep link `?q=&directive=&model=&serial=&make=` pre-fills and auto-runs once), `/directives`, `/directives/[id]`, `/applicability` (posts `/query`, use_llm false), `/evaluation`, `/dev/fixtures`. Wordmark links to `/` (landing).
+
+- `components/fx/ThinkingDots.tsx`: 3x3 pulsing dot grid + "Retrieving and verifying evidence...", rendered only while the real request is pending; static under reduced motion. No fake step progress.
+- `components/fx/LineChart.tsx`: SVG line chart, animated path draw (reduced-motion aware), one marker per measured point (distinct shapes per series), null = gap (never interpolated), values on hover/focus, table fallback. Palette #2563eb / #c2410c / #0e9aa7 validated with the dataviz validator (light mode).
+- `components/Activity.tsx`: real `timings_ms` stages via React Bits `AnimatedList`.
+- `components/EvaluationDashboard.tsx`: metric cards from the latest run containing each family (shows run + n), Dev/Locked tabs (locked = pre-fix corpus), applicability accuracy "Not measured".
+- `components/ApplicabilityLegend.tsx`: the three outcomes (blue / slate / amber, never green).
+- React Bits (free, vendored): `StarBorder` around the query card, `AnimatedList` for Activity. Citation cards use `motion` stagger. React Bits Pro is not used.
+- Sidebar: Dashboard, AI Search, Directives, Applicability, Evaluation; blue left indicator on the active item; collapses to icons below 1100px.
 
 ## Regulatory-UX rules (binding)
 - Regulatory stage, proposed applicability (plus final-rule applicability when present) and current enforceability are three separate cells; never merged.
