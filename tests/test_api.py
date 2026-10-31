@@ -24,6 +24,15 @@ def test_directives_list_and_filters():
     assert client.get("/directives", params={"limit": 0}).status_code == 422
 
 
+def test_directives_list_record_ids():
+    j = client.get("/directives", params={"q": "NPRM-180", "limit": 5}).json()
+    assert [(i["fr_docnum"], i["record_ids"]) for i in j["items"]] == [("2021-13482", ["NPRM-180"])]
+    j = client.get("/directives", params={"q": "NPRM-409"}).json()   # metadata-only record (no FR document)
+    assert [(i["fr_docnum"], i["record_ids"]) for i in j["items"]] == [(None, ["NPRM-409"])]
+    j = client.get("/directives", params={"source": "fr_final_rule_lookup", "limit": 3}).json()
+    assert all(i["record_ids"] == [] for i in j["items"])
+
+
 @pytest.mark.parametrize("ident", ["2026-21387", "FAA-2026-11814"])
 def test_directive_detail(ident):
     j = client.get(f"/directives/{ident}").json()
@@ -59,6 +68,17 @@ def test_path_traversal(path):
 def test_evaluation_summary_never_fabricates():
     r = client.get("/evaluation/summary")
     assert r.status_code == 200 and isinstance(r.json(), dict)
+
+
+def test_evaluation_runs_lists_timestamped_files():
+    r = client.get("/evaluation/runs")
+    assert r.status_code == 200
+    runs = r.json()
+    assert isinstance(runs, list)
+    assert all(not x["file"].startswith("latest_") and x["file"].startswith("2") for x in runs)
+    assert all(set(x) == {"file", "split", "timestamp", "families", "runtime_s", "metrics"} for x in runs)
+    stamps = [x["timestamp"] or x["file"] for x in runs]
+    assert stamps == sorted(stamps)
 
 
 def test_query_validation_and_cors():
@@ -179,3 +199,13 @@ def test_record_id_resolves_via_api():
                                              "directive_id": "NPRM-001", "use_llm": False}).json()
     assert r["directive"]["fr_docnum"] == "2026-21387"
     assert "NPRM-001" in r["directive"]["record_ids"]
+
+
+def test_applicability_check_final_rule():
+    r = client.post("/applicability/check", json={"directive_id": "2022-02072",
+                    "aircraft": {"model": "PA-34-200", "serial": "34-7250001"}})
+    assert r.status_code == 200
+    j = r.json()
+    assert j["final_rule_docnum"] == "2022-08852"
+    assert j["final_rule_applicability"]["basis"] == "FINAL_RULE"
+    assert j["final_rule_applicability"]["value"] == "APPLICABLE"

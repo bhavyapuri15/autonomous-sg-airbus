@@ -53,3 +53,27 @@ manifest, so do not do that after tuning begins. Caveat: the author of the locke
 locked questions were written before any retrieval tuning existed.
 
 Tests: `.venv/bin/python -m pytest tests/test_eval_cases.py`.
+
+## Update families F10-F13 (organiser clarifications of 31 Oct; added after the first locked run)
+Generator: `python evaluation/generate_update_cases.py [--manifest]` (deterministic; tests regenerate and compare byte-for-byte). Files
+`test_cases/{dev,locked}/f10_record_id, f11_revision_chain, f12_regulatory, f13_supersession.jsonl`. New manifest `LOCKED_MANIFEST_UPDATE.sha256`
+(written before any run; the original `LOCKED_MANIFEST.sha256` and all pre-existing case files are untouched; the old manifest test now
+ignores the f10-f13 files). Split: `split_map.json` via `sheet_row` (records) or docnum (FR docs). `evaluate.py` reads them through `load_cases`
+(guard `assert_not_locked`), so locked F10-F13 need `--split locked --final`. Gold never comes from system output.
+- **F10** record-id lookup, 3 query forms per record (`NPRM-007`, `nprm 7`, `What does record NPRM-007 propose?`). Gold = first docnum in the organiser
+  `federal_register_link` (`/documents/Y/M/D/<n>/`, `/d/<n>`, `/a/<n>`). 237 rows have such a URL; 15 are withdrawal rows with two links
+  (`<NPRM link>\nWithdrawal: <link>`): the row's own document is the link whose FR metadata date is within 3 days of the row's publish_date (resolves 3);
+  12 stay ambiguous and are skipped, so 225 records x 3 forms. Metric acc@1 (`search_ex` top hit). 5 nonexistent ids (NPRM-0/-999/-432 dev, -500/-9999 locked):
+  pass = no hit with `exact_id` in `match_sources`.
+- **F11** gold = `revision_chains` sheet of the xlsx (openpyxl): `status` latest/earlier -> LATEST/SUPERSEDED_IN_DATASET, `latest_record_id`, version/versions_total
+  (207 chain records). Single-publication: docket appears once in `nprm_index` and not in `revision_chains` (45 dev / 20 locked sampled by hash).
+- **F12** `stage`: gold = `data/raw/fr_metadata/{docnum}.json` action: contains withdraw/rescission -> WITHDRAWAL_NOTICE, correction -> CORRECTION, supplemental ->
+  SUPPLEMENTAL_PROPOSAL, notice of proposed rulemaking -> PROPOSED_RULE (checked in that order; type must be "Proposed Rule"; "extension of comment period",
+  "public meeting" and docs without metadata are excluded). `enforceability`: 4 PROPOSAL_WITHDRAWN + 4 FINAL_RULE_PUBLISHED_VERIFIED re-used from the hand-checked dev F6
+  evidence (read-only), plus 15 dev NPRMs read by hand (2026 "FAA proposes to adopt a new AD", comment periods open/recent, no withdrawal or final rule) -> NOT_VERIFIED.
+  `adnum`: the 21 organiser rows with `ad_number`; FINAL_RULE_PUBLISHED_VERIFIED allowed only if `relations` has a VERIFIED FINALIZES edge to the record's NPRM (documented use of
+  the relations table, so partly system-derived). Metrics: stage accuracy, enforceability accuracy, `unsafe_enforceability` (FINAL predicted where gold is not; must be 0), `adnum_misuse`.
+- **F13** one case per organiser `supersedes_ad` (62 rows): the AD must appear in `proposed_supersedes`. Operative gold = own regex (`final_rule_supersedes`, independent of revisions.py:
+  "supersede(s/ed/ing) [the existing] [Airworthiness Directive (AD)|AD] X" or "remov(e/es/ing) ... AD X" on tag-stripped, whitespace-collapsed
+  `fr_final_rules/{rule}/full_text.xml` of a VERIFIED final rule of the record). Metrics: recall, false operative count (must be 0), missed operative count.
+Known data quirk: in many rows the organiser link cell holds FR text, with the URL embedded; literal `\n` strings occur.

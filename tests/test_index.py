@@ -87,10 +87,16 @@ def test_fr_docnum_mapping_matches_records(conn, oi):
     for r in oi:
         assert r["fr_docnum"] == conn.execute("SELECT fr_docnum FROM records WHERE row=?", (r["sheet_row"],)).fetchone()[0]
     assert sum(1 for r in oi if r["fr_docnum"]) == 428
-    for r in oi:   # index URLs never contradict our resolved docnum
+    # index URLs never contradict our resolved docnum, except NPRM-180: its links are the withdrawn NPRM (2018-12886, wrong
+    # date) and a "Withdrawal:" URL for another docket's NPRM (2021-13636, FAA-2021-0214); resolved by docket search instead
+    contradicted = {}
+    for r in oi:
         dns = il.link_docnums(r["federal_register_link"])
-        if dns and r["fr_docnum"]:
-            assert r["fr_docnum"] in dns, r["record_id"]
+        if dns and r["fr_docnum"] and r["fr_docnum"] not in dns:
+            contradicted[r["record_id"]] = r["fr_docnum"]
+    assert contradicted == {"NPRM-180": "2021-13482"}
+    flags = conn.execute("SELECT dq_flags_json FROM records r JOIN organiser_index o ON o.sheet_row=r.row WHERE o.record_id='NPRM-180'").fetchone()[0]
+    assert "2021-13636(docket_mismatch)" in flags
 
 
 def test_serial_flag_is_integer_boolean(oi):

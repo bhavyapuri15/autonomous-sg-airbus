@@ -53,9 +53,10 @@ SCENARIOS = [
          expected="applicability UNKNOWN with serial listed as missing, status NEEDS_MORE_INFORMATION; never APPLICABLE/NOT_APPLICABLE",
          root_cause="Defaulting absent serial to inside/outside", mitigation="UNKNOWN + missing[] when a needed fact is absent"),
     dict(id="F8-08-conflicting-metadata", name="Conflicting metadata (reconciliation mismatch row)", severity="MAJOR",
-         inputs=dict(directive_id="2018-12886"), question="What does this proposed AD require?",
-         expected="Two sheet rows share FR 2018-12886 with different sheet dates/pages (2021-06-27 vs 2018-06-17; FR date 2018-06-18). Response must expose the "
-                  "conflict (both sheet rows or a warning) and rely on FR text, not silently pick a sheet value",
+         inputs=dict(directive_id="2016-05517"), question="What does this proposed AD require?",
+         expected="Sheet row 288 gives FR 2016-05517 as pages 29148-29149; the FR record is 81 FR 13303. Response must expose the conflict "
+                  "(a warning or several sheet rows) and rely on FR text, not silently pick a sheet value. (Was 2018-12886, whose conflict came "
+                  "from the withdrawal row NPRM-180 being mis-mapped to it; fixed 31 Oct.)",
          root_cause="Pipeline surfaces only one sheet row / no warning", mitigation="Expose sheet_rows and add a conflicting-metadata warning from reconcile.py"),
     dict(id="F8-09-unavailable-source", name="Unavailable source document (metadata-only row)", severity="BLOCKING",
          inputs=dict(directive_id="2003-CE-05-AD-W"), question="What technical actions did this withdrawal cover?",

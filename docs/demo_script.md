@@ -4,14 +4,14 @@ All scenarios use **real records** from the organiser dataset, all in the dev sp
 - Run with **LLM summary off** for scenarios A–D (B2 is applicability-only), so the demo is deterministic and works offline from the API.
 - Optionally turn the summary on once in scenario A to show LLM claims passing the verifier.
 
-**Setup:** `bash scripts/run_api.sh` (port 8000) and `cd frontend && npm run dev` (port 3000). Open http://localhost:3000.
+**Setup:** `bash scripts/run_api.sh` (port 8000) and `cd frontend && npm run dev` (port 3000). Open http://localhost:3000 (landing page), then **Launch Workspace** → Dashboard. The scenarios below run in **AI Search** (`/search`); the Dashboard's "Try a real query" links open them pre-filled. Scenario B2 can also be shown in the **Applicability** checker (`/applicability`).
 
 ---
 
 ## 0:00–0:20 Problem framing (talk track)
 - An engineer must decide whether an FAA airworthiness directive applies to a specific aircraft (model and serial number), and whether that directive is still a live proposal, was withdrawn, or became a final rule.
 - Today that means searching the Federal Register, reading paragraph (c) "Applicability", and chasing related notices.
-- Our tool covers the organiser's 431 rows. They resolve to 420 Federal Register documents (1,324 pages), plus 75 final rules found through a verified lookup.
+- Our tool covers the organiser's 431 rows. They resolve to 428 Federal Register documents (1,334 pages), plus 75 final rules found through a verified lookup.
 - Every statement is tied to an exact Federal Register page and quote. When the evidence is incomplete, the system says UNKNOWN or refuses instead of guessing.
 
 ## 0:20–1:00 Scenario A: exact directive retrieval with traceable evidence

@@ -72,3 +72,33 @@ describe("findQuote", () => {
     expect(findQuote("completely different text here", "propose to require inspection of widget brackets")).toBeNull();
   });
 });
+
+describe("final-rule applicability", () => {
+  const withFinal = () => {
+    const base = answered as unknown as QueryResponse;
+    return R({
+      ...base,
+      applicability: { ...base.applicability, value: "APPLICABLE", label: "Applicable under the proposed rule", basis: "PROPOSED_RULE" },
+      final_rule_docnum: "2022-08852",
+      final_rule_applicability: {
+        ...base.applicability, value: "APPLICABLE", basis: "FINAL_RULE", label: "Applicable under the published final rule",
+        template_text: "the AD as published in this final rule applies to PA-34-200", explanation: [], missing: [],
+      },
+    });
+  };
+  it("shows proposed and final cards side by side with neutral styling", () => {
+    render(<AnswerPanel response={withFinal()} onOpenCitation={noop} />);
+    const container = screen.getByTestId("applicability-pair");
+    expect(screen.getByRole("heading", { name: "Proposed rule" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Published final rule (FR 2022-08852)" })).toBeInTheDocument();
+    expect(within(screen.getByTestId("card-final")).getByText("Applicable under the published final rule")).toBeInTheDocument();
+    expect(screen.getByTestId("cell-final-applicability")).toBeInTheDocument();
+    for (const b of screen.getAllByTestId("applicability-badge")) expect(b.className).not.toMatch(/green|emerald/);
+    expect(screen.getByTestId("cell-final-applicability").className).not.toMatch(/green|emerald/);
+    expect(container.textContent?.toLowerCase()).not.toContain("compliant");
+  });
+  it("shows a single card when there is no final rule", () => {
+    render(<AnswerPanel response={R(answered)} onOpenCitation={noop} />);
+    expect(screen.queryByTestId("card-final")).toBeNull();
+  });
+});

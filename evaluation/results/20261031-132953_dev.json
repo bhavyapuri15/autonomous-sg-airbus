@@ -1,0 +1,250 @@
+{
+ "split": "dev",
+ "timestamp": "2026-10-31T13:29:42",
+ "families": [
+  "F10",
+  "F11",
+  "F12",
+  "F13"
+ ],
+ "llm_requested": false,
+ "metrics": {
+  "F10": {
+   "n": 492,
+   "n_lookup": 489,
+   "acc_at1": 1.0,
+   "by_form": {
+    "canonical": {
+     "n": 163,
+     "acc_at1": 1.0,
+     "top_hit_is_exact_id": 163
+    },
+    "lower_unpadded": {
+     "n": 163,
+     "acc_at1": 1.0,
+     "top_hit_is_exact_id": 163
+    },
+    "question": {
+     "n": 163,
+     "acc_at1": 1.0,
+     "top_hit_is_exact_id": 163
+    }
+   },
+   "nonexistent": {
+    "n": 3,
+    "no_exact_result": 3,
+    "rate": 1.0
+   },
+   "failures": []
+  },
+  "F11": {
+   "n": 192,
+   "status_acc": 0.9635,
+   "latest_record_id_acc": 0.9948,
+   "version_acc": 0.9635,
+   "all_correct": 0.9635,
+   "by_check": {
+    "chain": {
+     "n": 147,
+     "status_acc": 0.9592,
+     "latest_record_id_acc": 1.0,
+     "all_correct": 0.9592
+    },
+    "single": {
+     "n": 45,
+     "status_acc": 0.9778,
+     "latest_record_id_acc": 0.9778,
+     "all_correct": 0.9778
+    }
+   },
+   "failures": [
+    {
+     "id": "F11-dev-chain-021",
+     "record_id": "NPRM-176",
+     "docket": "FAA-2021-0255",
+     "expected": [
+      "LATEST_IN_DATASET",
+      "NPRM-176",
+      2,
+      2
+     ],
+     "actual": [
+      "SUPERSEDED_IN_DATASET",
+      "NPRM-176",
+      1,
+      2
+     ],
+     "status_flags": [
+      "SUPERSEDED_IN_DATASET",
+      "CURRENT_AUTHORITATIVE_STATUS_UNKNOWN"
+     ]
+    },
+    {
+     "id": "F11-dev-chain-023",
+     "record_id": "NPRM-177",
+     "docket": "FAA-2021-0298",
+     "expected": [
+      "LATEST_IN_DATASET",
+      "NPRM-177",
+      2,
+      2
+     ],
+     "actual": [
+      "SUPERSEDED_IN_DATASET",
+      "NPRM-177",
+      1,
+      2
+     ],
+     "status_flags": [
+      "SUPERSEDED_IN_DATASET",
+      "CURRENT_AUTHORITATIVE_STATUS_UNKNOWN"
+     ]
+    },
+    {
+     "id": "F11-dev-chain-025",
+     "record_id": "NPRM-178",
+     "docket": "FAA-2018-0689",
+     "expected": [
+      "LATEST_IN_DATASET",
+      "NPRM-178",
+      2,
+      2
+     ],
+     "actual": [
+      "SUPERSEDED_IN_DATASET",
+      "NPRM-178",
+      1,
+      2
+     ],
+     "status_flags": [
+      "SUPERSEDED_IN_DATASET",
+      "CURRENT_AUTHORITATIVE_STATUS_UNKNOWN"
+     ]
+    },
+    {
+     "id": "F11-dev-chain-027",
+     "record_id": "NPRM-179",
+     "docket": "FAA-2020-0713",
+     "expected": [
+      "LATEST_IN_DATASET",
+      "NPRM-179",
+      2,
+      2
+     ],
+     "actual": [
+      "SUPERSEDED_IN_DATASET",
+      "NPRM-179",
+      1,
+      2
+     ],
+     "status_flags": [
+      "SUPERSEDED_IN_DATASET",
+      "CURRENT_AUTHORITATIVE_STATUS_UNKNOWN"
+     ]
+    },
+    {
+     "id": "F11-dev-chain-029",
+     "record_id": "NPRM-180",
+     "docket": "FAA-2018-0422",
+     "expected": [
+      "LATEST_IN_DATASET",
+      "NPRM-180",
+      2,
+      2
+     ],
+     "actual": [
+      "SUPERSEDED_IN_DATASET",
+      "NPRM-180",
+      1,
+      2
+     ],
+     "status_flags": [
+      "SUPERSEDED_IN_DATASET",
+      "CURRENT_AUTHORITATIVE_STATUS_UNKNOWN"
+     ]
+    },
+    {
+     "id": "F11-dev-chain-031",
+     "record_id": "NPRM-184",
+     "docket": "FAA-2020-0985",
+     "expected": [
+      "LATEST_IN_DATASET",
+      "NPRM-184",
+      2,
+      2
+     ],
+     "actual": [
+      "SUPERSEDED_IN_DATASET",
+      "NPRM-184",
+      1,
+      2
+     ],
+     "status_flags": [
+      "SUPERSEDED_IN_DATASET",
+      "CURRENT_AUTHORITATIVE_STATUS_UNKNOWN"
+     ]
+    },
+    {
+     "id": "F11-dev-single-042",
+     "record_id": "NPRM-409",
+     "docket": "2002-CE-27-AD-W",
+     "expected": [
+      "SINGLE_PUBLICATION",
+      "NPRM-409"
+     ],
+     "actual": "NO REVISION RESULT: ABSTAINED/DIRECTIVE_NOT_FOUND"
+    }
+   ]
+  },
+  "F12": {
+   "n": 342,
+   "by_check": {
+    "adnum": {
+     "n": 15,
+     "accuracy": 1.0
+    },
+    "enforceability": {
+     "n": 23,
+     "accuracy": 1.0
+    },
+    "stage": {
+     "n": 304,
+     "accuracy": 1.0
+    }
+   },
+   "stage_accuracy": 1.0,
+   "enforceability_accuracy": 1.0,
+   "unsafe_enforceability": 0,
+   "unsafe_case_ids": [],
+   "adnum_misuse": {
+    "n": 15,
+    "final_predicted": 14,
+    "misuse": 0,
+    "allowed_n": 14,
+    "allowed_final_predicted": 14
+   },
+   "enforceability_distribution_on_stage_cases": {
+    "NOT_VERIFIED": 117,
+    "FINAL_RULE_PUBLISHED_VERIFIED": 42,
+    "PROPOSAL_WITHDRAWN": 145
+   },
+   "failures": []
+  },
+  "F13": {
+   "n": 44,
+   "recall_of_organiser_supersessions": 1.0,
+   "recalled": 44,
+   "false_operative_count": 0,
+   "missed_operative_count": 0,
+   "operative_gold_n": 6,
+   "operative_predicted_n": 6,
+   "operative_flag_on_other_entries": 0,
+   "failures": []
+  }
+ },
+ "config": {
+  "MIN_TOP_DENSE_COSINE": 0.684,
+  "ANSWER_TOP_K": 8
+ },
+ "runtime_s": 10.9
+}

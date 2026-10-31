@@ -170,6 +170,8 @@ export interface QueryResponse {
   status: AnswerStatus;
   answer_claims: Claim[];
   applicability: ApplicabilityResult;
+  final_rule_applicability?: ApplicabilityResult | null;
+  final_rule_docnum?: string | null;
   revision?: RevisionResult | null;
   directive?: DirectiveInfo | null;
   candidates: DirectiveInfo[];
@@ -214,6 +216,8 @@ export interface ApplicabilityCheckRequest {
 export interface ApplicabilityCheckResponse {
   directive?: DirectiveInfo | null;
   applicability: ApplicabilityResult;
+  final_rule_applicability?: ApplicabilityResult | null;
+  final_rule_docnum?: string | null;
   revision?: RevisionResult | null;
   warnings: string[];
   disclaimer: string;
@@ -230,7 +234,7 @@ export type LooseRecord = Record<string, unknown>;
 export type DirectiveSource = "organiser_sheet" | "fr_final_rule_lookup" | string;
 
 export interface DirectiveListItem {
-  fr_docnum: string;
+  fr_docnum: string | null;   // null for metadata-only records (no FR document)
   docket?: string | null;
   doc_class?: string | null;
   title?: string | null;

@@ -180,6 +180,55 @@ def _run_engines(docnum: str, req: QueryRequest, warnings: list[str]):
     return app, revision
 
 
+WARN_FINAL_UNCHECKED = ("Final-rule applicability is computed from the published final rule text; later amendments or "
+                        "supersession of the final AD were not checked.")
+WARN_FINAL_DIFFERS = ("Proposal and final rule differ in applicability for this configuration; the final rule text "
+                      "governs as published.")
+
+
+def evaluate_final_rule(docnum: str, req: QueryRequest, revision, applicability: ApplicabilityResult,
+                        warnings: list[str]):
+    """Returns (ApplicabilityResult | None, final_docnum | None). Only VERIFIED FINALIZES edges are evaluated;
+    CANDIDATE ones are mentioned in a warning only."""
+    ac = req.aircraft
+    app_m = deps.module("applicability")
+    if revision is None or app_m is None or not (ac and (ac.model or ac.serial or ac.facts)):
+        return None, None
+    fins = [e for e in revision.edges if e.type == "FINALIZES" and e.dst == docnum]
+    ver = sorted({e.src for e in fins if e.confidence == "VERIFIED"})
+    cand = sorted({e.src for e in fins if e.confidence != "VERIFIED"} - set(ver))
+    if cand:
+        warnings.append(f"A candidate (unverified) final rule exists ({', '.join(cand)}); its applicability was not evaluated.")
+    if not ver:
+        return None, None
+    dates = {}
+    try:
+        for d in ver:
+            r = deps.db().execute("select publication_date from documents where fr_docnum=?", (d,)).fetchone()
+            dates[d] = (r[0] if r and r[0] else "")
+    except Exception:
+        log.exception("final-rule date lookup failed")
+    ver.sort(key=lambda d: (dates.get(d, ""), d), reverse=True)
+    fdoc = ver[0]
+    if len(ver) > 1:
+        warnings.append(f"Multiple verified final rules exist ({', '.join(ver)}); showing the most recent ({fdoc}).")
+    try:
+        fres = app_m.evaluate_document(fdoc, ac)
+    except Exception as e:
+        log.exception("final-rule applicability failed")
+        warnings.append(f"Final-rule applicability engine failed ({type(e).__name__}); not evaluated.")
+        return None, None
+    fres.basis = "FINAL_RULE"
+    if fres.applicability_text is None:
+        fres.applicability_text = deps.applicability_quote(fdoc)
+    if WARN_FINAL_UNCHECKED not in warnings:
+        warnings.append(WARN_FINAL_UNCHECKED)
+    if (applicability.value != fres.value and applicability.value != ApplicabilityValue.NOT_EVALUATED
+            and WARN_FINAL_DIFFERS not in warnings):
+        warnings.append(WARN_FINAL_DIFFERS)
+    return fres, fdoc
+
+
 def _dedupe(cits: list[CitationRef]) -> list[CitationRef]:
     seen, out = set(), []
     for c in cits:
@@ -251,15 +300,31 @@ def answer(req: QueryRequest) -> QueryResponse:
         if unknown and not (q_res.docnums or q_res.meta_only):
             return _finish(ab.abstain(ab.DIRECTIVE_NOT_FOUND, candidates=q_res.near_miss, warnings=q_res.near_labels), t0, tm)
 
-    if res.meta_only and not res.docnums:
-        rec = res.meta_only[0]
-        return _finish(ab.abstain(ab.SOURCE_TEXT_UNAVAILABLE, citations=ab.sheet_citations(rec),
-                                  directive=cat.meta_only_info(rec)), t0, tm)
-
     if pq.compliance:
         return _finish(ab.abstain(ab.COMPLIANCE_DETERMINATION_OUT_OF_SCOPE), t0, tm)
     if pq.superlative:
         return _finish(ab.abstain(ab.UNSUPPORTED_QUESTION), t0, tm)
+
+    # metadata-only records that this response will not cover are named, never dropped silently
+    skipped = res.meta_only if res.docnums else res.meta_only[1:]
+    if skipped:
+        ids = ", ".join(r.get("record_id") or r["docket_norm"] or f"sheet row {r['row']}" for r in skipped)
+        warnings.append(f"Source text unavailable for {ids} (spreadsheet metadata only); not covered by this answer.")
+
+    if res.meta_only and not res.docnums:
+        rec = res.meta_only[0]
+        extra = {}
+        rev_m = deps.module("revisions")
+        if rev_m and rec.get("record_id") and hasattr(rev_m, "record_dataset_history"):
+            conn = deps.db()
+            try:
+                hist = rev_m.record_dataset_history(conn, rec["record_id"])
+            finally:
+                conn.close()
+            if hist:
+                extra["revision"] = RevisionResult(dataset_history=hist)
+        return _finish(ab.abstain(ab.SOURCE_TEXT_UNAVAILABLE, citations=ab.sheet_citations(rec), warnings=warnings,
+                                  directive=cat.meta_only_info(rec), **extra), t0, tm)
 
     ac = req.aircraft
     docnums = list(res.docnums)
@@ -302,9 +367,11 @@ def answer(req: QueryRequest) -> QueryResponse:
 
     # --- 3/4. engines + retrieval ---------------------------------------------------------------
     applicability, revision, engines_used = ApplicabilityResult(), None, False
+    final_app, final_doc = None, None
     if docnum:
         t = time.perf_counter()
         applicability, revision = _run_engines(docnum, req, warnings)
+        final_app, final_doc = evaluate_final_rule(docnum, req, revision, applicability, warnings)
         tm["engines"] = (time.perf_counter() - t) * 1000
         engines_used = (revision is not None or applicability.value != ApplicabilityValue.NOT_EVALUATED) and pq.intent != "factual"
 
@@ -401,10 +468,16 @@ def answer(req: QueryRequest) -> QueryResponse:
         cits.append(applicability.applicability_text)
     for ex in applicability.explanation:
         cits.extend(ex.evidence)
+    if final_app:
+        if final_app.applicability_text:
+            cits.append(final_app.applicability_text)
+        for ex in final_app.explanation:
+            cits.extend(ex.evidence)
     if revision:
         for e in revision.edges:
             cits.extend(e.evidence)
     resp = QueryResponse(status=status, answer_claims=claims, applicability=applicability, revision=revision,
+                         final_rule_applicability=final_app, final_rule_docnum=final_doc,
                          directive=cat.info(docnum) if docnum else None, citations=_dedupe(cits), warnings=warnings,
                          missing_information=missing, verification=vinfo, candidates=inferred_candidates)
     return _finish(resp, t0, tm)

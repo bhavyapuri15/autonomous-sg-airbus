@@ -1,25 +1,20 @@
 import "./globals.css";
-import Link from "next/link";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 
-export const metadata = { title: "AD Trace - traceable search for FAA AD proposed rules" };
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jbmono", display: "swap" });
+
+export const metadata = {
+  title: "AD Trace - aerospace regulatory intelligence, verified",
+  description: "Search FAA Airworthiness Directive proposals and trace every answer to the original Federal Register source.",
+};
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${mono.variable}`}>
       <body>
-        <header className="bg-slate-900 text-slate-100">
-          <div className="mx-auto flex max-w-[1400px] items-center gap-6 px-4 py-2.5">
-            <span className="font-semibold tracking-tight">AD Trace</span>
-            <nav className="flex gap-4 text-sm" aria-label="Main">
-              <Link className="hover:underline" href="/">Search &amp; verify</Link>
-              <Link className="hover:underline" href="/directives">Directives</Link>
-              <Link className="hover:underline" href="/evaluation">Evaluation</Link>
-            </nav>
-            <span className="ml-auto text-xs text-slate-300">FAA AD proposed rules (Federal Register)</span>
-          </div>
-        </header>
-        <main className="mx-auto max-w-[1400px] px-4 py-4">{children}</main>
+        {children}
       </body>
     </html>
   );

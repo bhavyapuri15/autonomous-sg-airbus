@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import { AnswerPanel } from "@/components/AnswerPanel";
-import { CitationLine } from "@/components/Provenance";
+import { CitationLine, StatusStrip } from "@/components/Provenance";
 import answered from "@/fixtures/answered.json";
 import type { CitationRef, QueryResponse } from "@/lib/types";
 
@@ -42,7 +42,8 @@ describe("provenance UI", () => {
     expect(app.getByText("APPLICABLE")).toBeInTheDocument();
     expect(app.getByText("Applicable under the proposed rule")).toBeInTheDocument();
     expect(within(screen.getByTestId("cell-enforceability")).getByText("Not verified")).toBeInTheDocument();
-    expect(strip).toHaveTextContent("Record NPRM-001");
+    expect(strip).not.toHaveTextContent("Record NPRM-001");
+    expect(screen.getByTestId("record-ids")).toHaveTextContent("Record NPRM-001");
   });
   it("never uses the words compliant or approved", () => {
     for (const v of ["APPLICABLE", "NOT_APPLICABLE", "UNKNOWN", "NOT_EVALUATED"]) {
@@ -50,6 +51,13 @@ describe("provenance UI", () => {
       expect(container.textContent?.toLowerCase()).not.toMatch(/compliant|approved/);
       unmount();
     }
+  });
+  it("metadata-only record (no FR document) shows stage as not determined, not the backend default", () => {
+    render(<StatusStrip directive={{ fr_docnum: null, record_ids: ["NPRM-409"], sheet_rows: [410] } as never}
+      revision={{ regulatory_stage: "OTHER", enforceability: "NOT_VERIFIED" } as never} />);
+    const stage = within(screen.getByTestId("cell-stage"));
+    expect(stage.getByText("Not determined")).toBeInTheDocument();
+    expect(stage.queryByText("Other document type")).toBeNull();
   });
   it("UNKNOWN shows Applicability not determined in the strip", () => {
     render(<AnswerPanel response={build({}, { value: "UNKNOWN", label: null })} onOpenCitation={noop} />);
