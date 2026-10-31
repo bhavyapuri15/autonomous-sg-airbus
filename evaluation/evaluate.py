@@ -359,7 +359,9 @@ def latency_worker(path: str, split: str):
 def run_latency(split: str):
     out = {}
     for path in ("search", "answer"):
-        r = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--latency-worker", path, "--split", split],
+        # forward --final for the (approved) locked run; the worker re-checks the split guard
+        r = subprocess.run([sys.executable, str(Path(__file__).resolve()), "--latency-worker", path, "--split", split]
+                           + (["--final"] if split == "locked" else []),
                            capture_output=True, text=True, cwd=str(ROOT))
         passes = json.loads(r.stdout.strip().splitlines()[-1])
         out[path] = dict(n_queries=len(passes[0]),
