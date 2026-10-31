@@ -30,11 +30,11 @@ describe("AnswerPanel", () => {
     expect(screen.getByText(/Not in indexed dataset/)).toBeInTheDocument();
     expect(screen.getByText(/DIFFERENT directives/)).toBeInTheDocument();
   });
-  it("UNKNOWN shows 'Not determined' and never 'not applicable'", () => {
+  it("UNKNOWN shows 'Applicability not determined' and never 'not applicable'", () => {
     const { container } = render(<AnswerPanel response={R(answered)} onOpenCitation={noop} />);
     const b = screen.getByTestId("applicability-badge");
     expect(b).toHaveAttribute("data-value", "UNKNOWN");
-    expect(within(b).getByText("Not determined")).toBeInTheDocument();
+    expect(within(b).getByText("Applicability not determined")).toBeInTheDocument();
     expect(b.textContent?.toLowerCase()).not.toContain("not applicable");
     expect(container.textContent?.toLowerCase()).not.toContain("not applicable");
   });

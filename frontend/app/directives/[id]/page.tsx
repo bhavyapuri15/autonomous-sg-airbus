@@ -7,6 +7,7 @@ import type { DirectiveDetailResponse, DirectiveRelation } from "@/lib/types";
 import { ErrorState } from "@/components/ErrorState";
 import { DocClassPill, SourceBadge } from "@/components/Badges";
 import { RevisionCard } from "@/components/AnswerPanel";
+import { HistoryTimeline, StagePill, Supersessions } from "@/components/Provenance";
 
 const card = "rounded-lg border border-slate-300 bg-white p-4 shadow-sm";
 const h2 = "mb-2 text-sm font-semibold uppercase text-slate-600";
@@ -42,11 +43,22 @@ export default function DirectiveDetail({ params }: { params: Promise<{ id: stri
   const rels = data.relations ?? [];
   const warnings = data.warnings ?? [];
   const at = data.applicability_text;
+  const rev = data.revision;
+  const recIds = Array.from(new Set([
+    ...(data.candidates ?? []).flatMap((c) => c.record_ids ?? []),
+    ...(rev?.dataset_history?.history ?? []).filter((e) => e.fr_docnum === docs[0]?.fr_docnum).map((e) => e.record_id),
+    ...docs.flatMap((d) => (Array.isArray(d.record_ids) ? (d.record_ids as string[]) : [])),
+  ]));
+  const stage = rev?.regulatory_stage || (data.candidates ?? []).find((c) => c.regulatory_stage)?.regulatory_stage;
 
   return (
     <div className="space-y-3">
       <Link href="/directives" className="text-sm underline">← Directives</Link>
       <h1 className="text-lg font-semibold">{docs[0]?.title || data.query_id} <span className="font-mono text-sm text-slate-600">{data.query_id}</span></h1>
+      <div className="flex flex-wrap items-center gap-2">
+        <StagePill stage={stage} />
+        {recIds.length > 0 && <span className="font-mono text-base font-bold" data-testid="record-ids">Record {recIds.join(", ")}</span>}
+      </div>
       {warnings.length > 0 && (
         <section className="rounded-lg border border-amber-500 bg-amber-50 p-3" aria-label="Warnings">
           <h2 className="mb-1 text-sm font-semibold uppercase text-amber-900">Warnings</h2>
@@ -76,7 +88,13 @@ export default function DirectiveDetail({ params }: { params: Promise<{ id: stri
           ))}</div>
         )}
       </section>
-      {<RevisionCard revision={data.revision} />}
+      <RevisionCard revision={rev} />
+      {((rev?.dataset_history?.history ?? []).length > 0 || (rev?.proposed_supersedes ?? []).length > 0) && (
+        <section className={card} aria-label="Dataset history and supersessions"><h2 className={h2}>Dataset history and proposed supersessions</h2>
+          <HistoryTimeline history={rev?.dataset_history} />
+          <Supersessions items={rev?.proposed_supersedes} />
+        </section>
+      )}
       <section className={card}><h2 className={h2}>Relations</h2>
         {rels.length === 0 ? <p className="text-sm text-slate-700">None reported.</p> : <ul className="space-y-1">{rels.map((r, i) => <Relation key={r.id ?? i} r={r} />)}</ul>}
       </section>

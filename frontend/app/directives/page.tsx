@@ -49,7 +49,7 @@ export default function Directives() {
       {rows.length > 0 && (
         <table className="w-full border-collapse bg-white text-sm shadow-sm">
           <thead className="bg-slate-200 text-left text-xs uppercase text-slate-700">
-            <tr><th className="p-2">FR doc</th><th className="p-2">Docket</th><th className="p-2">Class</th><th className="p-2">Make</th><th className="p-2">Models</th><th className="p-2">Sheet row</th><th className="p-2">Title</th><th className="p-2">Date</th></tr>
+            <tr><th className="p-2">FR doc</th><th className="p-2">Docket</th><th className="p-2">Class</th><th className="p-2">Make</th><th className="p-2">Models</th><th className="p-2">Record / sheet row</th><th className="p-2">Title</th><th className="p-2">Date</th></tr>
           </thead>
           <tbody>
             {rows.map((r, i) => (
@@ -62,7 +62,10 @@ export default function Directives() {
                 <td className="p-2"><DocClassPill docClass={r.doc_class} /></td>
                 <td className="p-2">{(r.make ?? []).join(", ")}</td>
                 <td className="p-2 text-xs">{joinModels(r.models)}</td>
-                <td className="p-2 font-mono text-xs">{(r.sheet_rows ?? []).join(", ")}</td>
+                <td className="p-2 font-mono text-xs">
+                  {(r.record_ids ?? []).length > 0 && <div className="font-semibold">{(r.record_ids ?? []).join(", ")}</div>}
+                  {(r.sheet_rows ?? []).length > 0 && <div>row {(r.sheet_rows ?? []).join(", ")}</div>}
+                </td>
                 <td className="p-2">{r.title ?? ""}</td>
                 <td className="p-2 whitespace-nowrap">{r.publication_date ?? ""}</td>
               </tr>

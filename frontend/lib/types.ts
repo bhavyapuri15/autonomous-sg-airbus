@@ -1,7 +1,7 @@
 // Mirrors backend/api/schemas.py exactly. Do not diverge; report ambiguities instead.
 
 export const DISCLAIMER_FALLBACK =
-  "Decision support only. Not a certified airworthiness or compliance determination. Verify against the official FAA source.";
+  "Decision support only. Not a certified airworthiness or compliance determination. Verify against the official FAA source. Decision-support prototype; requires qualified human verification.";
 
 export type AnswerStatus = "ANSWERED" | "ABSTAINED" | "NEEDS_MORE_INFORMATION";
 export type ApplicabilityValue = "APPLICABLE" | "NOT_APPLICABLE" | "UNKNOWN" | "NOT_EVALUATED";
@@ -22,6 +22,11 @@ export interface CitationRef {
   pdf_url?: string | null;
   xml_url?: string | null;
   sheet_row?: number | null;
+  record_ids?: string[];
+  docket_number?: string | null;
+  federal_register_citation?: string | null;
+  section?: string | null;
+  source_url?: string | null;
 }
 
 export interface Claim {
@@ -48,6 +53,42 @@ export interface ApplicabilityResult {
   rule_parse_status?: RuleParseStatus | null;
   evaluated_document?: string | null;
   applicability_text?: CitationRef | null;
+  basis?: "PROPOSED_RULE" | "FINAL_RULE" | "UNKNOWN";
+  label?: string | null;
+}
+
+export type RegulatoryStage =
+  | "PROPOSED_RULE" | "SUPPLEMENTAL_PROPOSAL" | "WITHDRAWAL_NOTICE" | "CORRECTION" | "FINAL_RULE" | "OTHER";
+export type Enforceability = "NOT_VERIFIED" | "PROPOSAL_WITHDRAWN" | "FINAL_RULE_PUBLISHED_VERIFIED";
+
+export interface DatasetVersionEntry {
+  record_id: string;
+  fr_docnum?: string | null;
+  publish_date?: string | null;
+  doc_class?: string | null;
+  version?: number | null;
+  is_latest: boolean;
+}
+
+export type DatasetStatus = "LATEST_IN_DATASET" | "SUPERSEDED_IN_DATASET" | "SINGLE_PUBLICATION" | "NOT_IN_DATASET";
+
+export interface DatasetHistory {
+  docket?: string | null;
+  versions_total: number;
+  this_version?: number | null;
+  dataset_status: DatasetStatus;
+  latest_record_id?: string | null;
+  history: DatasetVersionEntry[];
+  source: string;
+  note: string;
+  warnings: string[];
+}
+
+export interface ProposedSupersession {
+  ad_number: string;
+  source: "organiser_supersedes_ad_field" | "document_text";
+  evidence?: CitationRef | null;
+  operative_supersession_verified: boolean;
 }
 
 export type EdgeType =
@@ -70,6 +111,11 @@ export interface RevisionResult {
   edges: RevisionEdge[];
   template_text?: string | null;
   latest_in_dataset?: string | null;
+  regulatory_stage?: RegulatoryStage;
+  enforceability?: Enforceability;
+  status_flags?: string[];
+  dataset_history?: DatasetHistory | null;
+  proposed_supersedes?: ProposedSupersession[];
 }
 
 export interface DirectiveInfo {
@@ -81,6 +127,9 @@ export interface DirectiveInfo {
   citation?: string | null;
   sheet_rows: number[];
   pdf_url?: string | null;
+  record_ids?: string[];
+  regulatory_stage?: string | null;
+  source_url?: string | null;
 }
 
 export interface RejectedClaim {
@@ -191,6 +240,7 @@ export interface DirectiveListItem {
   models: string[];
   ad_number?: string | null;
   sheet_rows: number[];
+  record_ids?: string[];
 }
 
 export interface DirectiveListResponse {

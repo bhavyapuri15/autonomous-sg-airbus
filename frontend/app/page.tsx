@@ -53,7 +53,7 @@ export default function Home() {
       </div>
       {cite && (
         <div className="sticky top-2 h-[calc(100vh-1.5rem)] min-w-0">
-          <DocumentViewer citation={cite} onClose={() => setCite(null)} />
+          <DocumentViewer citation={cite} onClose={() => setCite(null)} stage={resp?.revision?.regulatory_stage || resp?.directive?.regulatory_stage} />
         </div>
       )}
     </div>

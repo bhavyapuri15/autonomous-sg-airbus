@@ -4,6 +4,7 @@ import type { CitationRef, QueryResponse, RevisionEdge, RevisionResult, StepOutc
 import { ApplicabilityBadge, DocClassPill, TierBadge, pageLabel } from "./Badges";
 import { Disclaimer } from "./Disclaimer";
 import { FactsInput, needsFacts } from "./FactsInput";
+import { CitationLine, HistoryTimeline, StagePill, StatusChips, StatusStrip, Supersessions } from "./Provenance";
 
 type Open = (c: CitationRef) => void;
 
@@ -66,6 +67,7 @@ function DirectiveHeader({ r }: { r: QueryResponse }) {
     <section className={card} aria-label="Directive">
       <div className="flex flex-wrap items-center gap-2">
         <DocClassPill docClass={d.doc_class} />
+        <StagePill stage={r.revision?.regulatory_stage || d.regulatory_stage} />
         {d.fr_docnum && <span className="font-mono text-sm">FR Doc. {d.fr_docnum}</span>}
         {d.docket && <span className="font-mono text-sm text-slate-700">Docket {d.docket}</span>}
       </div>
@@ -99,7 +101,7 @@ function ApplicabilityCard({ r, onOpen }: { r: QueryResponse; onOpen: Open }) {
   return (
     <section className={card} aria-label="Applicability">
       <h2 className={h2}>Applicability</h2>
-      <ApplicabilityBadge value={a.value} />
+      <ApplicabilityBadge value={a.value} label={a.label} basis={a.basis} />
       {a.template_text && <p className="mt-2 text-sm">{a.template_text}</p>}
       <div className="mt-1 flex flex-wrap gap-x-4 text-xs text-slate-700">
         {a.rule_parse_status && <span>Rule parse status: <b className="font-mono">{a.rule_parse_status}</b>{a.rule_parse_status !== "FULL" && " (rule text was not fully machine-readable)"}</span>}
@@ -164,6 +166,9 @@ export function RevisionCard({ revision: v }: { revision?: RevisionResult | null
       </div>
       {v.template_text && <p className="mt-2 text-sm">{v.template_text}</p>}
       {v.edges.length > 0 && <ul className="mt-2 space-y-1" aria-label="Revision edges">{v.edges.map((e, i) => <Edge key={i} e={e} />)}</ul>}
+      <StatusChips flags={v.status_flags} />
+      <HistoryTimeline history={v.dataset_history} />
+      <Supersessions items={v.proposed_supersedes} />
       {v.latest_in_dataset && (
         <p className="mt-2 text-xs text-slate-700">Latest document in dataset: <span className="font-mono">{v.latest_in_dataset}</span> (a dataset fact, not a statement of current legal status)</p>
       )}
@@ -220,6 +225,7 @@ export function AnswerPanel({ response: r, onOpenCitation, onPickCandidate, onRe
   return (
     <div className="space-y-3" data-testid="answer-panel">
       <StatusBanner r={r} onPick={onPickCandidate} />
+      <StatusStrip directive={r.directive} revision={r.revision} applicability={r.applicability} />
       <DirectiveHeader r={r} />
       <ApplicabilityCard r={r} onOpen={onOpenCitation} />
       {onRecheck && factKeys.length > 0 && <FactsInput key={factKeys.join("|")} missing={factKeys} onRecheck={onRecheck} />}
@@ -249,8 +255,9 @@ export function AnswerPanel({ response: r, onOpenCitation, onPickCandidate, onRe
               <li key={c.citation_id} className="text-sm">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold">[{i + 1}]</span>
-                  <span className="font-mono text-xs">FR Doc. {c.fr_docnum}</span>
-                  {(c.label || c.section_path) && <span className="text-xs text-slate-700">{c.label || c.section_path}</span>}
+                  <CitationLine c={c} />
+                  <span className="font-mono text-xs text-slate-600">FR Doc. {c.fr_docnum}</span>
+                  {!c.section && (c.label || c.section_path) && <span className="text-xs text-slate-700">{c.label || c.section_path}</span>}
                   <span className="text-xs text-slate-700">{c.source_tier === "FR_FULL_TEXT" ? pageLabel(c) : `Sheet row ${c.sheet_row ?? "n/a"}`}</span>
                   <TierBadge tier={c.source_tier} />
                 </div>

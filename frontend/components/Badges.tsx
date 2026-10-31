@@ -24,20 +24,21 @@ export function TierBadge({ tier }: { tier: SourceTier }) {
   );
 }
 
-export function ApplicabilityBadge({ value }: { value: ApplicabilityValue }) {
-  const m: Record<ApplicabilityValue, { icon: string; label: string; sub: string; cls: string }> = {
-    APPLICABLE: { icon: "✔", label: "Applicable", sub: "Per the proposed rule text and the configuration given", cls: "bg-emerald-50 border-emerald-600 text-emerald-900" },
-    NOT_APPLICABLE: { icon: "✖", label: "Not applicable", sub: "Per the proposed rule text and the configuration given", cls: "bg-slate-100 border-slate-600 text-slate-900" },
-    UNKNOWN: { icon: "?", label: "Not determined", sub: "Unknown: the evidence available does not settle this. It is NOT a negative result. Review the source text.", cls: "bg-violet-50 border-violet-600 border-dashed text-violet-900" },
-    NOT_EVALUATED: { icon: "–", label: "Not evaluated", sub: "No applicability check was run for this answer", cls: "bg-white border-slate-400 border-dashed text-slate-700" },
+export function ApplicabilityBadge({ value, label, basis }: { value: ApplicabilityValue; label?: string | null; basis?: string | null }) {
+  const m: Record<ApplicabilityValue, { icon: string; title: string; sub: string; cls: string }> = {
+    APPLICABLE: { icon: "i", title: "Applicable under the proposed rule", sub: "Per the proposed rule text and the configuration given. Not an enforceable requirement.", cls: "bg-sky-50 border-sky-600 text-sky-950" },
+    NOT_APPLICABLE: { icon: "i", title: "Not applicable under the proposed rule", sub: "Per the proposed rule text and the configuration given.", cls: "bg-slate-100 border-slate-600 text-slate-900" },
+    UNKNOWN: { icon: "?", title: "Applicability not determined", sub: "The evidence available does not settle this. It is NOT a negative result. Review the source text.", cls: "bg-violet-50 border-violet-600 border-dashed text-violet-900" },
+    NOT_EVALUATED: { icon: "–", title: "Applicability not evaluated", sub: "No applicability check was run for this answer", cls: "bg-white border-slate-400 border-dashed text-slate-700" },
   };
   const x = m[value];
+  const title = value === "UNKNOWN" ? x.title : label || x.title;
   return (
     <div className={`flex items-center gap-3 rounded-lg border-2 px-4 py-3 ${x.cls}`} data-testid="applicability-badge" data-value={value}>
       <span aria-hidden className="text-3xl font-bold">{x.icon}</span>
       <div>
-        <div className="text-xl font-bold uppercase tracking-wide">{x.label}</div>
-        <div className="text-xs">{x.sub}</div>
+        <div className="text-xl font-bold tracking-wide">{title}</div>
+        <div className="text-xs">{x.sub}{basis && basis !== "UNKNOWN" ? ` Basis: ${basis.replaceAll("_", " ").toLowerCase()}.` : ""}</div>
       </div>
     </div>
   );
