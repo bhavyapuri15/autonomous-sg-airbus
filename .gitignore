@@ -1,0 +1,12 @@
+# C1: never commit datasets, downloaded docs, indexes, caches, secrets
+data/
+.venv/
+__pycache__/
+*.pyc
+.env
+.env.*
+node_modules/
+.next/
+*.faiss
+*.npy
+.DS_Store
