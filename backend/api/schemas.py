@@ -213,6 +213,8 @@ class QueryResponse(BaseModel):
     status: AnswerStatus
     answer_claims: list[Claim] = []
     applicability: ApplicabilityResult = ApplicabilityResult()
+    final_rule_applicability: Optional[ApplicabilityResult] = None
+    final_rule_docnum: Optional[str] = None
     revision: Optional[RevisionResult] = None
     directive: Optional[DirectiveInfo] = None
     candidates: list[DirectiveInfo] = []  # when ambiguous / did-you-mean
@@ -257,6 +259,8 @@ class ApplicabilityCheckRequest(BaseModel):
 class ApplicabilityCheckResponse(BaseModel):
     directive: Optional[DirectiveInfo] = None
     applicability: ApplicabilityResult
+    final_rule_applicability: Optional[ApplicabilityResult] = None
+    final_rule_docnum: Optional[str] = None
     revision: Optional[RevisionResult] = None
     warnings: list[str] = []
     disclaimer: str = DISCLAIMER

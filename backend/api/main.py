@@ -111,7 +111,9 @@ def applicability_check(req: S.ApplicabilityCheckRequest):
         return _err(503, "applicability_unavailable", "Applicability engine not available.")
     qreq = S.QueryRequest(question="applicability", directive_id=docnum, aircraft=req.aircraft, use_llm=False)
     app_res, rev = pipeline._run_engines(docnum, qreq, warnings)
-    resp = S.ApplicabilityCheckResponse(directive=cat.info(docnum), applicability=app_res, revision=rev, warnings=warnings)
+    fapp, fdoc = pipeline.evaluate_final_rule(docnum, qreq, rev, app_res, warnings)
+    resp = S.ApplicabilityCheckResponse(directive=cat.info(docnum), applicability=app_res, revision=rev, warnings=warnings,
+                                        final_rule_applicability=fapp, final_rule_docnum=fdoc)
     citation_meta.enrich_model(resp)
     for w in pipeline.stage_warnings(resp):    # same stage warning as /query
         if w not in resp.warnings:

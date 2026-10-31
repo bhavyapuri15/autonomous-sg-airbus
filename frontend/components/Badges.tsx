@@ -33,12 +33,16 @@ export function ApplicabilityBadge({ value, label, basis }: { value: Applicabili
   };
   const x = m[value];
   const title = value === "UNKNOWN" ? x.title : label || x.title;
+  const isFinal = basis === "FINAL_RULE";
+  const sub = isFinal && (value === "APPLICABLE" || value === "NOT_APPLICABLE")
+    ? "Per the published final rule text and the configuration given. Later amendments or supersession were not checked."
+    : x.sub;
   return (
     <div className={`flex items-center gap-3 rounded-lg border-2 px-4 py-3 ${x.cls}`} data-testid="applicability-badge" data-value={value}>
       <span aria-hidden className="text-3xl font-bold">{x.icon}</span>
       <div>
         <div className="text-xl font-bold tracking-wide">{title}</div>
-        <div className="text-xs">{x.sub}{basis && basis !== "UNKNOWN" ? ` Basis: ${basis.replaceAll("_", " ").toLowerCase()}.` : ""}</div>
+        <div className="text-xs">{sub}{basis && basis !== "UNKNOWN" ? ` Basis: ${basis.replaceAll("_", " ").toLowerCase()}.` : ""}</div>
       </div>
     </div>
   );

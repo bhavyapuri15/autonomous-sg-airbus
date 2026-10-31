@@ -179,3 +179,13 @@ def test_record_id_resolves_via_api():
                                              "directive_id": "NPRM-001", "use_llm": False}).json()
     assert r["directive"]["fr_docnum"] == "2026-21387"
     assert "NPRM-001" in r["directive"]["record_ids"]
+
+
+def test_applicability_check_final_rule():
+    r = client.post("/applicability/check", json={"directive_id": "2022-02072",
+                    "aircraft": {"model": "PA-34-200", "serial": "34-7250001"}})
+    assert r.status_code == 200
+    j = r.json()
+    assert j["final_rule_docnum"] == "2022-08852"
+    assert j["final_rule_applicability"]["basis"] == "FINAL_RULE"
+    assert j["final_rule_applicability"]["value"] == "APPLICABLE"

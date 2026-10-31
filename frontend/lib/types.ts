@@ -170,6 +170,8 @@ export interface QueryResponse {
   status: AnswerStatus;
   answer_claims: Claim[];
   applicability: ApplicabilityResult;
+  final_rule_applicability?: ApplicabilityResult | null;
+  final_rule_docnum?: string | null;
   revision?: RevisionResult | null;
   directive?: DirectiveInfo | null;
   candidates: DirectiveInfo[];
@@ -214,6 +216,8 @@ export interface ApplicabilityCheckRequest {
 export interface ApplicabilityCheckResponse {
   directive?: DirectiveInfo | null;
   applicability: ApplicabilityResult;
+  final_rule_applicability?: ApplicabilityResult | null;
+  final_rule_docnum?: string | null;
   revision?: RevisionResult | null;
   warnings: string[];
   disclaimer: string;

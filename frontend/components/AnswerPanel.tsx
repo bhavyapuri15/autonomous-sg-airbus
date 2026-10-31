@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import type { CitationRef, QueryResponse, RevisionEdge, RevisionResult, StepOutcome } from "@/lib/types";
+import type { ApplicabilityResult, CitationRef, QueryResponse, RevisionEdge, RevisionResult, StepOutcome } from "@/lib/types";
 import { ApplicabilityBadge, DocClassPill, TierBadge, pageLabel } from "./Badges";
 import { Disclaimer } from "./Disclaimer";
 import { FactsInput, needsFacts } from "./FactsInput";
@@ -96,11 +96,10 @@ function EvidenceLink({ c, onOpen }: { c: CitationRef; onOpen: Open }) {
   );
 }
 
-function ApplicabilityCard({ r, onOpen }: { r: QueryResponse; onOpen: Open }) {
-  const a = r.applicability;
+function ApplicabilityCard({ a, title, testId, onOpen }: { a: ApplicabilityResult; title: string; testId: string; onOpen: Open }) {
   return (
-    <section className={card} aria-label="Applicability">
-      <h2 className={h2}>Applicability</h2>
+    <section className={card} aria-label={title} data-testid={testId}>
+      <h2 className={h2}>{title}</h2>
       <ApplicabilityBadge value={a.value} label={a.label} basis={a.basis} />
       {a.template_text && <p className="mt-2 text-sm">{a.template_text}</p>}
       <div className="mt-1 flex flex-wrap gap-x-4 text-xs text-slate-700">
@@ -225,9 +224,16 @@ export function AnswerPanel({ response: r, onOpenCitation, onPickCandidate, onRe
   return (
     <div className="space-y-3" data-testid="answer-panel">
       <StatusBanner r={r} onPick={onPickCandidate} />
-      <StatusStrip directive={r.directive} revision={r.revision} applicability={r.applicability} />
+      <StatusStrip directive={r.directive} revision={r.revision} applicability={r.applicability} finalApplicability={r.final_rule_applicability} finalDocnum={r.final_rule_docnum} />
       <DirectiveHeader r={r} />
-      <ApplicabilityCard r={r} onOpen={onOpenCitation} />
+      {r.final_rule_applicability ? (
+        <div className="grid gap-3 lg:grid-cols-2" data-testid="applicability-pair">
+          <ApplicabilityCard a={r.applicability} title="Proposed rule" testId="card-proposed" onOpen={onOpenCitation} />
+          <ApplicabilityCard a={r.final_rule_applicability} title={`Published final rule (FR ${r.final_rule_docnum ?? r.final_rule_applicability.evaluated_document ?? ""})`.replace(" )", ")")} testId="card-final" onOpen={onOpenCitation} />
+        </div>
+      ) : (
+        <ApplicabilityCard a={r.applicability} title="Applicability" testId="card-proposed" onOpen={onOpenCitation} />
+      )}
       {onRecheck && factKeys.length > 0 && <FactsInput key={factKeys.join("|")} missing={factKeys} onRecheck={onRecheck} />}
       <RevisionCard revision={r.revision} />
       {claims.length > 0 && (

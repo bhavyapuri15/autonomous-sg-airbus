@@ -288,3 +288,30 @@ def test_stage_warning_helper_on_abstention_with_directive():
     r = QueryResponse(status=AnswerStatus.ABSTAINED, directive=DirectiveInfo(fr_docnum="X", regulatory_stage="PROPOSED_RULE"))
     assert pipeline.stage_warnings(r) == [pipeline.WARN_PROPOSAL]
     assert pipeline.stage_warnings(QueryResponse(status=AnswerStatus.ABSTAINED)) == []
+
+
+# ---- final-rule applicability alongside the proposal --------------------------------------
+@pytest.mark.skipif(not HAVE_INDEX, reason="index not built")
+def test_final_rule_applicability_real_case():
+    # Final rule 2022-08852 (c): "This AD applies to Piper Aircraft, Inc. Model PA-34-200 airplanes, serial numbers
+    # 34-7250001 through 34-7450220, certificated in any category."  S/N 34-7250001 is the first serial in range
+    # -> APPLICABLE under the published final rule.
+    from backend.api.schemas import ApplicabilityValue
+    cfg = AircraftConfig(model="PA-34-200", serial="34-7250001")
+    r = pipeline.answer(req("Does this AD apply to my aircraft?", directive_id="2022-02072", aircraft=cfg))
+    fa = r.final_rule_applicability
+    assert fa is not None and r.final_rule_docnum == "2022-08852"
+    assert fa.basis == "FINAL_RULE" and fa.value == ApplicabilityValue.APPLICABLE
+    assert fa.label == "Applicable under the published final rule"
+    assert r.applicability.basis == "PROPOSED_RULE"
+    assert pipeline.WARN_FINAL_UNCHECKED in r.warnings
+    assert fa.applicability_text is not None and fa.applicability_text.fr_docnum == "2022-08852"
+
+
+@pytest.mark.skipif(not HAVE_INDEX, reason="index not built")
+@pytest.mark.parametrize("docnum", ["2026-21387", "E9-26683"])
+def test_no_final_rule_applicability(docnum):
+    cfg = AircraftConfig(model="PA-34-200", serial="34-7250001")
+    r = pipeline.answer(req("Does this AD apply to my aircraft?", directive_id=docnum, aircraft=cfg))
+    assert r.final_rule_applicability is None and r.final_rule_docnum is None
+    assert pipeline.WARN_FINAL_UNCHECKED not in r.warnings

@@ -32,8 +32,8 @@ export function StagePill({ stage }: { stage?: string | null }) {
 function applicabilityText(a?: ApplicabilityResult | null): { value: string; label: string } {
   const v = a?.value ?? "NOT_EVALUATED";
   const fallback: Record<string, string> = {
-    APPLICABLE: "Applicable under the proposed rule",
-    NOT_APPLICABLE: "Not applicable under the proposed rule",
+    APPLICABLE: a?.basis === "FINAL_RULE" ? "Applicable under the published final rule" : "Applicable under the proposed rule",
+    NOT_APPLICABLE: a?.basis === "FINAL_RULE" ? "Not applicable under the published final rule" : "Not applicable under the proposed rule",
     UNKNOWN: "Applicability not determined",
     NOT_EVALUATED: "Applicability not evaluated",
   };
@@ -45,12 +45,24 @@ function applicabilityText(a?: ApplicabilityResult | null): { value: string; lab
 const cell = "rounded-lg border border-slate-300 bg-white p-3";
 const cap = "text-xs font-semibold uppercase tracking-wide text-slate-600";
 
-export function StatusStrip({ directive, revision, applicability }: {
+function AppCell({ a, title, testId }: { a?: ApplicabilityResult | null; title: string; testId: string }) {
+  const app = applicabilityText(a);
+  const basis = a?.basis;
+  return (
+    <div className={`${cell} border-slate-400`} data-testid={testId} data-value={a?.value ?? "NOT_EVALUATED"}>
+      <div className={cap}>{title}</div>
+      <div className="mt-1 text-base font-bold text-slate-900">{app.value}</div>
+      <div className="text-sm text-slate-800">{app.label}</div>
+      {basis && <div className="text-xs text-slate-600">Basis: {basis.replaceAll("_", " ").toLowerCase()}</div>}
+    </div>
+  );
+}
+
+export function StatusStrip({ directive, revision, applicability, finalApplicability, finalDocnum }: {
   directive?: DirectiveInfo | null; revision?: RevisionResult | null; applicability?: ApplicabilityResult | null;
+  finalApplicability?: ApplicabilityResult | null; finalDocnum?: string | null;
 }) {
   const stage = revision?.regulatory_stage || directive?.regulatory_stage || null;
-  const app = applicabilityText(applicability);
-  const basis = applicability?.basis;
   const enf = revision?.enforceability;
   const recs = directive?.record_ids ?? [];
   return (
@@ -61,18 +73,20 @@ export function StatusStrip({ directive, revision, applicability }: {
           {directive?.source_url && <a className="text-sm text-sky-800 underline" href={directive.source_url} target="_blank" rel="noreferrer">Official source (federalregister.gov)</a>}
         </div>
       )}
-      <div className="grid gap-2 md:grid-cols-3">
+      <div className={`grid gap-2 ${finalApplicability ? "md:grid-cols-4" : "md:grid-cols-3"}`}>
         <div className={`${cell} border-sky-400`} data-testid="cell-stage">
           <div className={cap}>Regulatory stage</div>
           <div className="mt-1 text-base font-bold text-sky-900">{stageLabel(stage)}</div>
           <div className="text-xs text-slate-700">A proposal is not an enforceable AD.</div>
         </div>
-        <div className={`${cell} border-slate-400`} data-testid="cell-applicability" data-value={applicability?.value ?? "NOT_EVALUATED"}>
-          <div className={cap}>{basis === "FINAL_RULE" ? "Final-rule applicability" : "Proposed applicability"}</div>
-          <div className="mt-1 text-base font-bold text-slate-900">{app.value}</div>
-          <div className="text-sm text-slate-800">{app.label}</div>
-          {basis && <div className="text-xs text-slate-600">Basis: {basis.replaceAll("_", " ").toLowerCase()}</div>}
-        </div>
+        {finalApplicability ? (
+          <>
+            <AppCell a={applicability} title="Proposed rule" testId="cell-applicability" />
+            <AppCell a={finalApplicability} title={`Published final rule (FR ${finalDocnum ?? finalApplicability.evaluated_document ?? ""})`.replace(" )", ")")} testId="cell-final-applicability" />
+          </>
+        ) : (
+          <AppCell a={applicability} title={applicability?.basis === "FINAL_RULE" ? "Final-rule applicability" : "Proposed applicability"} testId="cell-applicability" />
+        )}
         <div className={`${cell} border-amber-400`} data-testid="cell-enforceability">
           <div className={cap}>Current enforceability</div>
           <div className="mt-1 text-base font-bold text-amber-950">{enf ? ENFORCE_LABEL[enf] ?? enf : ENFORCE_LABEL.NOT_VERIFIED}</div>
