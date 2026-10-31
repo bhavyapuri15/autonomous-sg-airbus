@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
-import { findQuote } from "@/lib/match";
+import { findQuote, findShortQuoteSpan } from "@/lib/match";
 import type { CitationRef } from "@/lib/types";
 import { ErrorState } from "./ErrorState";
 import { TierBadge } from "./Badges";
@@ -51,7 +51,11 @@ function PdfView({ citation, onHl }: { citation: CitationRef; onHl: (s: HlState)
         let joined = ""; const ranges: [number, number][] = [];
         divs.forEach((d) => { const t = d.textContent || ""; ranges.push([joined.length, joined.length + t.length]); joined += t + " "; });
         const m = findQuote(joined, citation.quote);
-        if (!m) { onHl("failed"); return; }
+        if (!m) {
+          const si = findShortQuoteSpan(divs.map((d) => d.textContent || ""), citation.quote);
+          if (si >= 0) { divs[si].style.background = "rgba(250,204,21,0.45)"; onHl("ok"); } else onHl("failed");
+          return;
+        }
         let n = 0;
         divs.forEach((d, i) => {
           if (ranges[i][1] > m[0] && ranges[i][0] < m[1]) { d.style.background = "rgba(250,204,21,0.45)"; n++; }

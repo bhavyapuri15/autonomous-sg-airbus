@@ -821,8 +821,13 @@ def _not(a):
     return {"T": "F", "F": "T", "U": "U"}[a]
 
 
+# Separator between the machine fact key (accepted in AircraftConfig.facts) and its human label in
+# `missing` entries. Keys never contain " :: ".
+FACT_LABEL_SEP = " :: "
+
+
 def _cond_label(c: Condition) -> str:
-    return f"{c.key} ({c.text.strip()[:80]})"
+    return f"{c.key}{FACT_LABEL_SEP}{c.text.strip()[:80]}"
 
 
 def _eval_cond(c, facts, miss):

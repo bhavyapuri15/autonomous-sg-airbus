@@ -33,3 +33,11 @@ export function findQuote(haystack: string, quote: string): [number, number] | n
   if (endIdx - head > q.length * 1.4 + 20) return null;
   return [h.map[head], h.map[endIdx - 1] + 1];
 }
+
+/** For short quotes (< 30 normalised chars, e.g. "AS355NP"): index of the first span whose normalised text contains
+ *  the normalised quote, else -1. */
+export function findShortQuoteSpan(spans: string[], quote: string): number {
+  const q = normIndex(quote).s;
+  if (q.length === 0 || q.length >= 30) return -1;
+  return spans.findIndex((t) => normIndex(t).s.includes(q));
+}

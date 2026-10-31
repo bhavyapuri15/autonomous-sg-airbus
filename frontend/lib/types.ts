@@ -178,10 +178,60 @@ export interface ErrorResponse {
 // ---- Endpoints whose shapes are NOT fixed in schemas.py. Deliberately loose; the UI renders defensively. ----
 export type LooseRecord = Record<string, unknown>;
 
-export interface DirectiveListResponseLoose {
-  items?: LooseRecord[];
-  total?: number;
+export type DirectiveSource = "organiser_sheet" | "fr_final_rule_lookup" | string;
+
+export interface DirectiveListItem {
+  fr_docnum: string;
+  docket?: string | null;
+  doc_class?: string | null;
+  title?: string | null;
+  publication_date?: string | null;
+  source?: DirectiveSource | null;
+  make: string[];
+  models: string[];
+  ad_number?: string | null;
+  sheet_rows: number[];
+}
+
+export interface DirectiveListResponse {
+  total: number;
+  limit: number;
+  offset: number;
+  items: DirectiveListItem[];
+}
+
+export interface DirectiveDocument {
+  fr_docnum: string;
+  title?: string | null;
+  doc_class?: string | null;
+  source?: DirectiveSource | null;
+  publication_date?: string | null;
+  fr_type?: string | null;
+  dockets?: string[];
+  pdf_url?: string | null;
+  html_url?: string | null;
   [k: string]: unknown;
+}
+
+export interface DirectiveRelation {
+  id?: number;
+  src: string;
+  dst: string;
+  type: string;
+  confidence: EdgeConfidence | string;
+  evidence_json?: { fr_docnum?: string; quote?: string; start?: number; end?: number }[];
+  note?: string | null;
+}
+
+export interface DirectiveDetailResponse {
+  query_id: string;
+  documents: DirectiveDocument[];
+  sheet_rows: Record<string, unknown>[];
+  revision?: RevisionResult | null;
+  relations: DirectiveRelation[];
+  applicability_text?: CitationRef | null;
+  warnings: string[];
+  candidates: DirectiveInfo[];
 }
 
 export interface PageTextResponseLoose {

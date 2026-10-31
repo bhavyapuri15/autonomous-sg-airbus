@@ -1,5 +1,5 @@
 import type {
-  ApplicabilityCheckRequest, ApplicabilityCheckResponse, LooseRecord, QueryRequest,
+  ApplicabilityCheckRequest, ApplicabilityCheckResponse, DirectiveDetailResponse, DirectiveListResponse, LooseRecord, QueryRequest,
   QueryResponse, SearchRequest, SearchResponse,
 } from "./types";
 
@@ -65,9 +65,9 @@ export const api = {
   query: (b: QueryRequest) => request<QueryResponse>("/query", { method: "POST", body: JSON.stringify(b) }, 90000),
   applicability: (b: ApplicabilityCheckRequest) =>
     request<ApplicabilityCheckResponse>("/applicability/check", { method: "POST", body: JSON.stringify(b) }),
-  directives: (p: { q?: string; make?: string; doc_class?: string; limit?: number; offset?: number }) =>
-    request<unknown>(`/directives${qs(p)}`),
-  directive: (id: string) => request<LooseRecord>(`/directives/${encodeURIComponent(id)}`),
+  directives: (p: { q?: string; make?: string; doc_class?: string; source?: string; limit?: number; offset?: number }) =>
+    request<DirectiveListResponse>(`/directives${qs(p)}`),
+  directive: (id: string) => request<DirectiveDetailResponse>(`/directives/${encodeURIComponent(id)}`),
   document: (docnum: string) => request<LooseRecord>(`/documents/${encodeURIComponent(docnum)}`),
   page: (docnum: string, pdfPage: number) =>
     request<LooseRecord>(`/documents/${encodeURIComponent(docnum)}/pages/${pdfPage}`),

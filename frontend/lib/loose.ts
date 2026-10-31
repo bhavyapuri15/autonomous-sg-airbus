@@ -7,3 +7,8 @@ export function pickList(data: unknown, keys: string[]): Rec[] {
   if (isRec(data)) for (const k of keys) if (Array.isArray(data[k])) return (data[k] as unknown[]).filter(isRec);
   return [];
 }
+
+export function joinModels(models: string[] | undefined, max = 6): string {
+  const m = Array.isArray(models) ? models : [];
+  return m.length > max ? `${m.slice(0, max).join(", ")} +${m.length - max}` : m.join(", ");
+}

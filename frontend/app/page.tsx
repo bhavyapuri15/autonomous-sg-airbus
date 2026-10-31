@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { CitationRef, QueryRequest, QueryResponse } from "@/lib/types";
 import { QueryPanel, type QueryForm } from "@/components/QueryPanel";
@@ -15,10 +15,16 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [cite, setCite] = useState<CitationRef | null>(null);
 
-  async function run(f: QueryForm = form) {
+  useEffect(() => {
+    const m = resp?.applicability.missing ?? [];
+    const id = m.includes("serial") ? "sn" : m.includes("model") ? "md" : null;
+    if (id) document.getElementById(id)?.focus();
+  }, [resp]);
+
+  async function run(f: QueryForm = form, facts: Record<string, boolean> = {}) {
     setLoading(true); setErr(null); setCite(null);
     const t = (s: string) => (s.trim() ? s.trim() : null);
-    const aircraft = t(f.model) || t(f.serial) || t(f.make) ? { model: t(f.model), serial: t(f.serial), make: t(f.make), facts: {} } : null;
+    const aircraft = t(f.model) || t(f.serial) || t(f.make) || Object.keys(facts).length ? { model: t(f.model), serial: t(f.serial), make: t(f.make), facts } : null;
     const body: QueryRequest = { question: f.question.trim(), directive_id: t(f.directiveId), aircraft, use_llm: f.useLlm };
     try { setResp(await api.query(body)); } catch (e) { setErr(e); setResp(null); } finally { setLoading(false); }
   }
@@ -32,7 +38,7 @@ export default function Home() {
         {err ? <ErrorState error={err} onRetry={() => run()} /> : null}
         {loading && <p className="rounded border border-slate-300 bg-white p-3 text-sm" role="status">Working…</p>}
         {resp && !loading && (
-          <AnswerPanel response={resp} onOpenCitation={setCite}
+          <AnswerPanel response={resp} onOpenCitation={setCite} onRecheck={(facts) => run(form, facts)}
             onPickCandidate={(id) => { const nf = { ...form, directiveId: id }; setForm(nf); run(nf); }} />
         )}
         {!resp && !err && !loading && (

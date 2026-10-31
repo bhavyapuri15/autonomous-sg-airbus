@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
-import type { CitationRef, QueryResponse, RevisionEdge, StepOutcome } from "@/lib/types";
+import type { CitationRef, QueryResponse, RevisionEdge, RevisionResult, StepOutcome } from "@/lib/types";
 import { ApplicabilityBadge, DocClassPill, TierBadge, pageLabel } from "./Badges";
 import { Disclaimer } from "./Disclaimer";
+import { FactsInput, needsFacts } from "./FactsInput";
 
 type Open = (c: CitationRef) => void;
 
@@ -148,8 +149,7 @@ function Edge({ e }: { e: RevisionEdge }) {
   );
 }
 
-function RevisionCard({ r }: { r: QueryResponse }) {
-  const v = r.revision;
+export function RevisionCard({ revision: v }: { revision?: RevisionResult | null }) {
   if (!v) return null;
   return (
     <section className={card} aria-label="Revision status">
@@ -203,9 +203,11 @@ function Verification({ r }: { r: QueryResponse }) {
   );
 }
 
-export function AnswerPanel({ response: r, onOpenCitation, onPickCandidate }: {
+export function AnswerPanel({ response: r, onOpenCitation, onPickCandidate, onRecheck }: {
   response: QueryResponse; onOpenCitation: Open; onPickCandidate?: (id: string) => void;
+  onRecheck?: (facts: Record<string, boolean>) => void;
 }) {
+  const factKeys = onRecheck ? needsFacts(r) : [];
   // Global citation numbering: response.citations first, then any claim citations not already listed.
   const all: CitationRef[] = [...r.citations];
   const idx = (c: CitationRef) => {
@@ -220,7 +222,8 @@ export function AnswerPanel({ response: r, onOpenCitation, onPickCandidate }: {
       <StatusBanner r={r} onPick={onPickCandidate} />
       <DirectiveHeader r={r} />
       <ApplicabilityCard r={r} onOpen={onOpenCitation} />
-      <RevisionCard r={r} />
+      {onRecheck && factKeys.length > 0 && <FactsInput key={factKeys.join("|")} missing={factKeys} onRecheck={onRecheck} />}
+      <RevisionCard revision={r.revision} />
       {claims.length > 0 && (
         <section className={card} aria-label="Answer claims">
           <h2 className={h2}>Answer (verified statements)</h2>
