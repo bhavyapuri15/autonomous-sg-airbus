@@ -8,7 +8,7 @@ import { cn } from "@/lib/cn";
 import { isRec } from "@/lib/loose";
 
 const NAV = [
-  { href: "/", label: "Search & verify", icon: Search },
+  { href: "/search", label: "Search & verify", icon: Search },
   { href: "/directives", label: "Directives", icon: FileSearch },
   { href: "/evaluation", label: "Evaluation", icon: BarChart3 },
 ];
@@ -54,7 +54,7 @@ export function Sidebar() {
       </div>
       <nav aria-label="Main" className="flex flex-col gap-0.5 px-2">
         {NAV.map(({ href, label, icon: Icon }) => {
-          const active = href === "/" ? path === "/" : path.startsWith(href);
+          const active = path.startsWith(href);
           return (
             <Link key={href} href={href} title={label} aria-current={active ? "page" : undefined}
               className={cn("flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium max-[1099px]:justify-center max-[1099px]:px-0", active ? "bg-blue-600/20 text-white ring-1 ring-inset ring-blue-400/40" : "text-slate-300 hover:bg-white/5 hover:text-white")}>
