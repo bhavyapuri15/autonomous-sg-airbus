@@ -14,7 +14,28 @@ from backend.retrieval.chunker import canon_docket
 _FR_CITE = re.compile(r"(?<![\w-])(\d{1,3})\s*(?:FR|F\.R\.)\s*(\d{1,6})(?![\w-])", re.I)
 _DOCKET_FAA = re.compile(r"(?<![\w-])FAA[-\s_]*(\d{4})[-\s_]*(\d{3,5})(?:[-\s]*R(\d))?(?![\w-])", re.I)
 _DOCKET_PROJ = re.compile(r"(?<![\w-])((?:MCAI|AD)-\d{4}-\d{5}-[A-Z])(?![\w-])", re.I)
-_DOCKET_LEGACY = re.compile(r"(?<![\w-])(\d{2,4})-([A-Z]{2,4})-(\d{1,4})(?:-AD)?(?:[-\s]*R(\d))?(?![\w-])", re.I)
+# FAA directorate / region codes used in pre-2003 docket numbers. Restricting to these prevents ordinary
+# phrases ("737 max 8", "2026 for 3") from being detected as dockets (orchestrator review finding).
+_DIRECTORATES = {"NM", "CE", "SW", "NE", "ANE", "ACE", "ASW", "ANM", "AEA", "AGL", "ASO", "AWP"}
+
+
+def _legacy_norm(m):
+    """Accept a legacy docket only with a real directorate code. Hyphenated forms may be any case
+    ("2000-nm-168-ad"); space-separated or compact forms need an explicit AD suffix ("2000 NM 168 AD",
+    "2000NM168AD"), since bare shapes like "2000 nm 168" collide with prose (nautical miles)."""
+    code = m.group(2)
+    if code.upper() not in _DIRECTORATES:
+        return None
+    raw = m.group(0)
+    hyphenated = re.match(r"\d{2,4}-[A-Za-z]{2,4}-\d{1,4}", raw) is not None
+    if not hyphenated and not re.search(r"AD\b", raw, re.I):
+        return None
+    return f"{m.group(1)}-{code.upper()}-{m.group(3)}-AD"
+
+
+# legacy dockets: separators may be '-', space, '_' or absent ("2000 NM 168 AD", "2000NM168AD")
+_DOCKET_LEGACY = re.compile(r"(?<![\w-])(\d{2,4})[-\s_]*([A-Z]{2,4})[-\s_]*(\d{1,4})(?:[-\s_]*AD)?(?:[-\s]*R(\d))?(?![\w-])", re.I)
+_CLASS_RANK = {"NPRM": 0, "SNPRM": 0, "WITHDRAWAL": 1, "CORRECTION": 2}
 _AD_NUM = re.compile(r"(?<![\w-])((?:19|20)\d{2}-\d{2}-\d{2})(?![\w-])")
 _DOCNUMS = [
     re.compile(r"(?<![\w-])([A-Za-z]\d{1,2}-\d{4}-\d{5})(?![\w-])"),   # R1-2022-23012
@@ -66,9 +87,23 @@ class IDRouter:
                 for key in {k, re.sub(r"-AD$", "", k)}:
                     self.by_docket.setdefault(key, []).append(d["fr_docnum"])
         for k, v in self.by_docket.items():
-            v.sort(key=lambda dn: (self.docs[dn]["publication_date"] or "", dn))
+            v[:] = sorted(set(v), key=self._group_key)
         self.ad_lookup = ad_mention_lookup
         self.known_ads = sorted(known_ad_numbers)
+
+    def _group_key(self, dn):
+        """Deterministic in-group order: NPRM/SNPRM, then withdrawals, then corrections, then others; by date."""
+        d = self.docs[dn]
+        return (_CLASS_RANK.get((d.get("doc_class") or "").upper(), 3), d["publication_date"] or "", dn)
+
+    def _docket_group(self, n):
+        """Docs for a normalized docket. The '-AD' suffix is not significant: the suffix-less key is the
+        superset group (it holds docs filed under either spelling), so it is tried first. Only exact keys
+        are used, never a different docket."""
+        for k in (re.sub(r"-AD$", "", n), n):
+            if k in self.by_docket:
+                return self.by_docket[k]
+        return None
 
     # -- detection ----------------------------------------------------------------------
     def detect(self, query: str) -> tuple[list[dict], str]:
@@ -89,7 +124,7 @@ class IDRouter:
         consume(_FR_CITE, "fr_citation", lambda m: (int(m.group(1)), int(m.group(2))))
         consume(_DOCKET_FAA, "docket", lambda m: f"FAA-{m.group(1)}-{m.group(2)}")
         consume(_DOCKET_PROJ, "docket", lambda m: canon_docket(m.group(1)))
-        consume(_DOCKET_LEGACY, "docket", lambda m: f"{m.group(1)}-{m.group(2).upper()}-{m.group(3)}-AD")
+        consume(_DOCKET_LEGACY, "docket", _legacy_norm)
         consume(_AD_NUM, "ad_number", lambda m: m.group(1))
         for rx in _DOCNUMS:
             consume(rx, "fr_docnum", lambda m: m.group(1).upper())
@@ -125,8 +160,7 @@ class IDRouter:
                             res.near_miss.append(dict(id_type=typ, query_id=f"{vol} FR {page}",
                                                       suggestion=f"{vol} FR {x['start_page']}", fr_docnum=x["fr_docnum"], near_miss=True))
             elif typ == "docket":
-                keys = [n, re.sub(r"-AD$", "", n)]
-                found = next((self.by_docket[k] for k in keys if k in self.by_docket), None)
+                found = self._docket_group(n)
                 if found:
                     for dn in found:
                         add(dn, typ, n, f"docket {n}")
@@ -136,12 +170,21 @@ class IDRouter:
                         for dn in self.by_docket[k][:1]:
                             res.near_miss.append(dict(id_type=typ, query_id=raw.strip(), suggestion=k, fr_docnum=dn, near_miss=True))
             elif typ == "fr_docnum":
+                bare = re.fullmatch(r"\d{4}-\d{4,5}", n) is not None
+                fdocket = self.by_docket.get("FAA-" + n) if bare else None
                 if n in self.by_docnum:
                     add(self.by_docnum[n], typ, n, f"FR document number {n}")
-                else:
+                if fdocket:  # bare YYYY-NNNNN that is also an FAA docket (FR docnum, if any, already first)
+                    for dn in fdocket:
+                        add(dn, "docket", f"FAA-{n}", f"docket FAA-{n} (bare {n})")
+                if n not in self.by_docnum and not fdocket:
                     for k in sorted(k for k in self.by_docnum if edit1(k, n))[:near_limit]:
                         res.near_miss.append(dict(id_type=typ, query_id=n, suggestion=self.by_docnum[k],
                                                   fr_docnum=self.by_docnum[k], near_miss=True))
+                    if bare:
+                        for k in sorted(k for k in self.by_docket if k.startswith("FAA-") and edit1(k, "FAA-" + n))[:near_limit]:
+                            res.near_miss.append(dict(id_type="docket", query_id=n, suggestion=k,
+                                                      fr_docnum=self.by_docket[k][0], near_miss=True))
             elif typ == "ad_number":
                 rows = self.ad_lookup(n) if self.ad_lookup else []
                 if rows:
