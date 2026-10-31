@@ -41,7 +41,7 @@ describe("evaluation", () => {
     render(<EvaluationView data={{ split: "dev", timestamp: "t1", metrics: { F3: { n: 2, acc: 0.5, failures: [{ id: "x1", q: "why" }] } } }} />);
     expect(screen.getByTestId("eval-header")).toHaveTextContent("dev");
     expect(screen.getByText("0.5")).toBeInTheDocument();
-    expect(screen.getByText(/n = 2/)).toBeInTheDocument();
+    expect(screen.getAllByText(/n = 2/).length).toBeGreaterThan(0);
     expect(screen.getByTestId("failure-list")).toBeInTheDocument();
   });
 });

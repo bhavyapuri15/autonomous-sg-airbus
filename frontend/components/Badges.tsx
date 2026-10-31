@@ -1,35 +1,34 @@
+import { CircleHelp, Info, MinusCircle, ShieldCheck, CheckCircle2 } from "lucide-react";
 import type { ApplicabilityValue, CitationRef, SourceTier } from "@/lib/types";
+import { cn } from "@/lib/cn";
+import { Badge } from "@/components/ui";
 
 export function DocClassPill({ docClass }: { docClass?: string | null }) {
   const c = (docClass || "UNKNOWN").toUpperCase();
-  const meta: Record<string, { label: string; cls: string }> = {
-    NPRM: { label: "NPRM · Proposed rule (not an enforceable AD)", cls: "bg-sky-100 text-sky-900 border-sky-400 border-dashed" },
-    SNPRM: { label: "SNPRM · Supplemental proposal (not an enforceable AD)", cls: "bg-sky-100 text-sky-900 border-sky-400 border-dashed" },
-    WITHDRAWAL: { label: "WITHDRAWAL · Proposal withdrawn", cls: "bg-slate-200 text-slate-900 border-slate-500" },
-    CORRECTION: { label: "CORRECTION · Correction notice", cls: "bg-slate-100 text-slate-900 border-slate-400" },
-    FINAL_RULE: { label: "FINAL RULE", cls: "bg-emerald-100 text-emerald-900 border-emerald-500" },
-    OTHER: { label: "OTHER document type", cls: "bg-slate-100 text-slate-800 border-slate-400" },
+  const meta: Record<string, { label: string; tone: "blue" | "slate" | "violet" }> = {
+    NPRM: { label: "NPRM · Proposed rule (not an enforceable AD)", tone: "blue" },
+    SNPRM: { label: "SNPRM · Supplemental proposal (not an enforceable AD)", tone: "blue" },
+    WITHDRAWAL: { label: "WITHDRAWAL · Proposal withdrawn", tone: "slate" },
+    CORRECTION: { label: "CORRECTION · Correction notice", tone: "slate" },
+    FINAL_RULE: { label: "FINAL RULE", tone: "violet" },
+    OTHER: { label: "OTHER document type", tone: "slate" },
   };
-  const m = meta[c] || { label: `${c} · document class`, cls: "bg-slate-100 text-slate-800 border-slate-400" };
-  return <span className={`inline-block rounded border px-2 py-0.5 text-xs font-semibold ${m.cls}`}>{m.label}</span>;
+  const m = meta[c] || { label: `${c} · document class`, tone: "slate" as const };
+  return <Badge tone={m.tone} className={cn("font-semibold", m.tone === "blue" && "border-dashed")}>{m.label}</Badge>;
 }
 
 export function TierBadge({ tier }: { tier: SourceTier }) {
   if (tier === "FR_FULL_TEXT")
-    return <span className="rounded border border-emerald-600 bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-900">Official FR text</span>;
-  return (
-    <span className="rounded border border-amber-600 bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-900">
-      Spreadsheet metadata, not regulatory text
-    </span>
-  );
+    return <Badge tone="blue"><ShieldCheck size={12} aria-hidden />Official FR text</Badge>;
+  return <Badge tone="amber">Spreadsheet metadata, not regulatory text</Badge>;
 }
 
 export function ApplicabilityBadge({ value, label, basis }: { value: ApplicabilityValue; label?: string | null; basis?: string | null }) {
-  const m: Record<ApplicabilityValue, { icon: string; title: string; sub: string; cls: string }> = {
-    APPLICABLE: { icon: "i", title: "Applicable under the proposed rule", sub: "Per the proposed rule text and the configuration given. Not an enforceable requirement.", cls: "bg-sky-50 border-sky-600 text-sky-950" },
-    NOT_APPLICABLE: { icon: "i", title: "Not applicable under the proposed rule", sub: "Per the proposed rule text and the configuration given.", cls: "bg-slate-100 border-slate-600 text-slate-900" },
-    UNKNOWN: { icon: "?", title: "Applicability not determined", sub: "The evidence available does not settle this. It is NOT a negative result. Review the source text.", cls: "bg-violet-50 border-violet-600 border-dashed text-violet-900" },
-    NOT_EVALUATED: { icon: "–", title: "Applicability not evaluated", sub: "No applicability check was run for this answer", cls: "bg-white border-slate-400 border-dashed text-slate-700" },
+  const m: Record<ApplicabilityValue, { Icon: typeof Info; title: string; sub: string; cls: string }> = {
+    APPLICABLE: { Icon: CheckCircle2, title: "Applicable under the proposed rule", sub: "Per the proposed rule text and the configuration given. Not an enforceable requirement.", cls: "bg-blue-50 border-blue-600 text-blue-950" },
+    NOT_APPLICABLE: { Icon: MinusCircle, title: "Not applicable under the proposed rule", sub: "Per the proposed rule text and the configuration given.", cls: "bg-slate-100 border-slate-500 text-slate-900" },
+    UNKNOWN: { Icon: CircleHelp, title: "Applicability not determined", sub: "The evidence available does not settle this. It is NOT a negative result. Review the source text.", cls: "bg-amber-50 border-amber-500 border-dashed text-amber-950" },
+    NOT_EVALUATED: { Icon: Info, title: "Applicability not evaluated", sub: "No applicability check was run for this answer", cls: "bg-white border-slate-300 border-dashed text-slate-700" },
   };
   const x = m[value];
   const title = value === "UNKNOWN" ? x.title : label || x.title;
@@ -38,10 +37,10 @@ export function ApplicabilityBadge({ value, label, basis }: { value: Applicabili
     ? "Per the published final rule text and the configuration given. Later amendments or supersession were not checked."
     : x.sub;
   return (
-    <div className={`flex items-center gap-3 rounded-lg border-2 px-4 py-3 ${x.cls}`} data-testid="applicability-badge" data-value={value}>
-      <span aria-hidden className="text-3xl font-bold">{x.icon}</span>
+    <div className={cn("flex items-center gap-3 rounded-lg border-2 px-4 py-3", x.cls)} data-testid="applicability-badge" data-value={value}>
+      <x.Icon size={28} aria-hidden className="shrink-0" />
       <div>
-        <div className="text-xl font-bold tracking-wide">{title}</div>
+        <div className="text-lg font-semibold">{title}</div>
         <div className="text-xs">{sub}{basis && basis !== "UNKNOWN" ? ` Basis: ${basis.replaceAll("_", " ").toLowerCase()}.` : ""}</div>
       </div>
     </div>
@@ -53,9 +52,5 @@ export const pageLabel = (c: Pick<CitationRef, "fr_page" | "pdf_page">) =>
 
 export function SourceBadge({ source }: { source?: string | null }) {
   const organiser = source === "organiser_sheet";
-  return (
-    <span className={`inline-block rounded border px-1.5 py-0.5 text-xs font-medium ${organiser ? "border-slate-500 bg-slate-100 text-slate-900" : "border-violet-500 border-dashed bg-violet-50 text-violet-900"}`}>
-      {organiser ? "Organiser dataset" : "FR final-rule lookup"}
-    </span>
-  );
+  return <Badge tone={organiser ? "slate" : "violet"}>{organiser ? "Organiser dataset" : "FR final-rule lookup"}</Badge>;
 }

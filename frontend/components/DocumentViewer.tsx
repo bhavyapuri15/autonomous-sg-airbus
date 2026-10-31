@@ -3,16 +3,18 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { findQuote, findShortQuoteSpan } from "@/lib/match";
 import type { CitationRef } from "@/lib/types";
+import { ChevronLeft, ChevronRight, ExternalLink, X, ZoomIn, ZoomOut } from "lucide-react";
+import { Button, Tabs } from "@/components/ui";
 import { ErrorState } from "./ErrorState";
 import { TierBadge } from "./Badges";
 import { CitationLine, StagePill } from "./Provenance";
 
 type HlState = "pending" | "ok" | "failed";
 
-function PdfView({ citation, onHl }: { citation: CitationRef; onHl: (s: HlState) => void }) {
+function PdfView({ citation, page, scale, onHl, onPages }: { citation: CitationRef; page: number; scale: number; onHl: (s: HlState) => void; onPages: (n: number) => void }) {
   const wrap = useRef<HTMLDivElement>(null);
   const [err, setErr] = useState<unknown>(null);
-  const page = citation.pdf_page ?? 1;
+  const isCited = page === (citation.pdf_page ?? 1);
 
   useEffect(() => {
     let cancelled = false;
@@ -26,8 +28,9 @@ function PdfView({ citation, onHl }: { citation: CitationRef; onHl: (s: HlState)
         const loading = pdfjs.getDocument({ url: api.pdfUrl(citation.fr_docnum) });
         task = loading;
         const doc = await loading.promise;
+        onPages(doc.numPages);
         const pg = await doc.getPage(Math.min(Math.max(page, 1), doc.numPages));
-        const viewport = pg.getViewport({ scale: 1.3 });
+        const viewport = pg.getViewport({ scale });
         if (cancelled || !wrap.current) return;
         const host = wrap.current;
         host.innerHTML = "";
@@ -46,6 +49,7 @@ function PdfView({ citation, onHl }: { citation: CitationRef; onHl: (s: HlState)
         const tl = new pdfjs.TextLayer({ textContentSource: pg.streamTextContent(), container: layer, viewport });
         await tl.render();
         if (cancelled) return;
+        if (!isCited) { onHl("pending"); return; }
         // Style text spans: transparent text, positioned by pdf.js.
         layer.querySelectorAll("span").forEach((s) => { (s as HTMLElement).style.color = "transparent"; });
         const divs = tl.textDivs as HTMLElement[];
@@ -54,12 +58,12 @@ function PdfView({ citation, onHl }: { citation: CitationRef; onHl: (s: HlState)
         const m = findQuote(joined, citation.quote);
         if (!m) {
           const si = findShortQuoteSpan(divs.map((d) => d.textContent || ""), citation.quote);
-          if (si >= 0) { divs[si].style.background = "rgba(250,204,21,0.45)"; onHl("ok"); } else onHl("failed");
+          if (si >= 0) { divs[si].style.background = "rgba(254,240,138,0.75)"; onHl("ok"); } else onHl("failed");
           return;
         }
         let n = 0;
         divs.forEach((d, i) => {
-          if (ranges[i][1] > m[0] && ranges[i][0] < m[1]) { d.style.background = "rgba(250,204,21,0.45)"; n++; }
+          if (ranges[i][1] > m[0] && ranges[i][0] < m[1]) { d.style.background = "rgba(254,240,138,0.75)"; n++; }
         });
         onHl(n > 0 ? "ok" : "failed");
       } catch (e) {
@@ -68,20 +72,19 @@ function PdfView({ citation, onHl }: { citation: CitationRef; onHl: (s: HlState)
     })();
     return () => { cancelled = true; task?.destroy().catch(() => {}); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [citation.fr_docnum, page, citation.quote]);
+  }, [citation.fr_docnum, page, scale, citation.quote]);
 
   return (
-    <div className="overflow-auto bg-slate-300 p-2">
+    <div className="overflow-auto bg-slate-200 p-3">
       {err ? <ErrorState error={err} /> : null}
       <div ref={wrap} className="relative mx-auto bg-white" aria-label={`PDF page ${page}`} />
     </div>
   );
 }
 
-function TextView({ citation }: { citation: CitationRef }) {
+function TextView({ citation, page }: { citation: CitationRef; page: number | null }) {
   const [data, setData] = useState<Record<string, unknown> | null>(null);
   const [err, setErr] = useState<unknown>(null);
-  const page = citation.pdf_page;
   useEffect(() => {
     if (page == null) return;
     let off = false;
@@ -92,10 +95,10 @@ function TextView({ citation }: { citation: CitationRef }) {
   if (err) return <ErrorState error={err} />;
   if (!data) return <p className="p-3 text-sm">Loading page text…</p>;
   const text = String(data.text ?? data.page_text ?? "");
-  const m = findQuote(text, citation.quote);
+  const m = page === citation.pdf_page ? findQuote(text, citation.quote) : null;
   return (
     <div className="p-3">
-      {!m && <p className="mb-2 rounded border border-amber-500 bg-amber-50 p-2 text-xs">Quote could not be located in this page&apos;s text; the cited page is shown unhighlighted.</p>}
+      {!m && page === citation.pdf_page && <p className="mb-2 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-950">Quote could not be located in this page&apos;s text; the cited page is shown unhighlighted.</p>}
       <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed" data-testid="page-text">
         {m ? <>{text.slice(0, m[0])}<mark className="hl">{text.slice(m[0], m[1])}</mark>{text.slice(m[1])}</> : text}
       </pre>
@@ -106,46 +109,64 @@ function TextView({ citation }: { citation: CitationRef }) {
 export function DocumentViewer({ citation, onClose, stage }: { citation: CitationRef; onClose: () => void; stage?: string | null }) {
   const [tab, setTab] = useState<"pdf" | "text">("pdf");
   const [hl, setHl] = useState<HlState>("pending");
+  const [page, setPage] = useState<number>(citation.pdf_page ?? 1);
+  const [pages, setPages] = useState<number | null>(null);
+  const [scale, setScale] = useState(1.1);
   const isSheet = citation.source_tier !== "FR_FULL_TEXT";
+  const onCited = page === (citation.pdf_page ?? 1);
+  const go = (n: number) => setPage(Math.min(Math.max(n, 1), pages ?? Math.max(n, 1)));
+  const official = citation.source_url || citation.pdf_url;
   return (
-    <aside className="flex h-full flex-col rounded-lg border border-slate-400 bg-white shadow-lg" aria-label="Document viewer">
-      <div className="flex items-center gap-2 border-b border-slate-300 bg-slate-100 px-3 py-2">
-        <div className="min-w-0 flex-1">
-          <div className="truncate font-mono text-sm font-semibold">{citation.record_ids?.length ? `${citation.record_ids.join(", ")} · ` : ""}FR Doc. {citation.fr_docnum}</div>
-          <div className="flex flex-wrap items-center gap-2"><CitationLine c={citation} />{stage && <StagePill stage={stage} />}</div>
-          <div className="text-xs text-slate-700">FR p. {citation.fr_page ?? "n/a"} · PDF p. {citation.pdf_page ?? "n/a"} {citation.label ? `· ${citation.label}` : ""}</div>
+    <aside className="flex h-full min-h-0 flex-col rounded-lg border border-slate-200 bg-white shadow-card" aria-label="Document viewer">
+      <div className="space-y-2 border-b border-slate-200 px-3 py-2">
+        <div className="flex items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="font-mono text-sm font-semibold">FR Doc. {citation.fr_docnum}</span>
+              {citation.record_ids?.length ? <span className="font-mono text-xs text-slate-600">{citation.record_ids.join(", ")}</span> : null}
+              {stage && <StagePill stage={stage} />}
+            </div>
+            <div className="mt-1 flex flex-wrap items-center gap-2"><CitationLine c={citation} /></div>
+          </div>
+          <Button size="sm" variant="ghost" onClick={onClose} aria-label="Close viewer"><X size={14} aria-hidden />Close</Button>
         </div>
-        <TierBadge tier={citation.source_tier} />
-        <button onClick={onClose} className="rounded border border-slate-500 px-2 py-0.5 text-sm hover:bg-slate-200" aria-label="Close viewer">Close</button>
+        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+          <TierBadge tier={citation.source_tier} />
+          <span>FR p. {citation.fr_page ?? "n/a"} · PDF p. {citation.pdf_page ?? "n/a"} {citation.label ? `· ${citation.label}` : ""}</span>
+          {!isSheet && (
+            <div className="ml-auto flex items-center gap-1">
+              <Button size="sm" aria-label="Previous page" disabled={page <= 1} onClick={() => go(page - 1)}><ChevronLeft size={14} aria-hidden /></Button>
+              <span className="min-w-[4.5rem] text-center font-mono" data-testid="page-nav">{page}{pages ? ` / ${pages}` : ""}</span>
+              <Button size="sm" aria-label="Next page" disabled={pages !== null && page >= pages} onClick={() => go(page + 1)}><ChevronRight size={14} aria-hidden /></Button>
+              <Button size="sm" aria-label="Zoom out" disabled={scale <= 0.6} onClick={() => setScale((x) => Math.max(0.6, +(x - 0.2).toFixed(1)))}><ZoomOut size={14} aria-hidden /></Button>
+              <Button size="sm" aria-label="Zoom in" disabled={scale >= 2.2} onClick={() => setScale((x) => Math.min(2.2, +(x + 0.2).toFixed(1)))}><ZoomIn size={14} aria-hidden /></Button>
+            </div>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-3 text-xs">
+          {official && <a className="inline-flex items-center gap-1 text-blue-600 hover:underline" href={official} target="_blank" rel="noreferrer"><ExternalLink size={12} aria-hidden />Open official source</a>}
+          {citation.pdf_url && <a className="text-blue-600 hover:underline" href={citation.pdf_url} target="_blank" rel="noreferrer">Official FR PDF</a>}
+          {citation.xml_url && <a className="text-blue-600 hover:underline" href={citation.xml_url} target="_blank" rel="noreferrer">Official FR XML</a>}
+        </div>
       </div>
-      <div className="border-b border-slate-300 p-3">
-        <div className="text-xs font-semibold uppercase text-slate-600">Cited quote</div>
-        <blockquote className="mt-1 max-h-32 overflow-auto border-l-4 border-yellow-400 bg-yellow-50 p-2 font-mono text-xs whitespace-pre-wrap">{citation.quote}</blockquote>
-        {!isSheet && tab === "pdf" && hl === "failed" && (
-          <p className="mt-2 rounded border border-amber-600 bg-amber-50 p-2 text-xs text-amber-950" data-testid="hl-unavailable">
+      <div className="border-b border-slate-200 px-3 py-2">
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Cited quote</div>
+        <blockquote className="mt-1 max-h-28 overflow-auto whitespace-pre-wrap rounded-lg border-l-4 border-yellow-300 bg-yellow-50 p-2 font-mono text-xs">{citation.quote}</blockquote>
+        {!isSheet && tab === "pdf" && onCited && hl === "failed" && (
+          <p className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-2 text-xs text-amber-950" data-testid="hl-unavailable">
             Exact highlight unavailable — quote shown above; cited page is {citation.fr_page ?? "n/a"}
           </p>
         )}
-        {!isSheet && tab === "pdf" && hl === "ok" && <p className="mt-1 text-xs text-emerald-800">Quote located and highlighted on the page (approximate match; verify wording).</p>}
-        <div className="mt-2 flex gap-3 text-xs">
-          {citation.pdf_url && <a className="text-sky-800 underline" href={citation.pdf_url} target="_blank" rel="noreferrer">Official FR PDF</a>}
-          {citation.xml_url && <a className="text-sky-800 underline" href={citation.xml_url} target="_blank" rel="noreferrer">Official FR XML</a>}
-        </div>
+        {!isSheet && tab === "pdf" && onCited && hl === "ok" && <p className="mt-1 text-xs text-slate-600">Quote located and highlighted on the page (approximate match; verify wording).</p>}
+        {!isSheet && !onCited && <p className="mt-1 text-xs text-slate-600">Viewing a different page than the cited one. <button className="text-blue-600 underline" onClick={() => setPage(citation.pdf_page ?? 1)}>Back to cited page</button></p>}
       </div>
       {isSheet ? (
         <p className="p-3 text-sm">This evidence comes from the spreadsheet (row {citation.sheet_row ?? "n/a"}), not from Federal Register text, so there is no page to display.</p>
       ) : (
         <>
-          <div role="tablist" className="flex border-b border-slate-300 text-sm">
-            {(["pdf", "text"] as const).map((t) => (
-              <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)}
-                className={`px-4 py-1.5 ${tab === t ? "border-b-2 border-slate-900 font-semibold" : "text-slate-600"}`}>
-                {t === "pdf" ? "PDF view" : "Text view"}
-              </button>
-            ))}
-          </div>
+          <Tabs label="Viewer mode" value={tab} onChange={setTab} tabs={[{ id: "pdf", label: "PDF view" }, { id: "text", label: "Text view" }]} />
           <div className="min-h-0 flex-1 overflow-auto">
-            {tab === "pdf" ? <PdfView citation={citation} onHl={setHl} /> : <TextView key={`${citation.fr_docnum}-${citation.pdf_page}`} citation={citation} />}
+            {tab === "pdf" ? <PdfView citation={citation} page={page} scale={scale} onHl={setHl} onPages={setPages} /> : <TextView key={`${citation.fr_docnum}-${page}`} citation={citation} page={page} />}
           </div>
         </>
       )}

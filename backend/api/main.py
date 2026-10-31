@@ -141,25 +141,26 @@ def list_directives(q: str = Query("", max_length=200), make: str = Query("", ma
         if ml and not any(ml in x.lower() for x in m["make_norm"]):
             continue
         rows = by_doc.get(dn, [])
-        hay = " ".join([dn, m["title"] or "", " ".join(m["dockets"]), " ".join(m["models"]), " ".join(m["ad_numbers"])]).lower()
+        rids = sorted(r["record_id"] for r in rows if r.get("record_id"))
+        hay = " ".join([dn, m["title"] or "", " ".join(m["dockets"]), " ".join(m["models"]), " ".join(m["ad_numbers"]), " ".join(rids)]).lower()
         if ql and ql not in hay:
             continue
         items.append(S.DirectiveListItem(fr_docnum=dn, docket=(m["dockets"][0] if m["dockets"] else None), doc_class=m["doc_class"],
                                          title=m["title"], publication_date=m["publication_date"], source=m["source"],
                                          make=m["make_norm"], models=m["models"], ad_number=(m["ad_numbers"] or [None])[0],
-                                         sheet_rows=[r["row"] for r in rows]))
+                                         sheet_rows=[r["row"] for r in rows], record_ids=rids))
     items.sort(key=lambda i: (i.publication_date or "", i.fr_docnum or ""), reverse=True)
     if not source or source == "organiser_sheet":
         import json as _j
         for r in cat.meta_only:
             if doc_class or (ml and ml not in (r["make_norm"] or "").lower()):
                 continue
-            if ql and ql not in " ".join([r["docket_norm"] or "", r["subject"] or "", r["make_raw"] or ""]).lower():
+            if ql and ql not in " ".join([r["docket_norm"] or "", r["subject"] or "", r["make_raw"] or "", r.get("record_id") or ""]).lower():
                 continue
             items.append(S.DirectiveListItem(fr_docnum=None, docket=r["docket_norm"], title=r["subject"],
                                              publication_date=r["publish_date"], source="organiser_sheet",
                                              make=[r["make_norm"]] if r["make_norm"] else [], models=_j.loads(r["models_json"] or "[]"),
-                                             sheet_rows=[r["row"]]))
+                                             sheet_rows=[r["row"]], record_ids=[r["record_id"]] if r.get("record_id") else []))
     return S.DirectiveListResponse(total=len(items), limit=limit, offset=offset, items=items[offset:offset + limit])
 
 

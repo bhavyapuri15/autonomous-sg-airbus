@@ -10,10 +10,15 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@tanstack/react-table": "^8.21.3",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.65.0",
     "next": "^16.4.3",
     "pdfjs-dist": "^6.4.299",
     "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "react-dom": "^19.3.1",
+    "react-resizable-panels": "^4.15.3",
+    "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",

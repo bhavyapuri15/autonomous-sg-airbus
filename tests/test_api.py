@@ -24,6 +24,15 @@ def test_directives_list_and_filters():
     assert client.get("/directives", params={"limit": 0}).status_code == 422
 
 
+def test_directives_list_record_ids():
+    j = client.get("/directives", params={"q": "NPRM-180", "limit": 5}).json()
+    assert [(i["fr_docnum"], i["record_ids"]) for i in j["items"]] == [("2021-13482", ["NPRM-180"])]
+    j = client.get("/directives", params={"q": "NPRM-409"}).json()   # metadata-only record (no FR document)
+    assert [(i["fr_docnum"], i["record_ids"]) for i in j["items"]] == [(None, ["NPRM-409"])]
+    j = client.get("/directives", params={"source": "fr_final_rule_lookup", "limit": 3}).json()
+    assert all(i["record_ids"] == [] for i in j["items"])
+
+
 @pytest.mark.parametrize("ident", ["2026-21387", "FAA-2026-11814"])
 def test_directive_detail(ident):
     j = client.get(f"/directives/{ident}").json()

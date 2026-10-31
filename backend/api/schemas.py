@@ -290,6 +290,7 @@ class DirectiveListItem(BaseModel):
     models: list[str] = []
     ad_number: Optional[str] = None
     sheet_rows: list[int] = []
+    record_ids: list[str] = []                       # organiser record_id(s) of the sheet rows (additive)
 
 
 class DirectiveListResponse(BaseModel):
