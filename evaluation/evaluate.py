@@ -452,7 +452,8 @@ def main(argv=None):
         import adversarial
         M["F8"] = adversarial.run_all(); print("F8 done", flush=True)
     if "LAT" in fams: M["latency"] = run_latency(a.split); print("LAT done", flush=True)
-    if "CAL" in fams: M["calibration"] = run_calibration(a.split); print("CAL done", flush=True)
+    # calibration is tuning: dev only, never on the locked split (C3)
+    if "CAL" in fams and a.split == "dev": M["calibration"] = run_calibration(a.split); print("CAL done", flush=True)
     from backend import config
     res["config"] = dict(MIN_TOP_DENSE_COSINE=config.MIN_TOP_DENSE_COSINE, ANSWER_TOP_K=config.ANSWER_TOP_K)
     res["runtime_s"] = round(time.time() - t0, 1)
