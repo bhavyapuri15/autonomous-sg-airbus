@@ -10,3 +10,4 @@ node_modules/
 *.faiss
 *.npy
 .DS_Store
+.claude/scheduled_tasks.lock

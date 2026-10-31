@@ -1,0 +1,16 @@
+{
+  "_SYNTHETIC": "SYNTHETIC FIXTURE - invented for UI tests only. Not real FAA data.",
+  "status": "ABSTAINED",
+  "answer_claims": [],
+  "applicability": { "value": "NOT_EVALUATED", "explanation": [], "missing": [] },
+  "revision": null,
+  "directive": null,
+  "candidates": [ { "fr_docnum": "0000-00009", "docket": "FAA-0000-0009", "doc_class": "NPRM", "title": "SYNTHETIC different directive", "sheet_rows": [] } ],
+  "citations": [],
+  "warnings": [],
+  "abstention_reason": "SYNTHETIC: Not in indexed dataset.",
+  "missing_information": [],
+  "verification": { "mode": "none", "claims_generated": 0, "claims_verified": 0, "claims_rejected": [] },
+  "timings_ms": { "retrieval": 0, "engines": 0, "generation": 0, "verification": 0, "total": 1 },
+  "disclaimer": "Decision support only. Not a certified airworthiness or compliance determination. Verify against the official FAA source."
+}

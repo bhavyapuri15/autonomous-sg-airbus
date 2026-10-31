@@ -1,4 +1,28 @@
-# Architecture Proposal (Phase 0.6) — PENDING APPROVAL
+# Architecture (Phase 0.6) — APPROVED 2026-10-31 with O1, O2 and O3
+
+## Approved amendments (binding; these take precedence over the sections below)
+- **A1 Claim verification.** Exact quote matching and identifier matching are necessary but not sufficient. Each claim also gets:
+  - a negation/polarity check (claim vs quote)
+  - a deterministic support check: content words, numbers and models in the claim must be covered by the quote
+  - optionally, an independent support judgement by a separate LLM call. It may only *reject* a claim, never rescue one.
+
+  Applicability and revision conclusions are rendered from deterministic templates. The LLM never writes them.
+- **A2 O1 final-rule lookup.** Document classes are NPRM, SNPRM, WITHDRAWAL, CORRECTION, FINAL_RULE and OTHER.
+  - A final rule is linked to an NPRM only when there is textual evidence (the rule cites the NPRM's FR citation or date) plus a docket match.
+  - Without that evidence the link is a CANDIDATE.
+  - We never infer that a proposal supersedes an existing final AD. The only such statement allowed is "proposes to supersede AD X", quoted from the text.
+- **A3 Applicability parsing.** These cases are represented explicitly, or else return UNKNOWN:
+  - exceptions
+  - AND/OR compound conditions
+  - equipment and part-number configurations
+  - references to external documents (service bulletins, etc.)
+
+  If any scope-restricting text is left unparsed, the result is UNKNOWN.
+- **A4 Page mapping.** XML→PDF page mapping is validated on real documents, including paragraphs that span pages, and the validation rate is reported. If precise highlighting fails, page-level citations are still kept.
+- **A5 Revision relationships.** Every edge needs evidence: an FR metadata field or a quoted text span. Sharing a docket alone never implies succession.
+- **A6 Impact benchmark.** A small manual-vs-assisted retrieval benchmark measuring time and steps.
+- **A7 Reconciliation.** A documented walk from 431 rows to 428 resolved rows to 420 unique docs, listing the 3 metadata-only rows and all duplicates.
+- **Runtime answer model:** `claude-sonnet-5-5`, with a no-LLM extractive fallback.
 
 ## 1. Data interpretation
 - **The sheet is a metadata index of mixed formats.** It is not a document corpus.

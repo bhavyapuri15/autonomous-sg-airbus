@@ -1,0 +1,44 @@
+{
+  "_SYNTHETIC": "SYNTHETIC FIXTURE - invented for UI tests only. Not real FAA data.",
+  "status": "ANSWERED",
+  "answer_claims": [
+    { "text": "SYNTHETIC: The proposal concerns inspection of widget brackets.",
+      "citations": [ { "citation_id": "aaaaaaaaaaaa", "fr_docnum": "0000-00000", "label": "Summary", "fr_page": 12345, "pdf_page": 1,
+        "quote": "SYNTHETIC quote: we propose to require inspection of widget brackets", "source_tier": "FR_FULL_TEXT" } ] }
+  ],
+  "applicability": {
+    "value": "UNKNOWN",
+    "template_text": "SYNTHETIC: Applicability could not be determined from the rule text.",
+    "explanation": [
+      { "step": "Model listed", "outcome": "TRUE", "detail": "Model XX-100 is listed.", "evidence": [ { "citation_id": "bbbbbbbbbbbb", "fr_docnum": "0000-00000", "fr_page": 12345, "pdf_page": 1, "quote": "SYNTHETIC models XX-100", "source_tier": "FR_FULL_TEXT" } ] },
+      { "step": "Serial in range", "outcome": "UNKNOWN", "detail": "Serial not provided.", "evidence": [] },
+      { "step": "Excluded", "outcome": "FALSE", "detail": "No exception matched.", "evidence": [] }
+    ],
+    "missing": ["serial"],
+    "rule_parse_status": "PARTIAL",
+    "evaluated_document": "0000-00000",
+    "applicability_text": { "citation_id": "cccccccccccc", "fr_docnum": "0000-00000", "fr_page": 12345, "pdf_page": 1, "quote": "SYNTHETIC (c) Applicability: This AD applies to widgets of model XX-100.", "source_tier": "FR_FULL_TEXT" }
+  },
+  "revision": {
+    "status": "PROPOSAL_STATUS_UNVERIFIED",
+    "current_authoritative_status_verified": false,
+    "template_text": "SYNTHETIC: No verified withdrawal, supplement or final rule found in the dataset.",
+    "latest_in_dataset": "0000-00001",
+    "edges": [
+      { "src": "0000-00001", "dst": "0000-00000", "type": "SUPPLEMENTS", "confidence": "VERIFIED", "evidence": [] },
+      { "src": "0000-00002", "dst": "0000-00000", "type": "SAME_DOCKET", "confidence": "CANDIDATE", "evidence": [] }
+    ]
+  },
+  "directive": { "fr_docnum": "0000-00000", "docket": "FAA-0000-0000", "doc_class": "NPRM", "title": "SYNTHETIC Airworthiness Directives; Example Widgets", "publication_date": "2000-01-01", "citation": "00 FR 12345", "sheet_rows": [2], "pdf_url": null },
+  "candidates": [],
+  "citations": [
+    { "citation_id": "aaaaaaaaaaaa", "fr_docnum": "0000-00000", "label": "Summary", "section_path": "SUMMARY", "fr_page": 12345, "pdf_page": 1, "quote": "SYNTHETIC quote: we propose to require inspection of widget brackets", "source_tier": "FR_FULL_TEXT" },
+    { "citation_id": "dddddddddddd", "fr_docnum": "0000-00000", "fr_page": null, "pdf_page": null, "quote": "SYNTHETIC sheet subject text", "source_tier": "SHEET_METADATA", "sheet_row": 2 }
+  ],
+  "warnings": ["SYNTHETIC warning: example only."],
+  "abstention_reason": null,
+  "missing_information": [],
+  "verification": { "mode": "extractive", "claims_generated": 2, "claims_verified": 1, "claims_rejected": [ { "text": "SYNTHETIC rejected claim", "failed_check": "V6_content_coverage" } ] },
+  "timings_ms": { "retrieval": 1, "engines": 2, "generation": 0, "verification": 1, "total": 5 },
+  "disclaimer": "Decision support only. Not a certified airworthiness or compliance determination. Verify against the official FAA source."
+}

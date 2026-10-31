@@ -1,0 +1,16 @@
+{
+  "_SYNTHETIC": "SYNTHETIC FIXTURE - invented for UI tests only. Not real FAA data.",
+  "status": "NEEDS_MORE_INFORMATION",
+  "answer_claims": [],
+  "applicability": { "value": "NOT_EVALUATED", "explanation": [], "missing": ["model"] },
+  "revision": null,
+  "directive": null,
+  "candidates": [],
+  "citations": [],
+  "warnings": [],
+  "abstention_reason": null,
+  "missing_information": ["Aircraft model", "Serial number"],
+  "verification": { "mode": "none", "claims_generated": 0, "claims_verified": 0, "claims_rejected": [] },
+  "timings_ms": { "retrieval": 0, "engines": 0, "generation": 0, "verification": 0, "total": 1 },
+  "disclaimer": "Decision support only. Not a certified airworthiness or compliance determination. Verify against the official FAA source."
+}
