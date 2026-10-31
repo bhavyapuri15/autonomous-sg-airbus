@@ -63,28 +63,16 @@ These rows stay in `records` as metadata-only (no FR document; col R is pasted t
 
 Sharing a docket never implies succession (A5); this is only a count.
 
-## 5. Sheet-vs-FR mismatches: 12 date, 2 pages (14 distinct rows)
+## 5. Sheet-vs-FR mismatches: 0 date, 2 pages (2 distinct rows)
 
 Evidence only. `drs_docnum` = docnum embedded in the col-A DRS link; `url_docnum` = docnum used for the match; `cite_date==FR` = date written in the sheet Citation text equals FR publication_date; `sheet_consistent` = Citation-text date equals the row's publish date or is +1 day (the known legacy offset); `other_row_matches` = another row with the same docnum agrees with FR on date and pages. Verdict rules, in order: (1) `fr_link_suspect` if the FR doc's docket_ids lack the sheet docket, or title Jaccard < 0.5, or drs_docnum != url_docnum; (2) `fr_link_suspect(stale col R link)` if sheet_consistent and other_row_matches and not cite_date==FR (the row's own date, pages and citation agree with each other, a sibling row matches the FR doc, so this row probably describes a later publication of the same docket); (3) `sheet_pages_suspect` if cite_date==FR but pages differ; (4) otherwise `undetermined`.
 
 | row | docket | match | sheet publish / pages | FR date / pages | date mm | pages mm | evidence | verdict |
 |---|---|---|---|---|---|---|---|---|
-| 159 | FAA-2024-1475 | direct_url | 2024-09-26 / (78826, 78827) | 2024-09-26 / (78826, 78827) | date |  | docket_in_FR=True; title_jaccard=1.0; drs_docnum=2024-21812; url_docnum=2024-21812; cite_date==FR:True; sheet_consistent=True; other_row_matches=False | sheet_pages_suspect |
-| 162 | FAA-2022-0876 | direct_url | 2024-03-22 / (20363, 20364) | 2024-03-22 / (20363, 20364) | date |  | docket_in_FR=True; title_jaccard=1.0; drs_docnum=2024-05913; url_docnum=2024-05913; cite_date==FR:True; sheet_consistent=True; other_row_matches=False | sheet_pages_suspect |
-| 175 | FAA-2018-0440 | direct_url | 2021-10-29 / (59899, 59900) | 2021-10-29 / (59899, 59900) | date |  | docket_in_FR=True; title_jaccard=1.0; drs_docnum=2021-23514; url_docnum=2021-23514; cite_date==FR:True; sheet_consistent=True; other_row_matches=False | sheet_pages_suspect |
-| 177 | FAA-2021-0255 | direct_url | 2021-09-08 / (50484, 50485) | 2021-09-09 / (50484, 50485) | date |  | docket_in_FR=True; title_jaccard=1.0; drs_docnum=opaque; url_docnum=2021-19355; cite_date==FR:True; sheet_consistent=True; other_row_matches=False | sheet_pages_suspect |
-| 178 | FAA-2021-0298 | direct_url | 2021-08-24 / (47419, 47420) | 2021-08-25 / (47419, 47420) | date |  | docket_in_FR=True; title_jaccard=1.0; drs_docnum=opaque; url_docnum=2021-18228; cite_date==FR:True; sheet_consistent=True; other_row_matches=False | sheet_pages_suspect |
-| 179 | FAA-2018-0689 | direct_url | 2021-07-27 / (40378, 40379) | 2021-07-28 / (40378, 40379) | date |  | docket_in_FR=True; title_jaccard=1.0; drs_docnum=opaque; url_docnum=2021-15952; cite_date==FR:True; sheet_consistent=True; other_row_matches=False | sheet_pages_suspect |
-| 180 | FAA-2020-0713 | direct_url | 2021-07-22 / (38949, 38950) | 2021-07-23 / (38949, 38950) | date |  | docket_in_FR=True; title_jaccard=1.0; drs_docnum=opaque; url_docnum=2021-15533; cite_date==FR:True; sheet_consistent=True; other_row_matches=False | sheet_pages_suspect |
-| 181 | FAA-2018-0422 | inferred_search | 2021-06-27 / (33915, 33916) | 2021-06-28 / (33915, 33916) | date |  | docket_in_FR=True; title_jaccard=1.0; drs_docnum=opaque; url_docnum=2021-13482; cite_date==FR:True; sheet_consistent=True; other_row_matches=False | sheet_pages_suspect |
-| 182 | FAA-2020-0089 | direct_url | 2021-06-23 / (33152, 33153) | 2021-06-24 / (33152, 33153) | date |  | docket_in_FR=True; title_jaccard=1.0; drs_docnum=opaque; url_docnum=2021-13133; cite_date==FR:True; sheet_consistent=True; other_row_matches=False | sheet_pages_suspect |
-| 183 | FAA-2020-0994 | direct_url | 2021-06-07 / (30398, 30399) | 2021-06-08 / (30398, 30399) | date |  | docket_in_FR=True; title_jaccard=1.0; drs_docnum=opaque; url_docnum=2021-11813; cite_date==FR:True; sheet_consistent=True; other_row_matches=False | sheet_pages_suspect |
-| 185 | FAA-2020-0985 | direct_url | 2021-04-01 / (17329, 17330) | 2021-04-02 / (17329, 17330) | date |  | docket_in_FR=True; title_jaccard=1.0; drs_docnum=opaque; url_docnum=2021-06768; cite_date==FR:True; sheet_consistent=True; other_row_matches=False | sheet_pages_suspect |
 | 187 | FAA-2007-0373 | direct_url | 2021-03-14 / (74210, 74213) | 2021-03-15 / (14289, 14290) |  | pages | docket_in_FR=True; title_jaccard=1.0; drs_docnum=opaque; url_docnum=2021-05219; cite_date==FR:True; sheet_consistent=True; other_row_matches=False | sheet_pages_suspect |
-| 206 | FAA-2019-0518 | direct_url | 2020-03-29 / (17510, 17510) | 2020-03-30 / (17510, 17510) | date |  | docket_in_FR=True; title_jaccard=1.0; drs_docnum=opaque; url_docnum=2020-06503; cite_date==FR:True; sheet_consistent=True; other_row_matches=False | sheet_pages_suspect |
 | 288 | FAA-2009-0559 | direct_url | 2016-03-13 / (29148, 29149) | 2016-03-14 / (13303, 13303) |  | pages | docket_in_FR=True; title_jaccard=0.67; drs_docnum=opaque; url_docnum=2016-05517; cite_date==FR:True; sheet_consistent=True; other_row_matches=False | sheet_pages_suspect |
 
-Verdict counts: sheet_pages_suspect=14.
+Verdict counts: sheet_pages_suspect=2.
 
 These are evidence-based assessments, not corrections: no sheet value or FR link is modified; the rows keep the flags `sheet_fr_date_mismatch` / `sheet_fr_pages_mismatch` in `records.dq_flags_json`.
 
@@ -99,8 +87,8 @@ These are evidence-based assessments, not corrections: no sheet value or FR link
 | downloaded PDFs (organiser docs) | 428 |
 | parsed documents (extraction_status ok) | 428 |
 | indexed pages (organiser docs, pages table) | 1334 |
-| indexed chunks, organiser docs (search.sqlite) | 11278 |
-| indexed chunks, all (organiser + final-rule enrichment; search.sqlite) | 13591 |
+| indexed chunks, organiser docs (search.sqlite) | 11261 |
+| indexed chunks, all (organiser + final-rule enrichment; search.sqlite) | 13574 |
 | failed downloads (ingest_failures.json) | 0 |
 | metadata-only records (no FR document) | 3 |
 | enrichment: final-rule documents / pages (source fr_final_rule_lookup) | 75 / 272 |

@@ -300,6 +300,17 @@ def answer(req: QueryRequest) -> QueryResponse:
         if unknown and not (q_res.docnums or q_res.meta_only):
             return _finish(ab.abstain(ab.DIRECTIVE_NOT_FOUND, candidates=q_res.near_miss, warnings=q_res.near_labels), t0, tm)
 
+    if pq.compliance:
+        return _finish(ab.abstain(ab.COMPLIANCE_DETERMINATION_OUT_OF_SCOPE), t0, tm)
+    if pq.superlative:
+        return _finish(ab.abstain(ab.UNSUPPORTED_QUESTION), t0, tm)
+
+    # metadata-only records that this response will not cover are named, never dropped silently
+    skipped = res.meta_only if res.docnums else res.meta_only[1:]
+    if skipped:
+        ids = ", ".join(r.get("record_id") or r["docket_norm"] or f"sheet row {r['row']}" for r in skipped)
+        warnings.append(f"Source text unavailable for {ids} (spreadsheet metadata only); not covered by this answer.")
+
     if res.meta_only and not res.docnums:
         rec = res.meta_only[0]
         extra = {}
@@ -312,13 +323,8 @@ def answer(req: QueryRequest) -> QueryResponse:
                 conn.close()
             if hist:
                 extra["revision"] = RevisionResult(dataset_history=hist)
-        return _finish(ab.abstain(ab.SOURCE_TEXT_UNAVAILABLE, citations=ab.sheet_citations(rec),
+        return _finish(ab.abstain(ab.SOURCE_TEXT_UNAVAILABLE, citations=ab.sheet_citations(rec), warnings=warnings,
                                   directive=cat.meta_only_info(rec), **extra), t0, tm)
-
-    if pq.compliance:
-        return _finish(ab.abstain(ab.COMPLIANCE_DETERMINATION_OUT_OF_SCOPE), t0, tm)
-    if pq.superlative:
-        return _finish(ab.abstain(ab.UNSUPPORTED_QUESTION), t0, tm)
 
     ac = req.aircraft
     docnums = list(res.docnums)

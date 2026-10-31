@@ -19,7 +19,7 @@ const mono = "font-mono text-xs";
 const columns = [
   col.accessor((r) => (r.record_ids ?? []).join(", "), { id: "record", header: "Record", cell: (c) => <span className={`${mono} font-semibold`}>{c.getValue() || <span className="text-slate-400">—</span>}</span> }),
   col.accessor((r) => r.docket ?? "", { id: "docket", header: "Docket", cell: (c) => <span className={mono}>{c.getValue()}</span> }),
-  col.accessor("fr_docnum", { header: "FR Doc", cell: (c) => <span className={`${mono} text-blue-700`}>{c.getValue()}</span> }),
+  col.accessor((r) => r.fr_docnum ?? "", { id: "fr_docnum", header: "FR Doc", cell: (c) => c.getValue() ? <span className={`${mono} text-blue-700`}>{c.getValue()}</span> : <span className="text-xs text-slate-500">No FR text</span> }),
   col.accessor((r) => (r.make ?? []).join(", "), { id: "make", header: "Make", cell: (c) => <span className="text-xs">{c.getValue()}</span> }),
   col.accessor((r) => joinModels(r.models), { id: "models", header: "Models", enableSorting: false, cell: (c) => <span className="text-xs text-slate-600">{c.getValue()}</span> }),
   col.accessor((r) => stageFromDocClass(r.doc_class) ?? "", { id: "stage", header: "Stage", cell: (c) => <StagePill stage={c.getValue()} compact /> }),
@@ -29,8 +29,8 @@ const columns = [
     cell: (c) => (
       <div className="flex flex-col items-start gap-1">
         <SourceBadge source={c.row.original.source} />
-        <a href={`https://www.federalregister.gov/d/${encodeURIComponent(c.row.original.fr_docnum)}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}
-          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline">Official <ExternalLink size={11} aria-hidden /></a>
+        {c.row.original.fr_docnum && <a href={`https://www.federalregister.gov/d/${encodeURIComponent(c.row.original.fr_docnum)}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}
+          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline">Official <ExternalLink size={11} aria-hidden /></a>}
       </div>
     ),
   }),
@@ -59,7 +59,10 @@ export default function Directives() {
   const data = useMemo(() => rows, [rows]);
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({ data, columns, state: { sorting }, onSortingChange: setSorting, getCoreRowModel: getCoreRowModel(), getSortedRowModel: getSortedRowModel() });
-  const open = (r: DirectiveListItem) => router.push(`/directives/${encodeURIComponent(r.fr_docnum)}`);
+  const open = (r: DirectiveListItem) => {
+    const id = r.fr_docnum ?? r.record_ids?.[0] ?? r.docket;   // metadata-only rows have no FR docnum
+    if (id) router.push(`/directives/${encodeURIComponent(id)}`);
+  };
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-4 p-4 md:p-6">

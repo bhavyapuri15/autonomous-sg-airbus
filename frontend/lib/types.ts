@@ -234,7 +234,7 @@ export type LooseRecord = Record<string, unknown>;
 export type DirectiveSource = "organiser_sheet" | "fr_final_rule_lookup" | string;
 
 export interface DirectiveListItem {
-  fr_docnum: string;
+  fr_docnum: string | null;   // null for metadata-only records (no FR document)
   docket?: string | null;
   doc_class?: string | null;
   title?: string | null;

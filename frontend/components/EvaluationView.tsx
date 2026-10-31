@@ -3,6 +3,8 @@ import { useState } from "react";
 import { isRec, str, type Rec } from "@/lib/loose";
 import { Badge, Card, Tabs } from "@/components/ui";
 
+// the section n is the denominator of rates only, not of counts such as false_operative_count
+const RATE_KEY = /(acc|accuracy|rate|recall|precision|mrr|f1)/i;
 const label = (k: string) => k.replaceAll("_", " ");
 const isScalar = (v: unknown) => v === null || ["string", "number", "boolean"].includes(typeof v);
 
@@ -67,7 +69,7 @@ function Node({ name, v, depth }: { name: string; v: unknown; depth: number }) {
       </h2>
       {nums.length > 0 && (
         <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
-          {nums.map(([k, x]) => <Metric key={k} name={k} v={x} n={typeof n === "number" ? n : undefined} />)}
+          {nums.map(([k, x]) => <Metric key={k} name={k} v={x} n={typeof n === "number" && RATE_KEY.test(k) ? n : undefined} />)}
         </div>
       )}
       {notes.map(([k, x]) => <p key={k} className="text-xs text-slate-600"><span className="font-semibold">{label(k)}:</span> {String(x)}</p>)}

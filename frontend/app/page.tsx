@@ -52,7 +52,7 @@ export default function Home() {
     </div>
   );
   const viewer = cite && (
-    <DocumentViewer key={`${cite.citation_id}`} citation={cite} onClose={() => setCite(null)} stage={resp?.revision?.regulatory_stage || resp?.directive?.regulatory_stage} />
+    <DocumentViewer key={`${cite.citation_id}`} citation={cite} onClose={() => setCite(null)} stage={resp?.directive && !resp.directive.fr_docnum ? null : resp?.revision?.regulatory_stage || resp?.directive?.regulatory_stage} />
   );
 
   if (!wide) {

@@ -200,7 +200,7 @@ def build(db_path=None, verbose=True):
         flags = list(rec["flags"])
         notes = mr["metadata_mismatch_notes"]
         for key, name in (("date_mismatch", "sheet_fr_date_mismatch"), ("pages_mismatch", "sheet_fr_pages_mismatch"), ("docket_mismatch", "sheet_fr_docket_format_mismatch")):
-            if key in notes: flags.append(name)
+            if re.search(rf"(?:^|; ){key}\(", notes): flags.append(name)   # anchored: not the colR_..._date_mismatch notes
         rj = re.search(r"colR_docnum_rejected_date_mismatch=(\S+?)(?:;|$)", notes)
         if rj: flags.append("colR_url_date_mismatch_rejected=" + rj.group(1))
         if not dn: flags.append("no_fr_document")

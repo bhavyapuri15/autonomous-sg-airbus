@@ -84,7 +84,8 @@ function DirectiveHeader({ r }: { r: QueryResponse }) {
       <div className="flex flex-wrap items-center gap-2">
         {recs.length > 0 && <Badge tone="outline" className="px-2 py-1 font-mono text-sm font-semibold text-slate-900" data-testid="record-ids">Record {recs.join(", ")}</Badge>}
         <DocClassPill docClass={d.doc_class} />
-        <StagePill stage={r.revision?.regulatory_stage || d.regulatory_stage} />
+        {/* metadata-only record: the backend stage is a default, not a determination */}
+        <StagePill stage={d.fr_docnum ? r.revision?.regulatory_stage || d.regulatory_stage : null} />
         {src && <a className="ml-auto inline-flex items-center gap-1 text-sm text-blue-600 hover:underline" href={src} target="_blank" rel="noreferrer">Official source<ExternalLink size={13} aria-hidden /></a>}
       </div>
       {d.title && <h3 className="mt-2 text-lg font-semibold leading-snug">{d.title}</h3>}

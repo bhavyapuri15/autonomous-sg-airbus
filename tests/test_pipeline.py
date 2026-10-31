@@ -61,6 +61,13 @@ def test_metadata_only_record_id():
     r = pipeline.answer(req("What inspection does NPRM-409 require?"))
     assert r.abstention_reason == "SOURCE_TEXT_UNAVAILABLE"
     assert pipeline.answer(req("What does it require?", directive_id="NPRM-999")).abstention_reason == "DIRECTIVE_NOT_FOUND"
+    # compliance wording is refused for what it is, before the metadata-only branch
+    r = pipeline.answer(req("Certify my Cessna is compliant with NPRM-409"))
+    assert r.abstention_reason == "COMPLIANCE_DETERMINATION_OUT_OF_SCOPE"
+    # a second metadata-only id is named in a warning, not dropped silently
+    r = pipeline.answer(req("What do NPRM-396 and NPRM-409 require?"))
+    assert r.abstention_reason == "SOURCE_TEXT_UNAVAILABLE"
+    assert any("Source text unavailable for NPRM-409" in w or "Source text unavailable for NPRM-396" in w for w in r.warnings)
 
 
 def test_compliance():

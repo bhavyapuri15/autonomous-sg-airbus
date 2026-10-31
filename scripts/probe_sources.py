@@ -126,6 +126,9 @@ def apply_date_rule(row):
     around the row publish date (same +-2d match / AMBIGUOUS rule as inferred rows). Records the rejected docnums."""
     if not row["docnum_source"].startswith("colR_") or date_ok(row, row["docnum"]):
         return
+    if row_ref_date(row) is None or _pub_date(row["docnum"]) is None:   # cannot compare: keep the linked doc, never drop it
+        row["resolution"] = row["docnum_source"] + ";date_rule_not_applied"
+        return
     row["rejected_docnum"] = row["docnum"]
     for cand in row["extra_docnums"]:
         if date_ok(row, cand):

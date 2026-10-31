@@ -184,4 +184,4 @@ All results in sections 2-7 were measured on the pre-fix corpus and are left as 
 | F12 stage accuracy | 1.0 (304) | 0.9934 (304) |
 | F6 revision status | 1.0 (20) | 1.0 (20) |
 
-All 10 F1/F12 misses are cases whose frozen gold names one of the two removed NPRM documents (2019-14901, 2022-20442); their docket queries now return the withdrawal notice. The case files and locked manifests were not regenerated; doing so changes locked F1/F2/F3 cases and needs an explicit decision.
+All 10 F1/F12 misses are cases whose frozen gold names one of the two removed NPRM documents (2019-14901, 2022-20442); their docket queries now return the withdrawal notice. The case files and locked manifests were not regenerated; doing so changes locked F1/F2/F3 cases and needs an explicit decision. F8-08 (conflicting metadata) was built on the mis-mapped 2018-12886, whose two-row conflict was the bug itself; it now targets 2016-05517 (sheet pages 29148-29149 vs FR 81 FR 13303) and passes (F8 16/16). F2, F3, F7, F10, F13 and latency are unchanged on the fixed corpus.
