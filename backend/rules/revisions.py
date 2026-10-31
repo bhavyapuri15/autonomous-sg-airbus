@@ -302,6 +302,7 @@ def revision_status(fr_docnum, conn=None) -> RevisionResult:
         if sup_by:
             status = status if wd_by else RevisionStatus.SUPPLEMENTED
             sents.append("A later supplemental proposal revises this one: " + "; ".join(_fmt(conn, r[0]) for r in sup_by) + ".")
+            sents.extend(_successor_outcomes(conn, [r[0] for r in sup_by]))
         if fin_by:
             status = status if (wd_by or sup_by) else RevisionStatus.FINALIZED
             for r in fin_by:
@@ -325,6 +326,24 @@ def revision_status(fr_docnum, conn=None) -> RevisionResult:
         sents.append("Current regulatory status was not verified.")
     return RevisionResult(status=status, current_authoritative_status_verified=False, edges=edges, template_text=" ".join(sents),
                           latest_in_dataset=_latest(conn, fr_docnum) if doc else None)
+
+
+def _successor_outcomes(conn, start):
+    """Follow VERIFIED SUPPLEMENTS edges forward and report what happened to each successor proposal
+    (withdrawn / finalized), quoting only VERIFIED edges. Status of the original document is not changed:
+    the withdrawal or final rule cites the successor, not necessarily this document."""
+    out, seen, todo = [], set(start), list(start)
+    while todo:
+        s = todo.pop(0)
+        for (w,) in conn.execute("SELECT src FROM relations WHERE type='WITHDRAWS' AND confidence='VERIFIED' AND dst=?", (s,)):
+            out.append(f"The supplemental proposal {_fmt(conn, s)} was later withdrawn by {_fmt(conn, w)}.")
+        for (f,) in conn.execute("SELECT src FROM relations WHERE type='FINALIZES' AND confidence='VERIFIED' AND dst=?", (s,)):
+            out.append(f"The supplemental proposal {_fmt(conn, s)} was later finalized by {_fmt(conn, f)}.")
+        for (n,) in conn.execute("SELECT src FROM relations WHERE type='SUPPLEMENTS' AND confidence='VERIFIED' AND dst=?", (s,)):
+            if n not in seen:
+                seen.add(n); todo.append(n)
+                out.append(f"{_fmt(conn, s)} was itself supplemented by {_fmt(conn, n)}.")
+    return out
 
 
 def _latest(conn, dn):
@@ -352,6 +371,7 @@ def revision_overlay(fr_docnum, conn=None) -> list[str]:
                    "Proposal withdrawn by " + ", ".join(e.src for e in ver("WITHDRAWS") if e.dst == fr_docnum) + "; no proposed requirement.")
     if res.status == RevisionStatus.SUPPLEMENTED:
         out.append("A later supplemental proposal (" + ", ".join(e.src for e in ver("SUPPLEMENTS") if e.dst == fr_docnum) + ") revises this one; evaluate that document too.")
+        out.extend(_successor_outcomes(conn, [e.src for e in ver("SUPPLEMENTS") if e.dst == fr_docnum]))
     for e in ver("FINALIZES"):
         if e.dst == fr_docnum:
             out.append(f"A final rule (FR {e.src}) was published; evaluate the final rule's applicability, not this proposal's.")
