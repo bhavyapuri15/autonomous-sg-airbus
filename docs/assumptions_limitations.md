@@ -1,0 +1,27 @@
+# Assumptions and limitations
+
+Stated plainly so that judges can check them. Numbers are quoted from the notes and result files named in each line.
+
+## Assumptions
+1. **FR full text is authoritative over sheet metadata.** Where the spreadsheet and the Federal Register text disagree, the FR text is used and the sheet is a lower-trust tier that may support only metadata claims (`docs/architecture.md`). Eight FR documents are shared by 16 sheet rows that disagree on pages or dates (`notes/reconciliation.md`); both rows are exposed.
+2. **"Latest in dataset" is not legal currency.** It means the latest publish date among the supplied records for a docket. It does not establish that a proposal is current or enforceable.
+3. **The final-rule lookup is a public FR enrichment, not part of the organiser dataset.** It queried the public Federal Register API by docket (590 dockets) and found 75 rules. A proposal is linked to a final rule as VERIFIED only when the rule's own text cites the proposal's FR citation or date and the docket matches (`notes/final_rules_report.md`). Otherwise the link is a CANDIDATE.
+4. **"As identified in <external document>" can only narrow scope.** The engine treats such a reference as an unknown AND-condition: models not listed are NOT_APPLICABLE; listed models stay UNKNOWN until the external document (EASA AD, service bulletin) is checked by a human.
+5. **A shared docket never implies succession.** A docket alone gives at most an unverified link. Every revision edge needs a quoted text span or an FR metadata field. A proposal that "proposes to supersede AD X" is not presented as AD X being superseded.
+6. **The 191 inferred FR matches were verified by title, page and date.** Rows with no direct FR URL were matched by search. Checks: title token Jaccard at least 0.5, sheet page range equals FR range, and sheet date or citation-text date equals the FR publication date. Result: match_verified true = 191, false = 0 (`notes/reconciliation.md`).
+7. **Index workbook not yet integrated.** The organiser index (`record_id`, `revision_chains`) was published during the build and is being integrated. The corpus counts here come from our own ingestion. The impact audit lists 406 links in the index against our 428 resolved rows (`docs/organiser_update_impact.md`); that difference has not yet been reconciled.
+
+## Limitations
+- **Applicability parse coverage: 221 FULL / 91 PARTIAL / 39 FAILED** over the 351 documents (dataset proposals plus final rules) that have an Applicability paragraph; a further 144 documents (mostly withdrawal notices) have no Applicability paragraph and return FAILED / NO_APPLICABILITY_PARAGRAPH (counted from `data/processed/applicability_rules.json`, 495 documents). Every non-FULL result returns UNKNOWN, never a guess.
+- **Tables and conjunctive conditions are not parsed.** Table-form applicability and compound AND/OR conditions that the rule language cannot express fall into PARTIAL or FAILED and return UNKNOWN with the verbatim paragraph.
+- **The verifier checks wording, not full meaning.** V1-V8 confirm that a claim's wording, identifiers, numbers and polarity trace to a verbatim quote. They cannot catch subject/object swaps, a faithful quote that misleads out of context, or implied conditions beyond the enclosing sentence (`notes/verification_report.md`). The optional LLM judge (V9) can only reject.
+- **F3 answer accuracy is modest.** Final dev: extractive 0.3 (6/20), LLM 0.75 (15/20). Locked: extractive 0.2105 (4/19), LLM 0.5789 (11/19). Citations are valid in every run (1.0), but a valid citation does not mean the answer is right.
+- **Evaluation sets are small.** F2 n=42 dev / 36 locked, F3 n=20 / 19, F7 n=30 refusal cases (dev) / 24 (locked), F6 n=20 (dev only), F8 n=16. Dev results are tuned (F1 router fixes, F7 threshold calibration); F7 dev scores are optimistic. The questions were written by a Claude Sonnet agent and checked for answerability by the author only.
+- **The locked split has no revision (F6) cases**, and its F8 scenarios use dev directives.
+- **Quantized embeddings.** The dense model is the int8-quantized ONNX build of `bge-small-en-v1.5` (`Qdrant/bge-small-en-v1.5-onnx-Q` via fastembed). Retrieval quality vs the unquantized model was not measured; vectors shift by up to 4.2e-4 across batch sizes, so cached embeddings are reused for determinism. Locked Applicability retrieval is weak (doc R@5 0.4444, n=9).
+- **Current status of final ADs is not checked.** A VERIFIED final rule says the rule cites the proposal. Whether that final AD was later amended or superseded is not examined; the UI and API state "Current authoritative status NOT verified". `NO_FINAL_RULE_FOUND_IN_FR` is not proof that no final rule exists (legacy documents, or a rule filed under a new docket).
+- **3 metadata-only records.** Rows 397, 410 and 412 (withdrawals) have no FR document; technical questions about them are refused with SOURCE_TEXT_UNAVAILABLE.
+- **Legacy data quality.** Ten revision warnings are raised (DATES_OUT_OF_ORDER 10, FINAL_RULE_FOR_WITHDRAWN 1) and flagged, not resolved. One page-mapping miss among 6,792 final-rule snippets is documented in `notes/revisions_report.md`.
+- **Impact benchmark.** If run by a single person, it is anecdotal, not a significance claim. It has not been run: "pending: manual arm not yet run".
+- **Not a compliance tool.** Output is decision support. Most records are proposals, which are not enforceable.
+- **Latency** was measured on one development machine, warm, without concurrency.
