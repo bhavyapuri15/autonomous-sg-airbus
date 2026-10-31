@@ -1020,13 +1020,22 @@ def render(rule: ApplicabilityRule, cfg: AircraftConfig, ev: Evaluation, T: Opti
     if T is not None:
         ap = pages.cite(T[rule.span[0]:rule.span[1]], rule.span[0], rule.span[1], "(c)")
     first = next((e for s in steps for e in s.evidence), None)
-    cite_s = f"“{first.quote[:100]}”" if first else "applicability paragraph"
     page = first.fr_page if first and first.fr_page else (ap.fr_page if ap else None)
+    vol, final = None, False
+    try:
+        row = _retry(lambda: _connect().execute("select volume, doc_class from documents where fr_docnum=?",
+                                                (rule.fr_docnum,)).fetchone())
+        if row:
+            vol, final = row[0], row[1] == "FINAL_RULE"
+    except Exception:
+        pass
+    cite_s = f"{vol} FR {page}" if vol and page else (f"FR page {page}" if page else "applicability paragraph")
+    would, would_not = (("the AD as published in this final rule applies to", "the AD as published in this final rule does not apply to")
+                        if final else ("the proposed AD would apply to", "the proposed AD would not apply to"))
     if ev.value == "T":
-        txt = (f"Based on paragraph (c) of FR {rule.fr_docnum} ({cite_s}, p. {page}), the proposed AD would apply to "
-               f"{mdl} S/N {ser}: {ev.reason}.")
+        txt = (f"Based on paragraph (c) of FR {rule.fr_docnum} ({cite_s}), {would} {mdl} S/N {ser}: {ev.reason}.")
     elif ev.value == "F":
-        txt = (f"Based on paragraph (c) of FR {rule.fr_docnum}, the proposed AD would not apply to {mdl} S/N {ser}: {ev.reason}.")
+        txt = (f"Based on paragraph (c) of FR {rule.fr_docnum} ({cite_s}), {would_not} {mdl} S/N {ser}: {ev.reason}.")
     else:
         txt = f"Applicability cannot be determined from the source: {ev.reason}. Needed: {', '.join(ev.missing) if ev.missing else 'n/a'}."
     return ApplicabilityResult(value=value, template_text=txt, explanation=steps, missing=ev.missing,
