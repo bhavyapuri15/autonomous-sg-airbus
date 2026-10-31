@@ -55,6 +55,12 @@ class CitationRef(BaseModel):
     pdf_url: Optional[str] = None
     xml_url: Optional[str] = None
     sheet_row: Optional[int] = None  # for SHEET_* tiers
+    # Organiser citation format (update 31 Oct): record_id + FR citation and page + section.
+    record_ids: list[str] = []                       # stable organiser record_id(s) (NPRM-NNN) mapped to fr_docnum
+    docket_number: Optional[str] = None
+    federal_register_citation: Optional[str] = None  # e.g. "91 FR 66022" (volume FR printed page of the quote)
+    section: Optional[str] = None                    # human label, e.g. "(c) Applicability"
+    source_url: Optional[str] = None                 # official federalregister.gov document URL
 
 
 class Claim(BaseModel):
@@ -77,6 +83,53 @@ class ApplicabilityResult(BaseModel):
     rule_parse_status: Optional[Literal["FULL", "PARTIAL", "FAILED"]] = None
     evaluated_document: Optional[str] = None
     applicability_text: Optional[CitationRef] = None  # verbatim (c) paragraph for human review
+    basis: Literal["PROPOSED_RULE", "FINAL_RULE", "UNKNOWN"] = "UNKNOWN"
+    label: Optional[str] = None   # e.g. "Applicable under the proposed rule" / "Not applicable under the proposed rule"
+
+
+class RegulatoryStage(str, Enum):
+    PROPOSED_RULE = "PROPOSED_RULE"                  # NPRM
+    SUPPLEMENTAL_PROPOSAL = "SUPPLEMENTAL_PROPOSAL"  # SNPRM
+    WITHDRAWAL_NOTICE = "WITHDRAWAL_NOTICE"
+    CORRECTION = "CORRECTION"
+    FINAL_RULE = "FINAL_RULE"                        # FR final-rule document (found by the verified lookup)
+    OTHER = "OTHER"
+
+
+class Enforceability(str, Enum):
+    NOT_VERIFIED = "NOT_VERIFIED"                                    # default for every proposal
+    PROPOSAL_WITHDRAWN = "PROPOSAL_WITHDRAWN"                        # VERIFIED withdrawal: imposes no requirement
+    FINAL_RULE_PUBLISHED_VERIFIED = "FINAL_RULE_PUBLISHED_VERIFIED"  # VERIFIED final rule cites this proposal;
+    #                                                                 later amendments/supersession NOT checked
+
+
+class DatasetVersionEntry(BaseModel):
+    record_id: str
+    fr_docnum: Optional[str] = None
+    publish_date: Optional[str] = None
+    doc_class: Optional[str] = None
+    version: Optional[int] = None
+    is_latest: bool = False
+
+
+class DatasetHistory(BaseModel):
+    """Organiser revision_chains view: versions of one docket inside the supplied dataset (not legal currency)."""
+    docket: Optional[str] = None
+    versions_total: int = 1
+    this_version: Optional[int] = None
+    dataset_status: Literal["LATEST_IN_DATASET", "SUPERSEDED_IN_DATASET", "SINGLE_PUBLICATION", "NOT_IN_DATASET"] = "NOT_IN_DATASET"
+    latest_record_id: Optional[str] = None
+    history: list[DatasetVersionEntry] = []          # chronological (publish_date, version)
+    source: str = "organiser revision_chains worksheet (challenge4_ad_index.xlsx)"
+    note: str = "Latest publish date = latest version in the supplied dataset; this does not establish legal enforceability."
+    warnings: list[str] = []                         # ties, missing dates, disagreement with evidence graph
+
+
+class ProposedSupersession(BaseModel):
+    ad_number: str
+    source: Literal["organiser_supersedes_ad_field", "document_text"]
+    evidence: Optional[CitationRef] = None
+    operative_supersession_verified: bool = False    # True only if a VERIFIED final rule's text supersedes it
 
 
 class RevisionEdge(BaseModel):
@@ -97,6 +150,12 @@ class RevisionResult(BaseModel):
     edges: list[RevisionEdge] = []
     template_text: Optional[str] = None
     latest_in_dataset: Optional[str] = None
+    regulatory_stage: RegulatoryStage = RegulatoryStage.OTHER
+    enforceability: Enforceability = Enforceability.NOT_VERIFIED
+    status_flags: list[str] = []   # subset of LATEST_IN_DATASET, SUPERSEDED_IN_DATASET, WITHDRAWN_IN_DATASET, CORRECTED,
+    #                                FINAL_RULE_VERIFIED, CURRENT_AUTHORITATIVE_STATUS_UNKNOWN
+    dataset_history: Optional[DatasetHistory] = None
+    proposed_supersedes: list[ProposedSupersession] = []
 
 
 class DirectiveInfo(BaseModel):
@@ -108,6 +167,9 @@ class DirectiveInfo(BaseModel):
     citation: Optional[str] = None
     sheet_rows: list[int] = []
     pdf_url: Optional[str] = None
+    record_ids: list[str] = []
+    regulatory_stage: Optional[str] = None
+    source_url: Optional[str] = None
 
 
 class RejectedClaim(BaseModel):
