@@ -295,6 +295,7 @@ def answer(req: QueryRequest) -> QueryResponse:
 
     # --- 5/6/7. generation + verification --------------------------------------------------------
     claims: list[Claim] = []
+    inferred_candidates: list = []
     vinfo = VerificationInfo()
     cit_m, gr_m = deps.module("citations"), deps.module("grounding")
     if hits and not skip_generation:
@@ -315,7 +316,18 @@ def answer(req: QueryRequest) -> QueryResponse:
         elif req.use_llm:
             warnings.append("LLM not configured (ANTHROPIC_API_KEY unset); used extractive mode.")
         if mode == "extractive":
-            drafts = [_draft(cit_m, s, cid, s) for s, cid in extractive_claims(req.question, hits)]
+            if scoped:
+                drafts = [_draft(cit_m, s, cid, s) for s, cid in extractive_claims(req.question, hits)]
+            else:
+                # Corpus-wide question: answer from a single directive (orchestrator review found 14/20 dev answers
+                # mixing sentences from different directives) and skip header/closing boilerplate. Directives are
+                # tried in retrieval rank order until one yields a usable sentence (at most 3).
+                for d in list(dict.fromkeys(h["fr_docnum"] for h in hits))[:3]:
+                    ex_hits = [h for h in hits if h["fr_docnum"] == d
+                               and (h.get("section_path") or "") not in _BOILERPLATE_SECTIONS]
+                    drafts = [_draft(cit_m, s, cid, s) for s, cid in extractive_claims(req.question, ex_hits)]
+                    if drafts:
+                        break
         tm["generation"] = (time.perf_counter() - t) * 1000
         t = time.perf_counter()
         if drafts:
@@ -325,6 +337,24 @@ def answer(req: QueryRequest) -> QueryResponse:
         tm["verification"] = (time.perf_counter() - t) * 1000
         if insufficient and not claims:
             warnings.append("The model reported the sources do not answer the question.")
+        if claims and not scoped:
+            answer_doc = claims[0].citations[0].fr_docnum
+            dropped = [c for c in claims if c.citations[0].fr_docnum != answer_doc]
+            claims = [c for c in claims if c.citations[0].fr_docnum == answer_doc]
+            others = list(dict.fromkeys([h["fr_docnum"] for h in hits if h["fr_docnum"] != answer_doc]))[:4]
+            inferred_candidates = [i for i in (cat.info(d) for d in others) if i]
+            warnings.append(f"No directive ID was given: this answer is drawn from the best-matching directive FR {answer_doc}. "
+                            f"Confirm it is the intended directive; other possibly relevant directives are listed as candidates.")
+            if dropped:
+                warnings.append(f"{len(dropped)} verified statement(s) from other directives were withheld so that one answer "
+                                f"cites one directive.")
+            docnum = answer_doc
+            try:
+                rev_m = deps.module("revisions")
+                if rev_m is not None and revision is None:
+                    revision = rev_m.revision_status(answer_doc)
+            except Exception:
+                log.exception("revision status failed for inferred directive")
 
     # --- 7/8. assemble ------------------------------------------------------------------------------
     missing = list(pq.hints)
@@ -345,9 +375,11 @@ def answer(req: QueryRequest) -> QueryResponse:
             cits.extend(e.evidence)
     resp = QueryResponse(status=status, answer_claims=claims, applicability=applicability, revision=revision,
                          directive=cat.info(docnum) if docnum else None, citations=_dedupe(cits), warnings=warnings,
-                         missing_information=missing, verification=vinfo)
+                         missing_information=missing, verification=vinfo, candidates=inferred_candidates)
     return _finish(resp, t0, tm)
 
+
+_BOILERPLATE_SECTIONS = {"preamble/header", "closing"}
 
 _CONFLICT_FLAGS = {"sheet_fr_date_mismatch": "publication date", "sheet_fr_pages_mismatch": "page range",
                    "sheet_fr_docket_format_mismatch": "docket format"}

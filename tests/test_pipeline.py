@@ -229,3 +229,16 @@ def test_extractive_end_to_end_real_index():
     assert r.status in (AnswerStatus.ANSWERED, AnswerStatus.ABSTAINED)
     for cl in r.answer_claims:
         assert cl.citations
+
+
+def test_corpus_wide_answer_cites_single_directive():
+    # orchestrator review: corpus-wide answers must not mix sentences from different directives
+    from backend.answer.pipeline import answer
+    from backend.api.schemas import QueryRequest
+    r = answer(QueryRequest(question="Which Boeing bulletin identifies the 757-200 and -200CB airplanes affected by the proposed AD of February 2026?",
+                            use_llm=False))
+    docs = {c.citations[0].fr_docnum for c in r.answer_claims}
+    assert len(docs) <= 1, docs
+    if r.answer_claims:
+        assert any("best-matching directive" in w for w in r.warnings)
+        assert all(c.citations[0].section_path not in ("preamble/header", "closing") for c in r.answer_claims)
