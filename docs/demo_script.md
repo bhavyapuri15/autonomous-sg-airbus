@@ -11,7 +11,7 @@ All scenarios use **real records** from the organiser dataset, all in the dev sp
 ## 0:00–0:20 Problem framing (talk track)
 - An engineer must decide whether an FAA airworthiness directive applies to a specific aircraft (model and serial number), and whether that directive is still a live proposal, was withdrawn, or became a final rule.
 - Today that means searching the Federal Register, reading paragraph (c) "Applicability", and chasing related notices.
-- Our tool covers the organiser's 431 rows. They resolve to 420 Federal Register documents (1,324 pages), plus 75 final rules found through a verified lookup.
+- Our tool covers the organiser's 431 rows. They resolve to 428 Federal Register documents (1,334 pages), plus 75 final rules found through a verified lookup.
 - Every statement is tied to an exact Federal Register page and quote. When the evidence is incomplete, the system says UNKNOWN or refuses instead of guessing.
 
 ## 0:20–1:00 Scenario A: exact directive retrieval with traceable evidence

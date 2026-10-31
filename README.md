@@ -16,7 +16,7 @@ Numbers are from `notes/reconciliation.md` and the evaluation result files.
 | Item | Count |
 |---|---|
 | Organiser records | 431 (an earlier figure of 432 was corrected to 431) |
-| FR documents resolved | 420 unique documents, covering 428 records (8 rows share a document with another row) |
+| FR documents resolved | 428 unique documents, one per resolved record (12 legacy withdrawal rows re-resolved to their withdrawal notice; see `notes/reconciliation.md`) |
 | Metadata-only records (no FR document) | 3 |
 | Dataset PDF pages | 1,324 |
 | Public FR final rules found by an evidence-verified lookup | 75 rules, 272 pages |

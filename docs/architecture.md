@@ -21,12 +21,12 @@
 - **A4 Page mapping.** XML→PDF page mapping is validated on real documents, including paragraphs that span pages, and the validation rate is reported. If precise highlighting fails, page-level citations are still kept.
 - **A5 Revision relationships.** Every edge needs evidence: an FR metadata field or a quoted text span. Sharing a docket alone never implies succession.
 - **A6 Impact benchmark.** A small manual-vs-assisted retrieval benchmark measuring time and steps.
-- **A7 Reconciliation.** A documented walk from 431 rows to 428 resolved rows to 420 unique docs, listing the 3 metadata-only rows and all duplicates.
+- **A7 Reconciliation.** A documented walk from 431 rows to 428 resolved rows to 428 unique docs, listing the 3 metadata-only rows and any shared documents (none since the withdrawal-row date rule).
 - **Runtime answer model:** `claude-sonnet-5-5`, with a no-LLM extractive fallback.
 
 ## 1. Data interpretation
 - **The sheet is a metadata index of mixed formats.** It is not a document corpus.
-- **Authoritative text comes from Federal Register (FR) full text.** That means XML for structure plus the govinfo PDF for the page viewer, covering 420 documents and 1,324 pages.
+- **Authoritative text comes from Federal Register (FR) full text.** That means XML for structure plus the govinfo PDF for the page viewer, covering 428 documents and 1,334 pages.
 - **Sheet text is a lower-trust tier.** Summary and the text pasted into col R are classified as `SHEET_METADATA` / `SHEET_EMBEDDED_TEXT`. They may support only metadata claims (C8).
 - **3 rows have no FR document.** They are kept as metadata-only records, and every technical question about them is refused.
 - **Domain framing.** Every document is a *proposed* AD. Each document is labelled with an FR `action`: NPRM, SNPRM, withdrawal or correction.

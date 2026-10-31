@@ -167,6 +167,21 @@ Final F3 extractive dev accuracy (0.3, 6/20) is above the 0.25 baseline but belo
 **Pending: manual arm not yet run.** `evaluation/impact_tasks.md` defines eight dev-split tasks, the protocol (manual federalregister.gov arm vs assisted UI arm; time, correctness, steps) and a blank results table. No results are recorded. If it is run by a single person, it is anecdotal and will be reported as such.
 
 ## 8. Not evaluated
-- Organiser-index record-ID, revision-chain, regulatory-status and proposed-vs-verified-supersession evaluation families (`docs/organiser_update_impact.md`): not yet added.
+- Organiser-index families F10-F13 are added (dev results in `evaluation/results/20261031-132953_dev.json`); their locked split has not been run.
 - Frontend behaviour beyond unit tests (`vitest`).
 - Latency under concurrent load, and on other hardware.
+
+
+## 9. Corpus fix after these runs (31 Oct, after the F10-F13 dev run)
+F11 (revision chains) found that legacy withdrawal rows linking the withdrawn NPRM's URL first were mapped to the NPRM's FR document. The resolver now accepts a linked document only when its publication date is within 3 days of the row's publish date (and, for other URLs in the cell, its docket matches). 12 rows were re-resolved to their withdrawal notices; organiser FR documents went 420 -> 428 and shared-document rows 16 -> 0. The four withdrawn NPRMs that have no sheet row of their own left the corpus.
+
+All results in sections 2-7 were measured on the pre-fix corpus and are left as recorded. Dev re-run on the fixed corpus with the **unchanged, frozen case files** (`--no-write`):
+
+| Family | Before (n) | After (n) |
+|---|---|---|
+| F11 revision chain status | 0.9635 (192) | 1.0 (192) |
+| F1 exact-ID acc@1 | 1.0 (1125) | 0.9929 (1125) |
+| F12 stage accuracy | 1.0 (304) | 0.9934 (304) |
+| F6 revision status | 1.0 (20) | 1.0 (20) |
+
+All 10 F1/F12 misses are cases whose frozen gold names one of the two removed NPRM documents (2019-14901, 2022-20442); their docket queries now return the withdrawal notice. The case files and locked manifests were not regenerated; doing so changes locked F1/F2/F3 cases and needs an explicit decision.

@@ -13,7 +13,7 @@
 |---|---|---|
 | `organiser_sheet` | `data/raw/sheet_snapshot/dataset.xlsx` (SHA256 `3bc255f5…b1fd0`), 431 NPRM rows | organiser download, SHA verified on every build |
 | `organiser_index_workbook` | `data/raw/organiser_v2/challenge4_index/challenge4_ad_index.xlsx` (SHA256 `10b46b2b…3206678`), public Drive folder `1FOw-3WXMylypPpY3wZMyzpYSbnKC4Ybt`, file `144lTTfdJLSmWH3Eeyqez6u6Tv7gMfz1I`, fetched 2026-10-31 13:10 | manual download, SHA verified on every build |
-| `federal_register_documents` | FR metadata JSON, XML and PDF for the 420 documents referenced by the sheet | `scripts/ingest.py` |
+| `federal_register_documents` | FR metadata JSON, XML and PDF for the 428 documents referenced by the sheet | `scripts/ingest.py` |
 | `fr_final_rule_lookup` | enrichment: final rules and related FR documents found by docket search | `scripts/fetch_final_rules.py`, then `scripts/ingest.py` |
 
 The machine-readable manifest is `data/processed/external_data_manifest.json`. For each source it lists the URL pattern, acquisition script and licence note.
