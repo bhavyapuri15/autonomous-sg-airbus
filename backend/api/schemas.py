@@ -200,3 +200,83 @@ class ApplicabilityCheckResponse(BaseModel):
 class ErrorResponse(BaseModel):
     error: str
     detail: Optional[str] = None
+
+
+# --- added by API agent ---
+class HealthResponse(BaseModel):
+    status: str
+    db: dict = {}
+    modules: dict = {}
+    llm_configured: bool = False
+
+
+class DirectiveListItem(BaseModel):
+    fr_docnum: Optional[str] = None
+    docket: Optional[str] = None
+    doc_class: Optional[str] = None
+    title: Optional[str] = None
+    publication_date: Optional[str] = None
+    source: Optional[str] = None
+    make: list[str] = []
+    models: list[str] = []
+    ad_number: Optional[str] = None
+    sheet_rows: list[int] = []
+
+
+class DirectiveListResponse(BaseModel):
+    total: int
+    limit: int
+    offset: int
+    items: list[DirectiveListItem]
+
+
+class DocumentMeta(BaseModel):
+    fr_docnum: str
+    title: Optional[str] = None
+    fr_type: Optional[str] = None
+    doc_class: Optional[str] = None
+    publication_date: Optional[str] = None
+    volume: Optional[int] = None
+    start_page: Optional[int] = None
+    end_page: Optional[int] = None
+    dockets: list[str] = []
+    pdf_url: Optional[str] = None
+    xml_url: Optional[str] = None
+    html_url: Optional[str] = None
+    source: Optional[str] = None
+    extraction_status: Optional[str] = None
+    pdf_cached: bool = False
+    page_count: int = 0
+
+
+class SheetRow(BaseModel):
+    row: int
+    docket: Optional[str] = None
+    fr_docnum: Optional[str] = None
+    subject: Optional[str] = None
+    status_raw: Optional[str] = None
+    publish_date: Optional[str] = None
+    make: Optional[str] = None
+    models: list[str] = []
+    ad_number: Optional[str] = None
+    citation: Optional[str] = None
+    summary: Optional[str] = None
+
+
+class DirectiveDetail(BaseModel):
+    query_id: str
+    documents: list[DocumentMeta] = []
+    sheet_rows: list[SheetRow] = []
+    revision: Optional[RevisionResult] = None
+    relations: list[dict] = []
+    applicability_text: Optional[CitationRef] = None
+    warnings: list[str] = []
+    candidates: list[DirectiveInfo] = []
+
+
+class PageResponse(BaseModel):
+    fr_docnum: str
+    pdf_page: int
+    fr_page: Optional[int] = None
+    text: str
+    is_image_only: bool = False

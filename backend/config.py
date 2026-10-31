@@ -20,3 +20,14 @@ DB_PATH = INDEXES / "ad.sqlite"
 FR_API = "https://www.federalregister.gov/api/v1"
 HTTP_USER_AGENT = "autonomous-sg-airbus-hackathon-prototype/0.1 (research; contact via repo)"
 HTTP_SLEEP_S = 0.5
+
+# --- answer pipeline (API agent) ---
+ANSWER_TOP_K = 8
+# TO BE CALIBRATED ON DEV SPLIT. Retrieval gate: abstain NO_SUPPORTING_EVIDENCE when no hit is
+# pinned by an exact ID and the best dense cosine is below this value. Observed bge-small best-hit cosines:
+# off-topic queries 0.30-0.54, domain queries 0.68-0.80 (BM25 scores are not discriminative: OR-matching).
+MIN_TOP_DENSE_COSINE = 0.60
+LLM_MODEL = "claude-sonnet-5-5"
+LLM_TIMEOUT_S = 20
+LLM_MAX_TOKENS = 1200
+EXTRACTIVE_MAX_CLAIMS = 3

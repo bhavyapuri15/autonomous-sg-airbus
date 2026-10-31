@@ -20,7 +20,7 @@ def _md_table(headers, rows):
 def reconcile(db_path=None, out_path=OUT):
     conn = sqlite3.connect(db_path or config.DB_PATH); conn.row_factory = sqlite3.Row
     recs = [dict(r) for r in conn.execute("SELECT * FROM records ORDER BY row")]
-    docs = {r["fr_docnum"]: dict(r) for r in conn.execute("SELECT * FROM documents")}
+    docs = {r["fr_docnum"]: dict(r) for r in conn.execute("SELECT * FROM documents WHERE source='organiser_sheet'")}
     L = []
     n_rows = len(recs)
     with_doc = [r for r in recs if r["fr_docnum"]]

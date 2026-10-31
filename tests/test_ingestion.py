@@ -103,7 +103,7 @@ def test_counts(conn):
     assert conn.execute("SELECT count(*) FROM records").fetchone()[0] == 431
     assert conn.execute("SELECT count(DISTINCT row) FROM records").fetchone()[0] == 431
     assert conn.execute("SELECT count(*) FROM documents WHERE source='organiser_sheet'").fetchone()[0] == 420
-    assert conn.execute("SELECT count(*) FROM doc_text").fetchone()[0] == 420
+    assert conn.execute("SELECT count(*) FROM doc_text WHERE fr_docnum IN (SELECT fr_docnum FROM documents WHERE source='organiser_sheet')").fetchone()[0] == 420
     assert conn.execute("SELECT count(*) FROM pages").fetchone()[0] >= 1000
 
 

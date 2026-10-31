@@ -1,5 +1,5 @@
 """Deterministic SQLite build from cached sheet + FR metadata/XML/PDF. No network, no wall-clock in content tables."""
-import csv, datetime as dt, hashlib, json, re, sqlite3, sys
+import csv, datetime as dt, hashlib, json, os, re, sqlite3, sys
 from pathlib import Path
 from backend import config
 from backend.ingestion import sheets_loader, schema_normalizer as sn, fr_xml_parser as fxp, pdf_parser as pp
@@ -16,7 +16,7 @@ CREATE TABLE documents(
  fr_docnum TEXT PRIMARY KEY, title TEXT, fr_type TEXT, action_raw TEXT, doc_class TEXT, publication_date TEXT, volume INTEGER,
  start_page INTEGER, end_page INTEGER, page_length INTEGER, docket_ids_json TEXT, cfr_refs_json TEXT, correction_of_json TEXT,
  pdf_url TEXT, xml_url TEXT, html_url TEXT, xml_sha256 TEXT, pdf_sha256 TEXT, metadata_sha256 TEXT,
- source TEXT, extraction_status TEXT, era TEXT, parse_warnings_json TEXT);
+ source TEXT, extraction_status TEXT, era TEXT, parse_warnings_json TEXT, is_rfc INTEGER, effective_on TEXT);
 CREATE TABLE doc_text(fr_docnum TEXT PRIMARY KEY, text TEXT);
 CREATE TABLE sections(
  id TEXT PRIMARY KEY, fr_docnum TEXT, seq INTEGER, section_path TEXT, kind TEXT, label TEXT, heading TEXT,
@@ -28,7 +28,8 @@ CREATE TABLE pages(
  is_image_only INTEGER, mapping_ok INTEGER, PRIMARY KEY(fr_docnum, pdf_page));
 CREATE TABLE ingest_log(id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, stage TEXT, fr_docnum TEXT, level TEXT, message TEXT);
 """
-CONTENT_TABLES = {"records": "row", "documents": "fr_docnum", "doc_text": "fr_docnum", "sections": "id", "pages": "fr_docnum,pdf_page"}
+CONTENT_TABLES = {"records": "row", "documents": "fr_docnum", "doc_text": "fr_docnum", "sections": "id", "pages": "fr_docnum,pdf_page",
+                  "final_rule_info": "fr_docnum", "final_rule_links": "dataset_docnum,rule_docnum", "relations": "id", "revision_warnings": "id"}
 
 # ---- doc_class rule table (ordered; first match wins). Applied to lower-cased FR `action`, then title. -----------------
 DOC_CLASS_RULES = [
@@ -93,10 +94,39 @@ def verify_inferred(rec, doc_meta):
                                sheet_publish=rec["publish_date"], sheet_citation_date=cd, fr_publish=fr_d, date_matched_via=date_via, failed=reasons)
 
 
+def insert_doc_content(conn, dn, doc, pages, sp):
+    """doc_text + sections + pages rows for one parsed document (shared by dataset docs and final-rule docs)."""
+    if doc is not None:
+        conn.execute("INSERT INTO doc_text VALUES(?,?)", (dn, doc.text))
+        npdf = len(pages)
+        def pdfp(fr):
+            p = fr - sp + 1
+            return p if 1 <= p <= npdf else None
+        for s in doc.sections:
+            conn.execute("INSERT INTO sections VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
+                f"{dn}:{s['seq']:04d}", dn, s["seq"], s["path"], s["kind"], s["label"], s["heading"], s["ancestor"], s["top"],
+                s["level"], s["start_char"], s["end_char"], s["text"], int(s["has_table"]), s["fr_page_start"], s["fr_page_end"],
+                pdfp(s["fr_page_start"]), pdfp(s["fr_page_end"])))
+    for i, t in enumerate(pages, 1):
+        hdr = pp.header_fr_page(t)
+        fr = sp + i - 1
+        conn.execute("INSERT INTO pages VALUES(?,?,?,?,?,?,?,?)", (dn, i, fr, t, len(t), hdr, int(len(t) < 50),
+                                                                   None if hdr is None else int(hdr == fr)))
+
+
+DOC_COLS = ("fr_docnum,title,fr_type,action_raw,doc_class,publication_date,volume,start_page,end_page,page_length,docket_ids_json,"
+            "cfr_refs_json,correction_of_json,pdf_url,xml_url,html_url,xml_sha256,pdf_sha256,metadata_sha256,source,extraction_status,"
+            "era,parse_warnings_json,is_rfc,effective_on")
+
+
 def build(db_path=None, verbose=True):
     db_path = Path(db_path or config.DB_PATH)
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    if db_path.exists(): db_path.unlink()
+    final_path = db_path
+    db_path = db_path.with_name(db_path.name + ".tmp")   # atomic: build aside, os.replace at the end
+    for suf in ("", "-journal"):
+        q = db_path.with_name(db_path.name + suf)
+        if q.exists(): q.unlink()
     conn = sqlite3.connect(db_path)
     conn.executescript(SCHEMA)
     sha = sheets_loader.verify_sha()
@@ -142,29 +172,14 @@ def build(db_path=None, verbose=True):
         vol = None
         mm = re.match(r"(\d+) FR", m.get("citation") or "")
         if mm: vol = int(mm.group(1))
-        conn.execute("INSERT INTO documents VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
+        conn.execute("INSERT INTO documents VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
             dn, m.get("title"), m.get("type"), m.get("action"), cls, m.get("publication_date"), vol, sp, m.get("end_page"),
             m.get("page_length"), json.dumps(m.get("docket_ids") or []),
             json.dumps([f"{c.get('title')} CFR {c.get('part')}" for c in (m.get("cfr_references") or [])]),
             json.dumps(m.get("correction_of")), m.get("pdf_url"), m.get("full_text_xml_url"), m.get("html_url"),
             sha256_file(xml_p) if xml_p.exists() else None, sha256_file(pdf_p) if pdf_p.exists() else None, sha256_file(mp),
-            "organiser_sheet", status, era_of(m.get("publication_date")), json.dumps(sorted(warnings))))
-        if doc is not None:
-            conn.execute("INSERT INTO doc_text VALUES(?,?)", (dn, doc.text))
-            npdf = len(pages)
-            def pdfp(fr):
-                p = fr - sp + 1
-                return p if 1 <= p <= npdf else None
-            for s in doc.sections:
-                conn.execute("INSERT INTO sections VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
-                    f"{dn}:{s['seq']:04d}", dn, s["seq"], s["path"], s["kind"], s["label"], s["heading"], s["ancestor"], s["top"],
-                    s["level"], s["start_char"], s["end_char"], s["text"], int(s["has_table"]), s["fr_page_start"], s["fr_page_end"],
-                    pdfp(s["fr_page_start"]), pdfp(s["fr_page_end"])))
-        for i, t in enumerate(pages, 1):
-            hdr = pp.header_fr_page(t)
-            fr = sp + i - 1
-            conn.execute("INSERT INTO pages VALUES(?,?,?,?,?,?,?,?)", (dn, i, fr, t, len(t), hdr, int(len(t) < 50),
-                                                                       None if hdr is None else int(hdr == fr)))
+            "organiser_sheet", status, era_of(m.get("publication_date")), json.dumps(sorted(warnings)), 0, m.get("effective_on")))
+        insert_doc_content(conn, dn, doc, pages, sp)
         if verbose and n % 50 == 0: print(f"  built {n}/{len(docnums)} docs", file=sys.stderr)
 
     # ---- records ---------------------------------------------------------------------------------------------------
@@ -193,24 +208,22 @@ def build(db_path=None, verbose=True):
             rec["page_number_raw"], rec["summary"], rec["col_r_raw"], rec["col_r_kind"], rec["drs_url"], rec["comments"],
             json.dumps(sorted(flags)), verified, detail))
     log(conn, "build", f"inferred match verification {inferred}")
-    ingest_final_rule_links(conn, config.PROCESSED / "final_rule_links.json")
+    fr_stats = ingest_final_rule_links(conn, config.PROCESSED / "final_rule_links.json")
+    from backend.rules import revisions
+    rev_stats = revisions.build_graph(conn)
     for f in failures:
         log(conn, "build", json.dumps(f), f["fr_docnum"], "error")
     conn.commit()
     h = content_hash(conn)
     conn.close()
-    return dict(db=str(db_path), content_sha256=h, failures=failures, inferred=inferred)
+    os.replace(db_path, final_path)
+    return dict(db=str(final_path), content_sha256=h, failures=failures, inferred=inferred, final_rules=fr_stats, revisions=rev_stats)
 
 
 def ingest_final_rule_links(conn, path):
-    """HOOK (format TBD): ingest data/processed/final_rule_links.json produced by the final-rules agent.
-    No-op when the file is absent. When present it must insert documents with source='fr_final_rule_lookup';
-    that is NOT implemented yet, so presence is logged loudly and nothing is inserted."""
-    path = Path(path)
-    if not path.exists():
-        return 0
-    log(conn, "final_rules", f"{path} exists but ingest_final_rule_links is not implemented; skipped", level="warn")
-    return 0
+    """Insert final-rule documents (source='fr_final_rule_lookup') + re-anchored links. No-op when the file is absent."""
+    from backend.ingestion import final_rules_ingest as fri
+    return fri.ingest(conn, path, insert_doc_content, log, DOC_COLS)
 
 
 def content_hash(conn):
@@ -262,15 +275,15 @@ def _windows(sec, markers, doc_text, width=40):
     return out
 
 
-def validate_page_mapping(db_path=None, out_path=None):
+def validate_page_mapping(db_path=None, out_path=None, source="organiser_sheet"):
     conn = sqlite3.connect(db_path or config.DB_PATH)
     conn.row_factory = sqlite3.Row
-    docs = {r["fr_docnum"]: dict(r) for r in conn.execute("SELECT * FROM documents")}
+    docs = {r["fr_docnum"]: dict(r) for r in conn.execute("SELECT * FROM documents WHERE source=?", (source,))}
     # (a) header check
     a_total = a_ok = a_missing = 0
     a_fail = []
     page_txt, pdf_texts = {}, {}
-    for r in conn.execute("SELECT fr_docnum,pdf_page,fr_page,header_fr_page,text FROM pages ORDER BY fr_docnum,pdf_page"):
+    for r in conn.execute("SELECT fr_docnum,pdf_page,fr_page,header_fr_page,text FROM pages WHERE fr_docnum IN (SELECT fr_docnum FROM documents WHERE source=?) ORDER BY fr_docnum,pdf_page", (source,)):
         pdf_texts.setdefault(r["fr_docnum"], []).append(r["text"])
         page_txt.setdefault(r["fr_docnum"], {})[r["pdf_page"]] = pp.norm_for_match(r["text"])
         a_total += 1
@@ -290,7 +303,7 @@ def validate_page_mapping(db_path=None, out_path=None):
         if not text: continue
         text = text[0]
         # re-derive markers from the section parse (single source of truth is the parser)
-        xml = (config.FR_DOCS_DIR / dn / "full_text.xml").read_bytes()
+        xml = ((config.FR_DOCS_DIR if source == "organiser_sheet" else config.FR_FINAL_RULES_DIR) / dn / "full_text.xml").read_bytes()
         pd = fr_xml_parser.parse_fr_xml(xml, d["start_page"], d["end_page"], pdf_pages=pdf_texts.get(dn))
         assert pd.text == text
         pages = page_txt.get(dn, {})
@@ -329,10 +342,10 @@ def validate_page_mapping(db_path=None, out_path=None):
     return res
 
 
-def parse_coverage(db_path=None):
+def parse_coverage(db_path=None, source="organiser_sheet"):
     """Section-parsing coverage by doc_class and era (all denominators included)."""
     conn = sqlite3.connect(db_path or config.DB_PATH); conn.row_factory = sqlite3.Row
-    docs = [dict(r) for r in conn.execute("SELECT fr_docnum,doc_class,era,extraction_status FROM documents ORDER BY fr_docnum")]
+    docs = [dict(r) for r in conn.execute("SELECT fr_docnum,doc_class,era,extraction_status FROM documents WHERE source=? ORDER BY fr_docnum", (source,))]
     ad = {}
     for r in conn.execute("SELECT * FROM sections WHERE kind='proposed_ad_paragraph' AND level=1 ORDER BY fr_docnum,seq"):
         ad.setdefault(r["fr_docnum"], []).append(dict(r))
@@ -358,9 +371,9 @@ def parse_coverage(db_path=None):
             a["applicability_with_table"] += any(s["has_table"] for s in appl)
     out["by_class_era"] = {k: agg[k] for k in sorted(agg)}
     out["c_applicability_paragraphs_with_table"] = conn.execute(
-        "SELECT count(*) FROM sections WHERE label='(c)' AND level=1 AND heading LIKE 'Applicab%' AND has_table=1").fetchone()[0]
+        "SELECT count(*) FROM sections WHERE label='(c)' AND level=1 AND heading LIKE 'Applicab%' AND has_table=1 AND fr_docnum IN (SELECT fr_docnum FROM documents WHERE source=?)", (source,)).fetchone()[0]
     out["c_applicability_paragraphs_total"] = conn.execute(
-        "SELECT count(*) FROM sections WHERE label='(c)' AND level=1 AND heading LIKE 'Applicab%'").fetchone()[0]
+        "SELECT count(*) FROM sections WHERE label='(c)' AND level=1 AND heading LIKE 'Applicab%' AND fr_docnum IN (SELECT fr_docnum FROM documents WHERE source=?)", (source,)).fetchone()[0]
     w = [d for d in docs if d["doc_class"] == "WITHDRAWAL"]
     out["withdrawals"] = dict(total=len(w), without_ad_paragraphs=sum(1 for d in w if not ad.get(d["fr_docnum"])))
     conn.close()

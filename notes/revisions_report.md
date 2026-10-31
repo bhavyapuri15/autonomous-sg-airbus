@@ -1,0 +1,12 @@
+# Revision graph + final-rule integration report
+Build: `scripts/ingest.py` (graph is built inside build_db.build(), so there is no separate build_revisions stage). Atomic: build to ad.sqlite.tmp, os.replace. Content hash (now includes final_rule_info, final_rule_links, relations, revision_warnings): 658477b531d17d1f6ab230eadb92821763e2c8ebb0f36655b450b147b8b8f882 (identical on two ingest runs; test_determinism_two_builds passes). 2nd ingest: NETWORK_CALLS 0.
+- documents: organiser_sheet 420 (NPRM 282, WITHDRAWAL 115, SNPRM 18, OTHER 4, CORRECTION 1); fr_final_rule_lookup 75 (FINAL_RULE 65 incl. 2 request-for-comments flagged is_rfc=1, CORRECTION 7, OTHER_RULE 3). Pages total 1596 (1324 + 272).
+- Final-rule page mapping (page_mapping_validation_final_rules.json): header 255/255 where header found (17 first pages have no parsable header); snippets 6791/6792 strict. One miss: 2023-07096 proposed_ad/(m)/(5) end snippet found on PDF page 1 not 4 (PDF text order for a website line).
+- Final-rule AD paragraphs: 65 FINAL_RULE docs, 65 with parsed top-level AD paragraphs, 60 with an Applicability paragraph; AD number extracted for 64/65.
+- Re-anchoring: 58 VERIFIED in, 58 kept, 0 downgraded; 118 evidence items, 118 exact, 0 whitespace-normalised, 0 failed; 11 had multiple occurrences (all chosen inside a paragraph mentioning NPRM/proposed/published).
+- Edges: WITHDRAWS V80/C11, SUPPLEMENTS V14/C1, FINALIZES V57/C8, CORRECTS V4 (FR correction_of metadata, target not in dataset), PROPOSES_TO_SUPERSEDE V75, SUPERSEDES V17, SAME_DOCKET C40.
+  The 58th O1 VERIFIED link (2026-21333 -> 2026-00842) is kept as SAME_DOCKET because the target is a CORRECTION, not a proposal.
+- Status over 420 dataset docs: WITHDRAWN 195 (115 withdrawals themselves + 80 withdrawn proposals), PROPOSAL_STATUS_UNVERIFIED 155, FINALIZED 57, SUPPLEMENTED 13.
+- Warnings: DATES_OUT_OF_ORDER 10 (final rules predating proposal: 5 incl. 00-11177, 02-33143, 04-23729, E8-6804, E9-19633; same-day or later-dated cited targets: 5), FINAL_RULE_FOR_WITHDRAWN 1 (2011-19048 / E9-19633).
+- Not done: CORRECTS from text references only runs for CORRECTION-class dataset docs and found none beyond metadata; legacy 2-digit AD numbers kept as written (AD:73-18-03). Same-day references are never VERIFIED (conservative).
+- Edits outside owned files (needed for acceptance): backend/ingestion/reconcile.py (documents filter on source), scripts/ingest.py (rule PDF download + final-rule validation step).
