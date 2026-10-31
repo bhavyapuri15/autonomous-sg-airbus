@@ -329,17 +329,16 @@ def run_f6(cases):
 
 
 # ------------------------------------------------------------------------------------ latency
-def latency_queries(split: str) -> list[str]:
-    qs = [c["query"] for c in load_cases("F2", split)]
-    qs += [c["query"] for c in load_cases("F3", split)][:0]
-    f1 = load_cases("F1", split)
+def latency_queries(split: str, final: bool = False) -> list[str]:
+    qs = [c["query"] for c in load_cases("F2", split, final)]
+    f1 = load_cases("F1", split, final)
     qs += [c["query"] for c in f1[::max(1, len(f1) // 6)]][:6]
     return qs
 
 
-def latency_worker(path: str, split: str):
+def latency_worker(path: str, split: str, final: bool = False):
     """Runs in a fresh process: pass1 (first sight of each query) then pass2/pass3 (warm). Prints JSON."""
-    qs = latency_queries(split)
+    qs = latency_queries(split, final)
     if path == "search":
         from backend.retrieval import hybrid_search as hs
         fn = lambda q: hs.search(q, top_k=10)
@@ -438,7 +437,7 @@ def main(argv=None):
     a = ap.parse_args(argv)
     check_split_args(a.split, a.final)          # raises PermissionError for locked without --final
     if a.latency_worker:
-        return latency_worker(a.latency_worker, a.split)
+        return latency_worker(a.latency_worker, a.split, a.final)
     fams = [f.strip().upper() for f in a.families.split(",") if f.strip()]
     res = dict(split=a.split, timestamp=datetime.now().isoformat(timespec="seconds"), families=fams, llm_requested=a.use_llm, metrics={})
     M = res["metrics"]
