@@ -11,3 +11,10 @@ function subscribe(cb: () => void) {
 export function useReducedMotion(): boolean {
   return useSyncExternalStore(subscribe, () => window.matchMedia(Q).matches, () => false);
 }
+
+const noop = () => () => {};
+/** False during server render and hydration, true afterwards. It flips in the same re-render as useReducedMotion's
+ *  client value, so gating WebGL on `hydrated && !reduce` never mounts it, even briefly, when motion is reduced. */
+export function useHydrated(): boolean {
+  return useSyncExternalStore(noop, () => true, () => false);
+}

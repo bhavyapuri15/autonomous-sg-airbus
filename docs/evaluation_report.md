@@ -184,4 +184,42 @@ All results in sections 2-7 were measured on the pre-fix corpus and are left as 
 | F12 stage accuracy | 1.0 (304) | 0.9934 (304) |
 | F6 revision status | 1.0 (20) | 1.0 (20) |
 
-All 10 F1/F12 misses are cases whose frozen gold names one of the two removed NPRM documents (2019-14901, 2022-20442); their docket queries now return the withdrawal notice. The case files and locked manifests were not regenerated; doing so changes locked F1/F2/F3 cases and needs an explicit decision. F8-08 (conflicting metadata) was built on the mis-mapped 2018-12886, whose two-row conflict was the bug itself; it now targets 2016-05517 (sheet pages 29148-29149 vs FR 81 FR 13303) and passes (F8 16/16). F2, F3, F7, F10, F13 and latency are unchanged on the fixed corpus.
+All 10 F1/F12 misses are cases whose frozen gold names one of the two removed NPRM documents (2019-14901, 2022-20442); their docket queries now return the withdrawal notice. The case files and locked manifests were not regenerated at that point; they were regenerated afterwards, see 9.1. F8-08 (conflicting metadata) was built on the mis-mapped 2018-12886, whose two-row conflict was the bug itself; it now targets 2016-05517 (sheet pages 29148-29149 vs FR 81 FR 13303) and passes (F8 16/16). F2, F3, F7, F10, F13 and latency are unchanged on the fixed corpus.
+
+### 9.1 Case files regenerated for the fixed corpus (31 Oct)
+The case generators were re-run against the fixed corpus (`generate_cases.py --manifest`, `generate_update_cases.py --manifest`)
+and both locked manifests were rewritten. This is a gold correction, not tuning: gold still comes only from the organiser sheet and
+the FR documents, never from system output, and **the locked split was not re-run** (the locked results in this report remain the
+pre-fix runs). What changed, with case ids ignored (ids are sequential, so insertions renumber later cases):
+
+- Partition: no existing document changed split or docket group. 4 documents left the corpus (the mis-mapped shared NPRMs) and 12 joined
+  it (the re-resolved withdrawal notices and the documents they replaced); each was assigned by the same hashed docket-group rule.
+- F1: cases on the 4 removed documents dropped, cases on the 12 new ones added (dev 1125 -> 1142, locked 414 -> 421); a docket query
+  now also accepts the withdrawal notice filed under the same docket.
+- F2/F3 locked: one passage (F2/F3-locked-013) gains an alternate, because the same SUMMARY text also appears in the newly mapped withdrawal
+  notice 2021-11813. Questions and answer spans are unchanged.
+- F10: only additions, for records that previously had no FR document (dev 492 -> 516, locked 188 -> 200).
+- F12: 2 proposed-rule stage cases on removed documents replaced by withdrawal-notice cases (dev 342 -> 348, locked 118 -> 120).
+- F6 (hand-written, dev): F6-dev-19 targeted 2019-14901, which left the corpus when NPRM-205 was mapped to its own withdrawal notice
+  2020-06503. Repointed to 2026-21298 (NPRM-002), the most recent dev organiser NPRM meeting the same no-evidence criteria, checked
+  against the document text.
+- F7, F11, F13 and all locked F7 cases are byte-identical.
+- `generate_cases.py --manifest` now hashes only its own families (F1, F2, F3, F7 plus the split map); F10-F13 stay in
+  `LOCKED_MANIFEST_UPDATE.sha256`.
+
+Dev run on the regenerated cases (`evaluation/results/20261031-161448_dev.json`):
+
+| Family | Frozen cases, fixed corpus (n) | Regenerated cases (n) |
+|---|---|---|
+| F1 exact-ID acc@1 | 0.9929 (1125) | 1.0 (1142) |
+| F12 stage accuracy | 0.9934 (304) | 1.0 (310) |
+| F10 record-ID acc@1 | 1.0 (492) | 0.9942 (513) |
+| F2 doc Recall@5 / MRR@10 | 0.8333 / 0.6952 (42) | 0.8333 / 0.6952 (42) |
+| F3 citation validity | 1.0 (90 citations) | 1.0 (90 citations) |
+| F6, F11, F13 | 1.0 | 1.0 |
+| F7 abstention F1 | 0.9677 | 0.9677 |
+| F8 | 16/16 | 16/16 |
+
+The 3 F10 misses are all NPRM-180 (canonical, unpadded and question forms). Its gold is parsed from the organiser link, which points to
+2021-13636, an NPRM on a different docket; the row's own docket and publish date identify 2021-13482, which the system returns. Before the
+fix this case scored 1.0 because the mis-mapping agreed with the bad link. The gold was not edited to match the system.
