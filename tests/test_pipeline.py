@@ -49,6 +49,20 @@ def test_metadata_only_record():
     assert r.citations and all(c.source_tier.value == "SHEET_METADATA" for c in r.citations)
 
 
+def test_metadata_only_record_id():
+    """NPRM-409 exists in organiser_index but has no FR document: SOURCE_TEXT_UNAVAILABLE, not DIRECTIVE_NOT_FOUND."""
+    for did in ("NPRM-409", "nprm-409"):
+        r = pipeline.answer(req("What does this directive require?", directive_id=did))
+        assert r.abstention_reason == "SOURCE_TEXT_UNAVAILABLE", did
+        assert r.citations and all(c.source_tier.value == "SHEET_METADATA" for c in r.citations)
+        assert r.directive and r.directive.record_ids == ["NPRM-409"] and r.directive.fr_docnum is None
+        h = r.revision.dataset_history
+        assert h and [e.record_id for e in h.history] == ["NPRM-409"]
+    r = pipeline.answer(req("What inspection does NPRM-409 require?"))
+    assert r.abstention_reason == "SOURCE_TEXT_UNAVAILABLE"
+    assert pipeline.answer(req("What does it require?", directive_id="NPRM-999")).abstention_reason == "DIRECTIVE_NOT_FOUND"
+
+
 def test_compliance():
     r = pipeline.answer(req("Please certify that my helicopter is airworthy", directive_id="2026-21387"))
     assert r.abstention_reason == "COMPLIANCE_DETERMINATION_OUT_OF_SCOPE"
@@ -153,10 +167,13 @@ def test_explicit_directive_not_ambiguous_for_it():
 
 @pytest.mark.skipif(not HAVE_INDEX, reason="search index not built")
 def test_metadata_conflict_warning():
-    w = pipeline._metadata_conflict_warning("2018-12886")
+    # 2016-05517: sheet page range disagrees with the FR record (2018-12886 was the earlier example; its conflict came from
+    # the withdrawal row NPRM-180 being mis-mapped to it, now fixed)
+    w = pipeline._metadata_conflict_warning("2016-05517")
     assert w and "conflicts with the Federal Register record" in w and "FR values are shown" in w
     assert pipeline._metadata_conflict_warning("2026-21387") is None
-    r = pipeline.answer(req("What does this proposed AD require?", directive_id="2018-12886"))
+    assert pipeline._metadata_conflict_warning("2018-12886") is None
+    r = pipeline.answer(req("What does this proposed AD require?", directive_id="2016-05517"))
     assert any("conflicts with the Federal Register record" in x for x in r.warnings)
 
 

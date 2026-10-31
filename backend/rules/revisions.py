@@ -413,15 +413,27 @@ def _valid_date(d):
     return bool(d) and bool(_ISO.match(str(d)))
 
 
-def dataset_history(conn, fr_docnum, doc, rows=None):
+def record_dataset_history(conn, record_id):
+    """dataset_history for one organiser record_id (used for metadata-only records that have no FR document)."""
+    cols = _oi_cols(conn)
+    if not cols:
+        return None
+    want = [c for c in ("record_id", "sheet_row", "docket_number", "publish_date", "supersedes_ad", "ad_number") if c in cols]
+    recs = [dict(zip(want, r)) for r in conn.execute(f"select {','.join(want)} from organiser_index where record_id=?", (record_id,))]
+    return dataset_history(conn, None, None, recs=recs) if recs else None
+
+
+def dataset_history(conn, fr_docnum, doc, rows=None, recs=None):
     """Organiser revision_chains view of this document's docket (dataset fact; never legal currency). None when the organiser
-    tables are not in the DB. Ties / missing dates / disagreement with VERIFIED evidence become warnings; never auto-resolved."""
+    tables are not in the DB. Ties / missing dates / disagreement with VERIFIED evidence become warnings; never auto-resolved.
+    recs: organiser rows to use instead of looking them up by fr_docnum (metadata-only records)."""
     if _oi_cols(conn) is None:
         return None
     if doc and doc[2] == "fr_final_rule_lookup":
         return DatasetHistory(docket=_doc_docket(conn, fr_docnum), versions_total=0, dataset_status="NOT_IN_DATASET",
                               note="Final-rule lookup document; not a record of the supplied dataset.")
-    recs = _organiser_rows(conn, fr_docnum)
+    if recs is None:
+        recs = _organiser_rows(conn, fr_docnum)
     if not recs:
         w = [f"No organiser record_id maps to FR {fr_docnum}; dataset history unavailable."] if doc else []
         return DatasetHistory(docket=_doc_docket(conn, fr_docnum), versions_total=0, dataset_status="NOT_IN_DATASET", warnings=w)

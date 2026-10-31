@@ -106,7 +106,7 @@ class Catalog:
     def meta_only_info(self, rec: dict) -> DirectiveInfo:
         return DirectiveInfo(fr_docnum=None, docket=rec["docket_norm"] or rec["docket_raw"], doc_class=None,
                              title=rec["subject"], publication_date=rec["publish_date"], citation=rec["citation"] or None,
-                             sheet_rows=[rec["row"]])
+                             sheet_rows=[rec["row"]], record_ids=[rec["record_id"]] if rec.get("record_id") else [])
 
     def group_for(self, docnum: str) -> list[str]:
         """Docnum plus other documents sharing a docket (date ordered)."""
@@ -156,6 +156,10 @@ def resolve_ids(text: str, *, explicit: bool) -> Resolution:
         dn = canon_docket(rec["docket_norm"] or "")
         if dn and re.search(rf"(?<![A-Z0-9]){re.escape(dn)}(?![A-Z0-9])", ctext):
             res.meta_only.append(rec)
+    # organiser record ids that exist but map to no FR document (the router drops them): match by record_id
+    for d in r.detected:
+        if d["id_type"] == "record_id" and d["normalized"] in cat.router.records and not cat.router.records[d["normalized"]]:
+            res.meta_only += [rec for rec in cat.meta_only if rec.get("record_id") == d["normalized"] and rec not in res.meta_only]
     for nm in r.near_miss:
         info = cat.info(nm["fr_docnum"]) if nm.get("fr_docnum") else None
         if info and all(i.fr_docnum != info.fr_docnum for i in res.near_miss):

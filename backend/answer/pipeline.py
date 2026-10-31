@@ -302,8 +302,18 @@ def answer(req: QueryRequest) -> QueryResponse:
 
     if res.meta_only and not res.docnums:
         rec = res.meta_only[0]
+        extra = {}
+        rev_m = deps.module("revisions")
+        if rev_m and rec.get("record_id") and hasattr(rev_m, "record_dataset_history"):
+            conn = deps.db()
+            try:
+                hist = rev_m.record_dataset_history(conn, rec["record_id"])
+            finally:
+                conn.close()
+            if hist:
+                extra["revision"] = RevisionResult(dataset_history=hist)
         return _finish(ab.abstain(ab.SOURCE_TEXT_UNAVAILABLE, citations=ab.sheet_citations(rec),
-                                  directive=cat.meta_only_info(rec)), t0, tm)
+                                  directive=cat.meta_only_info(rec), **extra), t0, tm)
 
     if pq.compliance:
         return _finish(ab.abstain(ab.COMPLIANCE_DETERMINATION_OUT_OF_SCOPE), t0, tm)

@@ -102,9 +102,42 @@ def conn():
 def test_counts(conn):
     assert conn.execute("SELECT count(*) FROM records").fetchone()[0] == 431
     assert conn.execute("SELECT count(DISTINCT row) FROM records").fetchone()[0] == 431
-    assert conn.execute("SELECT count(*) FROM documents WHERE source='organiser_sheet'").fetchone()[0] == 420
-    assert conn.execute("SELECT count(*) FROM doc_text WHERE fr_docnum IN (SELECT fr_docnum FROM documents WHERE source='organiser_sheet')").fetchone()[0] == 420
+    # 428 rows with an FR doc, all distinct since the withdrawal-row date rule (was 420 with 8 rows sharing their NPRM's doc)
+    assert conn.execute("SELECT count(*) FROM documents WHERE source='organiser_sheet'").fetchone()[0] == 428
+    assert conn.execute("SELECT count(*) FROM doc_text WHERE fr_docnum IN (SELECT fr_docnum FROM documents WHERE source='organiser_sheet')").fetchone()[0] == 428
     assert conn.execute("SELECT count(*) FROM pages").fetchone()[0] >= 1000
+
+
+def test_shared_docnum_only_when_dates_agree(conn):
+    """No two organiser records share an FR document unless each row's publish date is within 3 days of its publication date."""
+    import datetime as dt
+    rows = conn.execute("""SELECT o.record_id, o.publish_date, d.publication_date FROM organiser_index o
+        JOIN records r ON r.row=o.sheet_row JOIN documents d ON d.fr_docnum=r.fr_docnum
+        WHERE r.fr_docnum IN (SELECT fr_docnum FROM records WHERE fr_docnum IS NOT NULL GROUP BY fr_docnum HAVING count(*)>1)""").fetchall()
+    for rid, pd, fd in rows:
+        assert abs((dt.date.fromisoformat(pd) - dt.date.fromisoformat(fd)).days) <= 3, rid
+
+
+WITHDRAWAL_ROWS = {"NPRM-176": ("2021-19355", "2021-07164"), "NPRM-177": ("2021-18228", "2021-07564"),
+                   "NPRM-178": ("2021-15952", "2018-15964"), "NPRM-179": ("2021-15533", "2020-16211"),
+                   "NPRM-180": ("2021-13482", "2018-12886"), "NPRM-181": ("2021-13133", "2020-02016"),
+                   "NPRM-182": ("2021-11813", "2021-03483"), "NPRM-184": ("2021-06768", "2020-24766")}
+
+
+def test_legacy_withdrawal_rows_map_to_withdrawal_notice(conn):
+    """The 8 legacy withdrawal rows whose sheet cell links the withdrawn NPRM first now map to the withdrawal notice
+    (dated within 3 days), with a VERIFIED WITHDRAWS edge to that NPRM. NPRM-180's in-cell 'Withdrawal:' link points at
+    another docket's NPRM (2021-13636), so it is resolved by docket search instead."""
+    import datetime as dt
+    for rid, (wd, nprm) in WITHDRAWAL_ROWS.items():
+        dn, cls, fd, pd, flags = conn.execute("""SELECT r.fr_docnum, d.doc_class, d.publication_date, o.publish_date, r.dq_flags_json
+            FROM organiser_index o JOIN records r ON r.row=o.sheet_row JOIN documents d ON d.fr_docnum=r.fr_docnum
+            WHERE o.record_id=?""", (rid,)).fetchone()
+        assert (dn, cls) == (wd, "WITHDRAWAL"), rid
+        assert abs((dt.date.fromisoformat(pd) - dt.date.fromisoformat(fd)).days) <= 3, rid
+        assert f"colR_url_date_mismatch_rejected={nprm}" in flags, rid
+        assert conn.execute("SELECT 1 FROM relations WHERE src=? AND dst=? AND type='WITHDRAWS' AND confidence='VERIFIED'",
+                            (wd, nprm)).fetchone(), rid
 
 
 def test_section_offsets_and_pages(conn):

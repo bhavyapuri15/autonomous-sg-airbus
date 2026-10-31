@@ -84,7 +84,7 @@ def test_synthetic_ids_do_not_exist():
 
 
 def test_deterministic_regeneration_is_byte_identical():
-    files = G.build_all()
+    files = G.build_all(write=False)
     for rel, txt in files.items():
         assert (CASES / rel).read_text() == txt, rel
     # F2/F3 inputs are hand-written source files that are validated, never regenerated

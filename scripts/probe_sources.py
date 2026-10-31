@@ -70,11 +70,13 @@ def _search(key, params):
         return None
     data = r.json(); p.write_text(json.dumps(data)); return data
 
-def resolve_by_search(row):
-    """Docket + publication date (+-2 days) search. Returns (docnum, status). Multi-hit not disambiguated by start page -> AMBIGUOUS."""
-    if not row["sheet_date"]:
-        return "", "no_url;no_sheet_date"
-    d0 = dt.date.fromisoformat(row["sheet_date"])
+def resolve_by_search(row, d0=None):
+    """Docket + publication date (+-2 days) search. Returns (docnum, status). Multi-hit not disambiguated by start page -> AMBIGUOUS.
+    d0 defaults to the parsed Citation text date; the date rule passes the row publish date instead."""
+    if d0 is None:
+        if not row["sheet_date"]:
+            return "", "no_url;no_sheet_date"
+        d0 = dt.date.fromisoformat(row["sheet_date"])
     lo, hi = (d0 - dt.timedelta(days=2)).isoformat(), (d0 + dt.timedelta(days=2)).isoformat()
     dk = row["docket"]
     base = {"conditions[publication_date][gte]": lo, "conditions[publication_date][lte]": hi, "per_page": 20, "fields[]": FIELDS}
@@ -93,6 +95,45 @@ def resolve_by_search(row):
             return res[0]["document_number"], f"search_{how}"
         return "", f"AMBIGUOUS_{how}({len(res)} hits:{'|'.join(x['document_number'] for x in res)})"
     return "", "search_no_match"
+
+def _us_date(s):
+    m = re.match(r"\s*(\d{1,2})/(\d{1,2})/(\d{4})", s or "")
+    return dt.date(int(m.group(3)), int(m.group(1)), int(m.group(2))) if m else None
+
+DATE_TOL_DAYS = 3
+def row_ref_date(row):
+    """Row publish date: sheet 'Citation Publish Date' (col 9, same value as organiser_index.publish_date ISO); fallback = parsed Citation text date."""
+    return _us_date(row["sheet_cite_date_col"]) or (dt.date.fromisoformat(row["sheet_date"]) if row["sheet_date"] else None)
+
+def _pub_date(docnum):
+    """FR publication_date of docnum (metadata cached/fetched), or None."""
+    if not (META / f"{docnum}.json").exists():
+        fetch_meta([docnum])
+    p = META / f"{docnum}.json"
+    return dt.date.fromisoformat(json.loads(p.read_text())["publication_date"]) if p.exists() else None
+
+def date_ok(row, docnum):
+    ref, pd = row_ref_date(row), _pub_date(docnum)
+    return ref is not None and pd is not None and abs((pd - ref).days) <= DATE_TOL_DAYS
+
+def docket_ok(row, docnum):
+    p = META / f"{docnum}.json"
+    return p.exists() and any(row["docket"] in x for x in (json.loads(p.read_text()).get("docket_ids") or []))
+
+def apply_date_rule(row):
+    """colR-URL docnum accepted only if FR publication_date within +-3 days of the row publish date. Else try other URLs in the cell
+    (date AND docket must match: the sheet's 'Withdrawal:' link for NPRM-180 points at another docket's NPRM), then docket+date search
+    around the row publish date (same +-2d match / AMBIGUOUS rule as inferred rows). Records the rejected docnums."""
+    if not row["docnum_source"].startswith("colR_") or date_ok(row, row["docnum"]):
+        return
+    row["rejected_docnum"] = row["docnum"]
+    for cand in row["extra_docnums"]:
+        if date_ok(row, cand):
+            if docket_ok(row, cand):
+                row["docnum"], row["resolution"] = cand, "colR_url_date_mismatch→colR_other_url_in_cell"; return
+            row["rejected_docnum"] += "," + cand + "(docket_mismatch)"
+    dn, how = resolve_by_search(row, row_ref_date(row))
+    row["docnum"], row["resolution"] = dn, "colR_url_date_mismatch→" + (how if dn else "none:" + how)
 
 def fetch_meta(docnums):
     todo = [d for d in docnums if not (META / f"{d}.json").exists()]
@@ -150,6 +191,8 @@ def main():
         r["resolution"] = r["docnum_source"]
         if not r["docnum"]:
             r["docnum"], r["resolution"] = resolve_by_search(r); r["search_note"] = r["resolution"]
+        else:
+            apply_date_rule(r)
     uniq = sorted({r["docnum"] for r in rows if r["docnum"]})
     print(f"rows={len(rows)} unique_docnums={len(uniq)}", file=sys.stderr)
     status = fetch_meta(uniq)
@@ -157,6 +200,7 @@ def main():
     for r in rows:
         n = r["docnum"]; notes = []
         notes.append("docnum_source=" + (r["resolution"] or "none"))
+        if r.get("rejected_docnum"): notes.append("colR_docnum_rejected_date_mismatch=" + r["rejected_docnum"])
         if r["extra_docnums"]: notes.append("extra_docnums_in_cell=" + "|".join(r["extra_docnums"]))
         m = json.loads((META / f"{n}.json").read_text()) if n and (META / f"{n}.json").exists() else None
         if m:

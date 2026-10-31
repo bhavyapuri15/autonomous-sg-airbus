@@ -282,8 +282,9 @@ def f23_cases(split, docs, texts, sections, sm):
 
 
 # ----------------------------------------------------------------------------- main
-def build_all():
-    sm = S.write_split_map()
+def build_all(write=True):
+    """write=False builds the split in memory (tests must not overwrite the locked split_map.json)."""
+    sm = S.write_split_map() if write else S.build_split()
     docs, texts, sections, rows, ad_numbers = load_db()
     files = {}
     for split in ("dev", "locked"):
