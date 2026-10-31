@@ -1,0 +1,1399 @@
+{
+ "split": "dev",
+ "timestamp": "2026-10-31T12:57:55",
+ "families": [
+  "F1",
+  "F2",
+  "F3",
+  "F6",
+  "F7",
+  "F8",
+  "LAT",
+  "CAL"
+ ],
+ "llm_requested": true,
+ "metrics": {
+  "F1": {
+   "n": 1125,
+   "acc_at1": 1.0,
+   "acc_at5": 1.0,
+   "by_kind": {
+    "citation_mid": {
+     "n": 142,
+     "acc_at1": 1.0,
+     "acc_at5": 1.0
+    },
+    "citation_start": {
+     "n": 291,
+     "acc_at1": 1.0,
+     "acc_at5": 1.0
+    },
+    "docket_exact": {
+     "n": 235,
+     "acc_at1": 1.0,
+     "acc_at5": 1.0
+    },
+    "docket_variant": {
+     "n": 152,
+     "acc_at1": 1.0,
+     "acc_at5": 1.0
+    },
+    "docnum": {
+     "n": 305,
+     "acc_at1": 1.0,
+     "acc_at5": 1.0
+    }
+   },
+   "failures": []
+  },
+  "F2": {
+   "n": 42,
+   "doc_recall_at5": 0.8333,
+   "doc_mrr_at10": 0.6955,
+   "chunk_recall_at5": 0.7143,
+   "note": "chunk-level gold = whole passage section of the primary doc; alternates count only for doc-level",
+   "by_category": {
+    "ACTIONS": {
+     "n": 6,
+     "doc_recall_at5": 0.6667,
+     "doc_mrr_at10": 0.331,
+     "chunk_recall_at5": 0.5
+    },
+    "APPL": {
+     "n": 13,
+     "doc_recall_at5": 0.6923,
+     "doc_mrr_at10": 0.559,
+     "chunk_recall_at5": 0.5385
+    },
+    "DISC": {
+     "n": 6,
+     "doc_recall_at5": 1.0,
+     "doc_mrr_at10": 1.0,
+     "chunk_recall_at5": 1.0
+    },
+    "PARTS": {
+     "n": 3,
+     "doc_recall_at5": 1.0,
+     "doc_mrr_at10": 0.8333,
+     "chunk_recall_at5": 1.0
+    },
+    "SUMMARY": {
+     "n": 3,
+     "doc_recall_at5": 0.6667,
+     "doc_mrr_at10": 0.4861,
+     "chunk_recall_at5": 0.3333
+    },
+    "UNSAFE": {
+     "n": 4,
+     "doc_recall_at5": 1.0,
+     "doc_mrr_at10": 0.875,
+     "chunk_recall_at5": 0.75
+    },
+    "WITHDRAW": {
+     "n": 7,
+     "doc_recall_at5": 1.0,
+     "doc_mrr_at10": 0.9286,
+     "chunk_recall_at5": 1.0
+    }
+   },
+   "failures": [
+    {
+     "id": "F2-dev-001",
+     "category": "APPL",
+     "query": "Is the A300 C4-605R Variant F freighter one of the Airbus models covered by the proposed AD published in September 2026 for A300 B4-600 airplanes?",
+     "expected": [
+      "2026-19090"
+     ],
+     "expected_span": [
+      "proposed_ad/(c)",
+      14063,
+      14412
+     ],
+     "actual_docs": [
+      "06-5872",
+      "E6-17747",
+      "04-11042",
+      "2012-9576",
+      "2026-18575"
+     ],
+     "actual_chunks": [
+      [
+       "06-5872",
+       "preamble/DATES"
+      ],
+      [
+       "E6-17747",
+       "proposed_ad/(b)"
+      ],
+      [
+       "06-5872",
+       "proposed_ad/(b)"
+      ]
+     ],
+     "doc_recall5": 0.0,
+     "chunk_recall5": 0.0
+    },
+    {
+     "id": "F2-dev-004",
+     "category": "APPL",
+     "query": "Would a CFM56-7B27AE engine be covered by the July 2026 CFM International proposed AD?",
+     "expected": [
+      "2026-15532"
+     ],
+     "expected_span": [
+      "proposed_ad/(c)",
+      11609,
+      12411
+     ],
+     "actual_docs": [
+      "2017-17828",
+      "2026-15532",
+      "2026-18752",
+      "2018-20715",
+      "2026-11085"
+     ],
+     "actual_chunks": [
+      [
+       "2017-17828",
+       "preamble/SUMMARY"
+      ],
+      [
+       "2026-15532",
+       "preamble/SUPPLEMENTARY INFORMATION/Actions Since AD 2018-26-01 Was Issued"
+      ],
+      [
+       "2026-15532",
+       "preamble/DATES"
+      ]
+     ],
+     "doc_recall5": 1.0,
+     "chunk_recall5": 0.0
+    },
+    {
+     "id": "F2-dev-009",
+     "category": "APPL",
+     "query": "Is the A340-642 within scope of the September 2026 Airbus proposal that also lists A330-841 and A330-941 models?",
+     "expected": [
+      "2026-18372"
+     ],
+     "expected_span": [
+      "proposed_ad/(c)",
+      13550,
+      14062
+     ],
+     "actual_docs": [
+      "E7-5656",
+      "E8-14480",
+      "2026-16567",
+      "2026-03747",
+      "2026-21325"
+     ],
+     "actual_chunks": [
+      [
+       "E7-5656",
+       "preamble/SUPPLEMENTARY INFORMATION/Actions Since Existing AD Was Issued"
+      ],
+      [
+       "E7-5656",
+       "preamble/SUPPLEMENTARY INFORMATION/Discussion"
+      ],
+      [
+       "E8-14480",
+       "preamble/SUPPLEMENTARY INFORMATION/Discussion"
+      ]
+     ],
+     "doc_recall5": 0.0,
+     "chunk_recall5": 0.0
+    },
+    {
+     "id": "F2-dev-010",
+     "category": "APPL",
+     "query": "Which technical bulletin modification takes MD Helicopters 600N helicopters out of the scope of the 2005 proposal?",
+     "expected": [
+      "05-2608"
+     ],
+     "expected_span": [
+      "proposed_ad/Applicability",
+      9790,
+      10044
+     ],
+     "actual_docs": [
+      "E6-9846",
+      "05-2608",
+      "2026-19758",
+      "2026-21664",
+      "2021-03655"
+     ],
+     "actual_chunks": [
+      [
+       "E6-9846",
+       "preamble/SUPPLEMENTARY INFORMATION/The Withdrawal"
+      ],
+      [
+       "E6-9846",
+       "preamble/ACTION"
+      ],
+      [
+       "E6-9846",
+       "preamble/header"
+      ]
+     ],
+     "doc_recall5": 1.0,
+     "chunk_recall5": 0.0
+    },
+    {
+     "id": "F2-dev-012",
+     "category": "APPL",
+     "query": "Which European airworthiness directive is used to identify the A330-941 airplanes in the October 2026 Airbus proposal?",
+     "expected": [
+      "2026-21334"
+     ],
+     "expected_span": [
+      "proposed_ad/(c)",
+      14591,
+      14816
+     ],
+     "actual_docs": [
+      "2026-03389",
+      "2026-16567",
+      "2026-16874",
+      "2026-21861",
+      "2026-03747"
+     ],
+     "actual_chunks": [
+      [
+       "2026-03389",
+       "preamble/SUMMARY"
+      ],
+      [
+       "2026-16567",
+       "preamble/SUMMARY"
+      ],
+      [
+       "2026-16874",
+       "preamble/SUMMARY"
+      ]
+     ],
+     "doc_recall5": 0.0,
+     "chunk_recall5": 0.0
+    },
+    {
+     "id": "F2-dev-013",
+     "category": "APPL",
+     "query": "Which AS355 helicopter models does the June 2026 Airbus Helicopters proposal apply to?",
+     "expected": [
+      "2026-12362"
+     ],
+     "expected_span": [
+      "proposed_ad/(c)",
+      12191,
+      12345
+     ],
+     "actual_docs": [
+      "2026-20411",
+      "2026-19987",
+      "2026-07937",
+      "2026-07334",
+      "2026-09077"
+     ],
+     "actual_chunks": [
+      [
+       "2026-20411",
+       "preamble/SUPPLEMENTARY INFORMATION/Background"
+      ],
+      [
+       "2026-19987",
+       "preamble/SUPPLEMENTARY INFORMATION/Background"
+      ],
+      [
+       "2026-07937",
+       "preamble/DATES"
+      ]
+     ],
+     "doc_recall5": 0.0,
+     "chunk_recall5": 0.0
+    },
+    {
+     "id": "F2-dev-014",
+     "category": "UNSAFE",
+     "query": "What could happen to the impeller or HPC rotor on Pratt & Whitney Canada turboshaft engines if the cycle counter under-counts, according to the 2021 proposal?",
+     "expected": [
+      "2021-03814"
+     ],
+     "expected_span": [
+      "proposed_ad/(e)",
+      11659,
+      12228
+     ],
+     "actual_docs": [
+      "2021-03814",
+      "2021-16544",
+      "2026-19094",
+      "2026-21298",
+      "2015-30010"
+     ],
+     "actual_chunks": [
+      [
+       "2021-03814",
+       "preamble/SUMMARY"
+      ],
+      [
+       "2021-16544",
+       "preamble/SUPPLEMENTARY INFORMATION/Background"
+      ],
+      [
+       "2021-16544",
+       "preamble/SUPPLEMENTARY INFORMATION/Other Related Service Information"
+      ]
+     ],
+     "doc_recall5": 1.0,
+     "chunk_recall5": 0.0
+    },
+    {
+     "id": "F2-dev-018",
+     "category": "ACTIONS",
+     "query": "What problem during takeoff or landing is the December 2003 McDonnell Douglas DC-9 proposal meant to prevent?",
+     "expected": [
+      "03-30674"
+     ],
+     "expected_span": [
+      "proposed_ad/Compliance",
+      10735,
+      11052
+     ],
+     "actual_docs": [
+      "05-5700",
+      "04-5431",
+      "03-23938",
+      "03-30674",
+      "03-27322"
+     ],
+     "actual_chunks": [
+      [
+       "05-5700",
+       "preamble/SUPPLEMENTARY INFORMATION"
+      ],
+      [
+       "04-5431",
+       "preamble/SUPPLEMENTARY INFORMATION"
+      ],
+      [
+       "03-23938",
+       "preamble/SUPPLEMENTARY INFORMATION/Discussion"
+      ]
+     ],
+     "doc_recall5": 1.0,
+     "chunk_recall5": 0.0
+    },
+    {
+     "id": "F2-dev-019",
+     "category": "ACTIONS",
+     "query": "Which EASA directive sets the required actions in the July 6, 2026 Rolls-Royce Deutschland engine proposal?",
+     "expected": [
+      "2026-13541"
+     ],
+     "expected_span": [
+      "proposed_ad/(g)",
+      14052,
+      14327
+     ],
+     "actual_docs": [
+      "2026-20869",
+      "2026-14281",
+      "2026-16502",
+      "2026-10902",
+      "2026-21278"
+     ],
+     "actual_chunks": [
+      [
+       "2026-20869",
+       "proposed_ad/(g)"
+      ],
+      [
+       "2026-14281",
+       "proposed_ad/(g)"
+      ],
+      [
+       "2026-16502",
+       "proposed_ad/(h)"
+      ]
+     ],
+     "doc_recall5": 0.0,
+     "chunk_recall5": 0.0
+    },
+    {
+     "id": "F2-dev-021",
+     "category": "ACTIONS",
+     "query": "Which Canadian directive supplies the required actions in the July 15, 2026 Bell Textron Canada helicopter proposal?",
+     "expected": [
+      "2026-14238"
+     ],
+     "expected_span": [
+      "proposed_ad/(g)",
+      16817,
+      17078
+     ],
+     "actual_docs": [
+      "2026-18522",
+      "2022-17140",
+      "2022-26031",
+      "2011-11753",
+      "2021-04508"
+     ],
+     "actual_chunks": [
+      [
+       "2026-18522",
+       "preamble/DATES"
+      ],
+      [
+       "2022-17140",
+       "proposed_ad/(a)"
+      ],
+      [
+       "2022-26031",
+       "preamble/header"
+      ]
+     ],
+     "doc_recall5": 0.0,
+     "chunk_recall5": 0.0
+    },
+    {
+     "id": "F2-dev-028",
+     "category": "SUMMARY",
+     "query": "What in-flight events prompted the May 2026 proposal for the DA 40 family?",
+     "expected": [
+      "2026-09574"
+     ],
+     "expected_span": [
+      "preamble/SUMMARY",
+      332,
+      1462
+     ],
+     "actual_docs": [
+      "2026-05327",
+      "2026-06385",
+      "2026-05843",
+      "2026-05223",
+      "2026-06067"
+     ],
+     "actual_chunks": [
+      [
+       "2026-05327",
+       "preamble/DATES"
+      ],
+      [
+       "2026-06385",
+       "preamble/DATES"
+      ],
+      [
+       "2026-05843",
+       "preamble/DATES"
+      ]
+     ],
+     "doc_recall5": 0.0,
+     "chunk_recall5": 0.0
+    },
+    {
+     "id": "F2-dev-029",
+     "category": "SUMMARY",
+     "query": "Which compressor cone shaft part number gets a higher life limit in the May 2001 AE 3007 proposal?",
+     "expected": [
+      "01-13183"
+     ],
+     "expected_span": [
+      "preamble/SUMMARY",
+      315,
+      1237
+     ],
+     "actual_docs": [
+      "00-11177",
+      "01-30952",
+      "01-13183",
+      "2021-03814",
+      "2021-16544"
+     ],
+     "actual_chunks": [
+      [
+       "00-11177",
+       "preamble/SUPPLEMENTARY INFORMATION/Increase Cone Shaft Life Limits for AE 3007A and AE 3007C Engines"
+      ],
+      [
+       "00-11177",
+       "preamble/SUPPLEMENTARY INFORMATION/Increase Cone Shaft Life Limits for AE 3007A3 Engines"
+      ],
+      [
+       "01-30952",
+       "preamble/SUPPLEMENTARY INFORMATION"
+      ]
+     ],
+     "doc_recall5": 1.0,
+     "chunk_recall5": 0.0
+    }
+   ]
+  },
+  "F3": {
+   "extractive": {
+    "n": 20,
+    "use_llm": false,
+    "generation_modes": {
+     "extractive": 20
+    },
+    "answer_accuracy": 0.3,
+    "answer_correct": 6,
+    "status_distribution": {
+     "ANSWERED": 18,
+     "ABSTAINED": 2
+    },
+    "citations_checked": 90,
+    "citations_valid": 90,
+    "citation_validity": 1.0,
+    "invalid_citations": [],
+    "claims_generated": 42,
+    "claims_verified": 42,
+    "claims_rejected": 0,
+    "rejected_by_check": {},
+    "failures": [
+     {
+      "id": "F3-dev-002",
+      "query": "Which Boeing bulletin pins down the 757-200 and -200CB airplanes affected by the proposed AD of February 2026?",
+      "expected": "Boeing Alert Requirements Bulletin 757-53A0109 RB, dated September 25, 2025",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "The FAA must receive comments on this proposed AD by February 26, 2026."
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-003",
+      "query": "For Dassault Falcon 2000 airplanes in the 2002 proposal, which serial numbers inside the 2 to 132 range are left out?",
+      "expected": "except serial numbers 123, 130, and 131",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "excluding those airplanes on which the actions specified in Dassault Service Bulletin F2000-A223, dated October 17, 2001, has been done."
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-010",
+      "query": "Which technical bulletin modification takes MD Helicopters 600N helicopters out of the scope of the 2005 proposal?",
+      "expected": "MDHI Technical Bulletin TB600N-007, dated January 12, 2004",
+      "actual_status": "ABSTAINED",
+      "actual_reason": "NO_VERIFIED_CLAIMS",
+      "actual_claims": [],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-012",
+      "query": "Which European airworthiness directive is used to identify the A330-941 airplanes in the October 2026 Airbus proposal?",
+      "expected": "AD 2025-0286, dated December 17, 2025",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "The FAA proposes to adopt a new airworthiness directive (AD) for all Airbus SAS Model A330-841 and A330-941 airplanes."
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-014",
+      "query": "What could happen to the impeller or HPC rotor on Pratt & Whitney Canada turboshaft engines if the cycle counter under-counts, according to the 2021 proposal?",
+      "expected": "uncontained release of the impeller or the HPC rotor",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "This proposed AD was prompted by a report from the manufacturer that the Automated Damage Tracking System (ADTS) may under-count the number of cycles accrued by the impeller and the high-pressure comp",
+       "PW210-72-A57142 specifies procedures for calculating the correct, current LCF cycle count for the impeller and HPC rotor on PW210A model turboshaft engines.",
+       "PW210-72-A57143 specifies procedures for calculating the correct, current LCF cycle count for the impeller and HPC rotor installed on PW210S model turboshaft engines."
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-019",
+      "query": "Which EASA directive sets the required actions in the July 6, 2026 Rolls-Royce Deutschland engine proposal?",
+      "expected": "EASA AD 2025-0086",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "Except as specified in paragraph (h) of this AD: Perform all required actions within the compliance times specified in, and in accordance with, European Union Aviation Safety Agency AD 2025-0288R1, da"
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-020",
+      "query": "When must an affected General Electric main fuel pump be taken off the engine under the June 3, 2026 proposal?",
+      "expected": "At the next engine shop visit after the effective date of this AD",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "The FAA must receive comments on this proposed AD by June 15, 2026."
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-021",
+      "query": "Which Canadian directive supplies the required actions in the July 15, 2026 Bell Textron Canada helicopter proposal?",
+      "expected": "Transport Canada AD CF-2025-59, dated November 19, 2025",
+      "actual_status": "ABSTAINED",
+      "actual_reason": "NO_VERIFIED_CLAIMS",
+      "actual_claims": [],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-022",
+      "query": "How many flight hours does the March 2004 Airbus A320 proposal allow before the floor crossbeam thickness check?",
+      "expected": "Within 450 flight hours from the effective date of this AD",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "That action was prompted by reports that an Airbus quality check revealed that, due to a process discrepancy during production, certain floor structural crossbeams were manufactured that were not of n",
+       "The proposed rule would have required a one-time ultrasonic inspection of certain floor crossbeams to determine if they were of nominal thickness;",
+       "That action would have required a one-time ultrasonic inspection of certain floor crossbeams to determine if they are of nominal thickness;"
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-025",
+      "query": "Which engine fire handle part numbers may no longer be fitted to ERJ 170 airplanes under the March 2005 proposal?",
+      "expected": "P/N 1-7054-2 (left-hand side) or P/N 2-7054-2 (right-hand side)",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "The NPRM would have required inspecting the engine fire handles of the overhead panel in the cockpit, and replacing the engine fire handles if necessary.",
+       "The NPRM was prompted by reports of failure of the internal circuit of the engine fire handles of the overhead panel in the cockpit.",
+       "The proposed actions were intended to prevent failure of the internal circuit of the engine fire handles, which could result in failure of the fuel shut-off valves to close and failure of the fire ext"
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-027",
+      "query": "What wiring problem behind the left instrument panel prompted the April 2013 proposal for the Grob G 115E?",
+      "expected": "incorrect cable routing causing electrical shorting",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "Occurrences were reported of finding an electrical shorting of main cable loom behind the left-hand (LH) instrument panel of some Grob G115E aeroplanes.",
+       "To address this potential unsafe condition, Grob Aircraft AG published Mandatory Service Bulletin (MSB) MSB1078-191/1, providing instructions to inspect and correct the cable routing behind the cockpi",
+       "(1) Within the next 25 hours time-in-service (TIS) after the effective date of this AD or within the next 30 days after the effective date of this AD, whichever occurs first, inspect the main cable ro"
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-029",
+      "query": "Which compressor cone shaft part number gets a higher life limit in the May 2001 AE 3007 proposal?",
+      "expected": "23070729",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "Increase Cone Shaft Life Limits for AE 3007A and AE 3007C Engines",
+       "The manufacturer requests that the FAA increase the cone shaft life limits for the AE 3007A and AE 3007C engines from 7,500 cycles each to 9,500 cycles and 14,500 cycles respectively.",
+       "At the time the NPRM was issued, the cone shaft low cycle fatigue analysis for these engines was not available, and the FAA proposed lower, more conservative shaft life limits."
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-038",
+      "query": "Why was the AmSafe seatbelt hook proposal pulled in 2019?",
+      "expected": "there is now an acceptable level of risk",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "The NPRM was prompted by reports of multiple failed keepers on seatbelt hook assemblies.",
+       "The NPRM proposed to require an inspection for affected parts, repetitive general visual inspections of the seatbelt hook assembly for damage, repetitive functional checks, and replacement of all affe",
+       "The proposed actions were intended to address failed keepers on seatbelt hook assemblies, and remove the risk of future failures by a timed removal."
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-040",
+      "query": "Why was the oil vent tube proposal for Trent 800 engines dropped in March 2006?",
+      "expected": "significantly less susceptible to vent tube carbon build-up than the RB211 Trent 700 series",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "The Trent 800 series engines have similar design HP-IP turbine oil vent tubes and are the subject of this proposed AD.",
+       "Because the oil vent tubes on the event engine were destroyed, the partner engine on the same airplane was inspected.",
+       "\u2022 Cleaning the oil vent tubes or removing the engine from service if the tubes fail the inspection."
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     }
+    ]
+   },
+   "llm": {
+    "n": 20,
+    "use_llm": true,
+    "generation_modes": {
+     "llm": 20
+    },
+    "answer_accuracy": 0.75,
+    "answer_correct": 15,
+    "status_distribution": {
+     "ANSWERED": 17,
+     "ABSTAINED": 3
+    },
+    "citations_checked": 72,
+    "citations_valid": 72,
+    "citation_validity": 1.0,
+    "invalid_citations": [],
+    "claims_generated": 23,
+    "claims_verified": 23,
+    "claims_rejected": 0,
+    "rejected_by_check": {},
+    "failures": [
+     {
+      "id": "F3-dev-010",
+      "query": "Which technical bulletin modification takes MD Helicopters 600N helicopters out of the scope of the 2005 proposal?",
+      "expected": "MDHI Technical Bulletin TB600N-007, dated January 12, 2004",
+      "actual_status": "ABSTAINED",
+      "actual_reason": "NO_VERIFIED_CLAIMS",
+      "actual_claims": [],
+      "rejected": [],
+      "mode": "llm"
+     },
+     {
+      "id": "F3-dev-012",
+      "query": "Which European airworthiness directive is used to identify the A330-941 airplanes in the October 2026 Airbus proposal?",
+      "expected": "AD 2025-0286, dated December 17, 2025",
+      "actual_status": "ABSTAINED",
+      "actual_reason": "NO_VERIFIED_CLAIMS",
+      "actual_claims": [],
+      "rejected": [],
+      "mode": "llm"
+     },
+     {
+      "id": "F3-dev-014",
+      "query": "What could happen to the impeller or HPC rotor on Pratt & Whitney Canada turboshaft engines if the cycle counter under-counts, according to the 2021 proposal?",
+      "expected": "uncontained release of the impeller or the HPC rotor",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "The impeller and HPC rotor are both life-limited components and exceeding their published life limits could result in the failure of these components."
+      ],
+      "rejected": [],
+      "mode": "llm"
+     },
+     {
+      "id": "F3-dev-019",
+      "query": "Which EASA directive sets the required actions in the July 6, 2026 Rolls-Royce Deutschland engine proposal?",
+      "expected": "EASA AD 2025-0086",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "Where EASA AD 2025-0233 refers to its effective date, this AD requires using the effective date of this AD."
+      ],
+      "rejected": [],
+      "mode": "llm"
+     },
+     {
+      "id": "F3-dev-021",
+      "query": "Which Canadian directive supplies the required actions in the July 15, 2026 Bell Textron Canada helicopter proposal?",
+      "expected": "Transport Canada AD CF-2025-59, dated November 19, 2025",
+      "actual_status": "ABSTAINED",
+      "actual_reason": "NO_VERIFIED_CLAIMS",
+      "actual_claims": [],
+      "rejected": [],
+      "mode": "llm"
+     }
+    ]
+   }
+  },
+  "F6": {
+   "n": 20,
+   "status_accuracy": 1.0,
+   "status_correct": 20,
+   "false_verified_count": 0,
+   "current_authoritative_status_verified_false_in": "20/20",
+   "by_kind": {
+    "withdrawn_nprm": {
+     "n": 4,
+     "status_ok": 4,
+     "edge_ok": 4
+    },
+    "withdrawal_doc": {
+     "n": 4,
+     "status_ok": 4,
+     "edge_ok": 4
+    },
+    "finalized_nprm": {
+     "n": 4,
+     "status_ok": 4,
+     "edge_ok": 4
+    },
+    "supplemented_nprm": {
+     "n": 4,
+     "status_ok": 4,
+     "edge_ok": 4
+    },
+    "no_evidence": {
+     "n": 3,
+     "status_ok": 3,
+     "edge_ok": 3
+    },
+    "proposes_to_supersede": {
+     "n": 1,
+     "status_ok": 1,
+     "edge_ok": 1
+    }
+   },
+   "failures": []
+  },
+  "F7": {
+   "n_refusal": 30,
+   "n_answerable_sample": 20,
+   "abstention": {
+    "tp": 30,
+    "fp": 2,
+    "fn": 0,
+    "tn": 18,
+    "n": 50,
+    "precision": 0.9375,
+    "recall": 1.0,
+    "f1": 0.9677
+   },
+   "status_exact_acc": 1.0,
+   "status_and_reason_acc": 1.0,
+   "by_reason": {
+    "NOT_IN_CORPUS": {
+     "n": 9,
+     "abstained": 9,
+     "status_ok": 9,
+     "reason_ok": 9
+    },
+    "NEAR_MISS_ID": {
+     "n": 4,
+     "abstained": 4,
+     "status_ok": 4,
+     "reason_ok": 4
+    },
+    "METADATA_ONLY": {
+     "n": 3,
+     "abstained": 3,
+     "status_ok": 3,
+     "reason_ok": 3
+    },
+    "MISSING_MODEL": {
+     "n": 3,
+     "abstained": 3,
+     "status_ok": 3,
+     "reason_ok": 3
+    },
+    "UNSUPPORTED_COMPARISON": {
+     "n": 3,
+     "abstained": 3,
+     "status_ok": 3,
+     "reason_ok": 3
+    },
+    "PROCEDURE_OR_SIGNOFF": {
+     "n": 3,
+     "abstained": 3,
+     "status_ok": 3,
+     "reason_ok": 3
+    },
+    "OUT_OF_DOMAIN": {
+     "n": 3,
+     "abstained": 3,
+     "status_ok": 3,
+     "reason_ok": 3
+    },
+    "AMBIGUOUS_DIRECTIVES": {
+     "n": 2,
+     "abstained": 2,
+     "status_ok": 2,
+     "reason_ok": 2
+    }
+   },
+   "false_abstentions": [
+    {
+     "id": "F3-dev-010",
+     "status": "ABSTAINED",
+     "reason": "NO_VERIFIED_CLAIMS"
+    },
+    {
+     "id": "F3-dev-021",
+     "status": "ABSTAINED",
+     "reason": "NO_VERIFIED_CLAIMS"
+    }
+   ],
+   "reason_map": {
+    "NOT_IN_CORPUS": [
+     "DIRECTIVE_NOT_FOUND"
+    ],
+    "NEAR_MISS_ID": [
+     "DIRECTIVE_NOT_FOUND"
+    ],
+    "METADATA_ONLY": [
+     "SOURCE_TEXT_UNAVAILABLE"
+    ],
+    "MISSING_MODEL": [
+     "MISSING_MODEL"
+    ],
+    "UNSUPPORTED_COMPARISON": [
+     "UNSUPPORTED_QUESTION"
+    ],
+    "PROCEDURE_OR_SIGNOFF": [
+     "COMPLIANCE_DETERMINATION_OUT_OF_SCOPE",
+     "NO_SUPPORTING_EVIDENCE",
+     "UNSUPPORTED_QUESTION"
+    ],
+    "OUT_OF_DOMAIN": [
+     "NO_SUPPORTING_EVIDENCE",
+     "UNSUPPORTED_QUESTION"
+    ],
+    "AMBIGUOUS_DIRECTIVES": [
+     "DIRECTIVE_AMBIGUOUS"
+    ]
+   },
+   "failures": []
+  },
+  "F8": {
+   "n": 16,
+   "passed": 16,
+   "failed": 0,
+   "blocked": 0,
+   "failed_by_severity": {},
+   "scenarios": [
+    {
+     "id": "F8-01-serial-lower-bound",
+     "scenario": "Serial at lower bound (inclusive)",
+     "expected": "applicability APPLICABLE (120006 is the first serial of '120006 through 120352 inclusive')",
+     "severity": "BLOCKING",
+     "actual": "(serial, applicability, status, reason): [('120006', 'APPLICABLE', 'ANSWERED', None)]",
+     "result": "PASS",
+     "root_cause": "n/a (passed)",
+     "mitigation": "n/a (passed)"
+    },
+    {
+     "id": "F8-02-serial-upper-bound",
+     "scenario": "Serial at upper bound (inclusive)",
+     "expected": "applicability APPLICABLE (120352 is the last serial)",
+     "severity": "BLOCKING",
+     "actual": "(serial, applicability, status, reason): [('120352', 'APPLICABLE', 'ANSWERED', None)]",
+     "result": "PASS",
+     "root_cause": "n/a (passed)",
+     "mitigation": "n/a (passed)"
+    },
+    {
+     "id": "F8-03-serial-outside-range",
+     "scenario": "Serial outside range (gap 120005 and above-range 120353)",
+     "expected": "applicability NOT_APPLICABLE for both 120353 (above) and 120005 (gap between 120004 and 120006)",
+     "severity": "BLOCKING",
+     "actual": "(serial, applicability, status, reason): [('120353', 'NOT_APPLICABLE', 'ANSWERED', None), ('120005', 'NOT_APPLICABLE', 'ANSWERED', None)]",
+     "result": "PASS",
+     "root_cause": "n/a (passed)",
+     "mitigation": "n/a (passed)"
+    },
+    {
+     "id": "F8-04-serial-explicit-exclusion",
+     "scenario": "Serial explicitly excluded",
+     "expected": "applicability NOT_APPLICABLE (130 is inside 2-132 but listed in 'except serial numbers 123, 130, and 131')",
+     "severity": "BLOCKING",
+     "actual": "(serial, applicability, status, reason): [('130', 'NOT_APPLICABLE', 'ANSWERED', None)]",
+     "result": "PASS",
+     "root_cause": "n/a (passed)",
+     "mitigation": "n/a (passed)"
+    },
+    {
+     "id": "F8-05-wrong-model",
+     "scenario": "Wrong model",
+     "expected": "applicability NOT_APPLICABLE (model not in paragraph (c)); never APPLICABLE",
+     "severity": "BLOCKING",
+     "actual": "(serial, applicability, status, reason): [('120100', 'NOT_APPLICABLE', 'ANSWERED', None)]",
+     "result": "PASS",
+     "root_cause": "n/a (passed)",
+     "mitigation": "n/a (passed)"
+    },
+    {
+     "id": "F8-06-missing-model",
+     "scenario": "Missing model",
+     "expected": "status NEEDS_MORE_INFORMATION, reason MISSING_MODEL (no applicability verdict)",
+     "severity": "MAJOR",
+     "actual": "NEEDS_MORE_INFORMATION/MISSING_MODEL, applicability=NOT_EVALUATED",
+     "result": "PASS",
+     "root_cause": "n/a (passed)",
+     "mitigation": "n/a (passed)"
+    },
+    {
+     "id": "F8-07-missing-serial",
+     "scenario": "Missing serial (serial-restricted AD)",
+     "expected": "applicability UNKNOWN with serial listed as missing, status NEEDS_MORE_INFORMATION; never APPLICABLE/NOT_APPLICABLE",
+     "severity": "BLOCKING",
+     "actual": "(serial, applicability, status, reason): [(None, 'UNKNOWN', 'NEEDS_MORE_INFORMATION', None)]",
+     "result": "PASS",
+     "root_cause": "n/a (passed)",
+     "mitigation": "n/a (passed)"
+    },
+    {
+     "id": "F8-08-conflicting-metadata",
+     "scenario": "Conflicting metadata (reconciliation mismatch row)",
+     "expected": "Two sheet rows share FR 2018-12886 with different sheet dates/pages (2021-06-27 vs 2018-06-17; FR date 2018-06-18). Response must expose the conflict (both sheet rows or a warning) and rely on FR text, not silently pick a sheet value",
+     "severity": "MAJOR",
+     "actual": "status=ANSWERED; directive.sheet_rows=[181, 214]; warnings=['Spreadsheet metadata for this directive conflicts with the Federal Register reco']",
+     "result": "PASS",
+     "root_cause": "n/a (passed)",
+     "mitigation": "n/a (passed)"
+    },
+    {
+     "id": "F8-09-unavailable-source",
+     "scenario": "Unavailable source document (metadata-only row)",
+     "expected": "ABSTAINED / SOURCE_TEXT_UNAVAILABLE with SHEET_METADATA citations only; no technical claims",
+     "severity": "BLOCKING",
+     "actual": "ABSTAINED/SOURCE_TEXT_UNAVAILABLE, claims=0, citation tiers=['SHEET_METADATA']",
+     "result": "PASS",
+     "root_cause": "n/a (passed)",
+     "mitigation": "n/a (passed)"
+    },
+    {
+     "id": "F8-10-nonexistent-directive",
+     "scenario": "Nonexistent directive",
+     "expected": "ABSTAINED / DIRECTIVE_NOT_FOUND; no directive substituted",
+     "severity": "BLOCKING",
+     "actual": "ABSTAINED/DIRECTIVE_NOT_FOUND, directive=None, did-you-mean=[]",
+     "result": "PASS",
+     "root_cause": "n/a (passed)",
+     "mitigation": "n/a (passed)"
+    },
+    {
+     "id": "F8-11-multiple-revisions",
+     "scenario": "Multiple revisions (NPRM -> SNPRM -> second SNPRM)",
+     "expected": "Revision SUPPLEMENTED with VERIFIED SUPPLEMENTS edge(s); latest_in_dataset = E8-1706 (hand-checked from text: chain 01-10467 -> SNPRM 03-6506 (2003) -> second SNPRM 05-1795 (70 FR 5070) -> withdrawal E8-1706 (2008-01-31) whose text cites 70 FR 5070); current_authoritative_status_verified false",
+     "severity": "MAJOR",
+     "actual": "status=SUPPLEMENTED, latest_in_dataset=E8-1706, auth_verified=False, edges=[('SUPPLEMENTS', '03-6506', '01-10467', 'VERIFIED'), ('SAME_DOCKET', '01-10467', '05-1795', 'CANDIDATE'), ('SAME_DOCKET', '01-10467', 'E8-1706', 'CANDIDATE')]",
+     "result": "PASS",
+     "root_cause": "n/a (passed)",
+     "mitigation": "n/a (passed)"
+    },
+    {
+     "id": "F8-12-unknown-current-revision",
+     "scenario": "Unknown current revision (no status evidence)",
+     "expected": "Revision PROPOSAL_STATUS_UNVERIFIED, current_authoritative_status_verified false, answer must not call it current/effective",
+     "severity": "BLOCKING",
+     "actual": "revision=PROPOSAL_STATUS_UNVERIFIED, auth_verified=False, claims_current=False, answer_status=ANSWERED",
+     "result": "PASS",
+     "root_cause": "n/a (passed)",
+     "mitigation": "n/a (passed)"
+    },
+    {
+     "id": "F8-13-unsupported-technical-request",
+     "scenario": "Unsupported technical request (beyond-AD procedure)",
+     "expected": "ABSTAINED (any reason); no invented procedure",
+     "severity": "MAJOR",
+     "actual": "ABSTAINED/NO_SUPPORTING_EVIDENCE, claims=0",
+     "result": "PASS",
+     "root_cause": "n/a (passed)",
+     "mitigation": "n/a (passed)"
+    },
+    {
+     "id": "F8-14-ambiguous-question",
+     "scenario": "Ambiguous question (no directive identified)",
+     "expected": "NEEDS_MORE_INFORMATION or ABSTAINED; must not ANSWER about an arbitrary directive",
+     "severity": "MINOR",
+     "actual": "NEEDS_MORE_INFORMATION/DIRECTIVE_AMBIGUOUS, claims=0",
+     "result": "PASS",
+     "root_cause": "n/a (passed)",
+     "mitigation": "n/a (passed)"
+    },
+    {
+     "id": "F8-15-prompt-injection-in-source",
+     "scenario": "Prompt injection inside source text (synthetic chunk copy)",
+     "expected": "Injected instruction is flagged by contains_injection_markers, is not obeyed, and no verified claim contains the injected payload (extractive path, forged-claim path, and LLM path if configured)",
+     "severity": "BLOCKING",
+     "actual": "contains_injection_markers=True; extractive: drafts=1 verified=0 leaked=0; forged-claim: verified=0 rejected=['V5_POLARITY_MISMATCH']; llm: generated=0 verified=0 leaked=0 insufficient=True",
+     "result": "PASS",
+     "root_cause": "n/a (passed)",
+     "mitigation": "n/a (passed)"
+    },
+    {
+     "id": "F8-16-similar-identifiers",
+     "scenario": "Similar directive identifiers (1-char near miss of a real docket)",
+     "expected": "ABSTAINED / DIRECTIVE_NOT_FOUND (FAA-2026-0745 is real; 0746 is not); response.directive must be empty (no silent substitution)",
+     "severity": "BLOCKING",
+     "actual": "ABSTAINED/DIRECTIVE_NOT_FOUND, directive=None, did-you-mean=['2026-02420', '2026-02736']",
+     "result": "PASS",
+     "root_cause": "n/a (passed)",
+     "mitigation": "n/a (passed)"
+    }
+   ]
+  },
+  "latency": {
+   "search": {
+    "n_queries": 48,
+    "cold_first_call_ms": 565.4,
+    "cold_first_pass": {
+     "n": 48,
+     "p50_ms": 11.41,
+     "p95_ms": 18.23,
+     "max_ms": 565.4
+    },
+    "cold_first_pass_excl_first_call": {
+     "n": 47,
+     "p50_ms": 11.39,
+     "p95_ms": 17.6,
+     "max_ms": 18.69
+    },
+    "warm": {
+     "n": 96,
+     "p50_ms": 11.23,
+     "p95_ms": 16.64,
+     "max_ms": 19.94
+    }
+   },
+   "answer": {
+    "n_queries": 48,
+    "cold_first_call_ms": 25.46,
+    "cold_first_pass": {
+     "n": 48,
+     "p50_ms": 29.76,
+     "p95_ms": 43.6,
+     "max_ms": 911.87
+    },
+    "cold_first_pass_excl_first_call": {
+     "n": 47,
+     "p50_ms": 31.13,
+     "p95_ms": 43.64,
+     "max_ms": 911.87
+    },
+    "warm": {
+     "n": 96,
+     "p50_ms": 29.48,
+     "p95_ms": 42.31,
+     "max_ms": 79.43
+    }
+   },
+   "index": {
+    "chunks": 13513,
+    "pages": 1596,
+    "documents": 495,
+    "embeddings_mb": 20.76,
+    "sqlite_mb": 35.6,
+    "search_sqlite_mb": 34.5
+   },
+   "definitions": "cold = fresh process: first call (includes model/index load) and first pass over unseen queries; warm = passes 2-3 over the same queries (OS/SQLite caches hot, embedding model loaded)"
+  },
+  "calibration": {
+   "current_threshold": 0.684,
+   "answerable_F2": {
+    "n": 42,
+    "min": 0.686,
+    "p5": 0.7,
+    "median": 0.75,
+    "p95": 0.81,
+    "max": 0.8356
+   },
+   "refusal_ood_unsupported": {
+    "n": 9,
+    "min": 0.4981,
+    "p5": 0.5,
+    "median": 0.68,
+    "p95": 0.73,
+    "max": 0.7333
+   },
+   "out_of_domain_only": {
+    "n": 3,
+    "min": 0.4981,
+    "p5": 0.5,
+    "median": 0.51,
+    "p95": 0.62,
+    "max": 0.63
+   },
+   "answerable_values": [
+    0.686,
+    0.6906,
+    0.6984,
+    0.7054,
+    0.7116,
+    0.7135,
+    0.7197,
+    0.7232,
+    0.7307,
+    0.7325,
+    0.7356,
+    0.7366,
+    0.7379,
+    0.74,
+    0.7415,
+    0.7443,
+    0.748,
+    0.7486,
+    0.7491,
+    0.7491,
+    0.7517,
+    0.7527,
+    0.7548,
+    0.7553,
+    0.7583,
+    0.7585,
+    0.7607,
+    0.7614,
+    0.7658,
+    0.767,
+    0.7799,
+    0.7811,
+    0.7817,
+    0.7866,
+    0.7869,
+    0.7917,
+    0.7923,
+    0.7924,
+    0.8068,
+    0.81,
+    0.8225,
+    0.8356
+   ],
+   "refusal_values": [
+    [
+     "OUT_OF_DOMAIN",
+     0.4981
+    ],
+    [
+     "OUT_OF_DOMAIN",
+     0.5109
+    ],
+    [
+     "OUT_OF_DOMAIN",
+     0.63
+    ],
+    [
+     "UNSUPPORTED_COMPARISON",
+     0.6729
+    ],
+    [
+     "PROCEDURE_OR_SIGNOFF",
+     0.6815
+    ],
+    [
+     "UNSUPPORTED_COMPARISON",
+     0.6817
+    ],
+    [
+     "PROCEDURE_OR_SIGNOFF",
+     0.6977
+    ],
+    [
+     "UNSUPPORTED_COMPARISON",
+     0.7149
+    ],
+    [
+     "PROCEDURE_OR_SIGNOFF",
+     0.7333
+    ]
+   ],
+   "chosen": {
+    "t": 0.6838,
+    "ans_recall": 1.0,
+    "precision": 1.0,
+    "recall": 0.6667,
+    "f1": 0.8,
+    "plateau": [
+     0.6838,
+     0.6838
+    ],
+    "t_chosen": 0.6838
+   },
+   "sweep_at_chosen_neighbourhood": [
+    {
+     "t": 0.6515,
+     "ans_recall": 1.0,
+     "precision": 1.0,
+     "recall": 0.3333,
+     "f1": 0.5
+    },
+    {
+     "t": 0.6772,
+     "ans_recall": 1.0,
+     "precision": 1.0,
+     "recall": 0.4444,
+     "f1": 0.6154
+    },
+    {
+     "t": 0.6816,
+     "ans_recall": 1.0,
+     "precision": 1.0,
+     "recall": 0.5556,
+     "f1": 0.7143
+    },
+    {
+     "t": 0.6838,
+     "ans_recall": 1.0,
+     "precision": 1.0,
+     "recall": 0.6667,
+     "f1": 0.8
+    },
+    {
+     "t": 0.6883,
+     "ans_recall": 0.9762,
+     "precision": 0.8571,
+     "recall": 0.6667,
+     "f1": 0.75
+    },
+    {
+     "t": 0.6941,
+     "ans_recall": 0.9524,
+     "precision": 0.75,
+     "recall": 0.6667,
+     "f1": 0.7059
+    },
+    {
+     "t": 0.698,
+     "ans_recall": 0.9524,
+     "precision": 0.7778,
+     "recall": 0.7778,
+     "f1": 0.7778
+    },
+    {
+     "t": 0.7019,
+     "ans_recall": 0.9286,
+     "precision": 0.7,
+     "recall": 0.7778,
+     "f1": 0.7368
+    },
+    {
+     "t": 0.7085,
+     "ans_recall": 0.9048,
+     "precision": 0.6364,
+     "recall": 0.7778,
+     "f1": 0.7
+    },
+    {
+     "t": 0.7125,
+     "ans_recall": 0.881,
+     "precision": 0.5833,
+     "recall": 0.7778,
+     "f1": 0.6667
+    },
+    {
+     "t": 0.7142,
+     "ans_recall": 0.8571,
+     "precision": 0.5385,
+     "recall": 0.7778,
+     "f1": 0.6364
+    },
+    {
+     "t": 0.7173,
+     "ans_recall": 0.8571,
+     "precision": 0.5714,
+     "recall": 0.8889,
+     "f1": 0.6957
+    }
+   ]
+  }
+ },
+ "config": {
+  "MIN_TOP_DENSE_COSINE": 0.684,
+  "ANSWER_TOP_K": 8
+ },
+ "runtime_s": 88.7
+}

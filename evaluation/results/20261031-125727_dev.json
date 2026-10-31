@@ -1,0 +1,409 @@
+{
+ "split": "dev",
+ "timestamp": "2026-10-31T12:56:20",
+ "families": [
+  "F3",
+  "F7"
+ ],
+ "llm_requested": true,
+ "metrics": {
+  "F3": {
+   "extractive": {
+    "n": 20,
+    "use_llm": false,
+    "generation_modes": {
+     "extractive": 20
+    },
+    "answer_accuracy": 0.3,
+    "answer_correct": 6,
+    "status_distribution": {
+     "ABSTAINED": 3,
+     "ANSWERED": 17
+    },
+    "citations_checked": 89,
+    "citations_valid": 89,
+    "citation_validity": 1.0,
+    "invalid_citations": [],
+    "claims_generated": 41,
+    "claims_verified": 41,
+    "claims_rejected": 0,
+    "rejected_by_check": {},
+    "failures": [
+     {
+      "id": "F3-dev-002",
+      "query": "Which Boeing bulletin pins down the 757-200 and -200CB airplanes affected by the proposed AD of February 2026?",
+      "expected": "Boeing Alert Requirements Bulletin 757-53A0109 RB, dated September 25, 2025",
+      "actual_status": "ABSTAINED",
+      "actual_reason": "NO_VERIFIED_CLAIMS",
+      "actual_claims": [],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-003",
+      "query": "For Dassault Falcon 2000 airplanes in the 2002 proposal, which serial numbers inside the 2 to 132 range are left out?",
+      "expected": "except serial numbers 123, 130, and 131",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "excluding those airplanes on which the actions specified in Dassault Service Bulletin F2000-A223, dated October 17, 2001, has been done."
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-010",
+      "query": "Which technical bulletin modification takes MD Helicopters 600N helicopters out of the scope of the 2005 proposal?",
+      "expected": "MDHI Technical Bulletin TB600N-007, dated January 12, 2004",
+      "actual_status": "ABSTAINED",
+      "actual_reason": "NO_VERIFIED_CLAIMS",
+      "actual_claims": [],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-012",
+      "query": "Which European airworthiness directive is used to identify the A330-941 airplanes in the October 2026 Airbus proposal?",
+      "expected": "AD 2025-0286, dated December 17, 2025",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "The FAA proposes to adopt a new airworthiness directive (AD) for all Airbus SAS Model A330-841 and A330-941 airplanes."
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-014",
+      "query": "What could happen to the impeller or HPC rotor on Pratt & Whitney Canada turboshaft engines if the cycle counter under-counts, according to the 2021 proposal?",
+      "expected": "uncontained release of the impeller or the HPC rotor",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "This proposed AD was prompted by a report from the manufacturer that the Automated Damage Tracking System (ADTS) may under-count the number of cycles accrued by the impeller and the high-pressure comp",
+       "PW210-72-A57142 specifies procedures for calculating the correct, current LCF cycle count for the impeller and HPC rotor on PW210A model turboshaft engines.",
+       "PW210-72-A57143 specifies procedures for calculating the correct, current LCF cycle count for the impeller and HPC rotor installed on PW210S model turboshaft engines."
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-019",
+      "query": "Which EASA directive sets the required actions in the July 6, 2026 Rolls-Royce Deutschland engine proposal?",
+      "expected": "EASA AD 2025-0086",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "Except as specified in paragraph (h) of this AD: Perform all required actions within the compliance times specified in, and in accordance with, European Union Aviation Safety Agency AD 2025-0288R1, da"
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-020",
+      "query": "When must an affected General Electric main fuel pump be taken off the engine under the June 3, 2026 proposal?",
+      "expected": "At the next engine shop visit after the effective date of this AD",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "The FAA must receive comments on this proposed AD by June 15, 2026."
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-021",
+      "query": "Which Canadian directive supplies the required actions in the July 15, 2026 Bell Textron Canada helicopter proposal?",
+      "expected": "Transport Canada AD CF-2025-59, dated November 19, 2025",
+      "actual_status": "ABSTAINED",
+      "actual_reason": "NO_VERIFIED_CLAIMS",
+      "actual_claims": [],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-022",
+      "query": "How many flight hours does the March 2004 Airbus A320 proposal allow before the floor crossbeam thickness check?",
+      "expected": "Within 450 flight hours from the effective date of this AD",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "That action was prompted by reports that an Airbus quality check revealed that, due to a process discrepancy during production, certain floor structural crossbeams were manufactured that were not of n",
+       "The proposed rule would have required a one-time ultrasonic inspection of certain floor crossbeams to determine if they were of nominal thickness;",
+       "That action would have required a one-time ultrasonic inspection of certain floor crossbeams to determine if they are of nominal thickness;"
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-025",
+      "query": "Which engine fire handle part numbers may no longer be fitted to ERJ 170 airplanes under the March 2005 proposal?",
+      "expected": "P/N 1-7054-2 (left-hand side) or P/N 2-7054-2 (right-hand side)",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "The NPRM would have required inspecting the engine fire handles of the overhead panel in the cockpit, and replacing the engine fire handles if necessary.",
+       "The NPRM was prompted by reports of failure of the internal circuit of the engine fire handles of the overhead panel in the cockpit.",
+       "The proposed actions were intended to prevent failure of the internal circuit of the engine fire handles, which could result in failure of the fuel shut-off valves to close and failure of the fire ext"
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-027",
+      "query": "What wiring problem behind the left instrument panel prompted the April 2013 proposal for the Grob G 115E?",
+      "expected": "incorrect cable routing causing electrical shorting",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "Occurrences were reported of finding an electrical shorting of main cable loom behind the left-hand (LH) instrument panel of some Grob G115E aeroplanes.",
+       "To address this potential unsafe condition, Grob Aircraft AG published Mandatory Service Bulletin (MSB) MSB1078-191/1, providing instructions to inspect and correct the cable routing behind the cockpi",
+       "(1) Within the next 25 hours time-in-service (TIS) after the effective date of this AD or within the next 30 days after the effective date of this AD, whichever occurs first, inspect the main cable ro"
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-029",
+      "query": "Which compressor cone shaft part number gets a higher life limit in the May 2001 AE 3007 proposal?",
+      "expected": "23070729",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "Increase Cone Shaft Life Limits for AE 3007A and AE 3007C Engines",
+       "The manufacturer requests that the FAA increase the cone shaft life limits for the AE 3007A and AE 3007C engines from 7,500 cycles each to 9,500 cycles and 14,500 cycles respectively.",
+       "At the time the NPRM was issued, the cone shaft low cycle fatigue analysis for these engines was not available, and the FAA proposed lower, more conservative shaft life limits."
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-038",
+      "query": "Why was the AmSafe seatbelt hook proposal pulled in 2019?",
+      "expected": "there is now an acceptable level of risk",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "The NPRM was prompted by reports of multiple failed keepers on seatbelt hook assemblies.",
+       "The NPRM proposed to require an inspection for affected parts, repetitive general visual inspections of the seatbelt hook assembly for damage, repetitive functional checks, and replacement of all affe",
+       "The proposed actions were intended to address failed keepers on seatbelt hook assemblies, and remove the risk of future failures by a timed removal."
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-040",
+      "query": "Why was the oil vent tube proposal for Trent 800 engines dropped in March 2006?",
+      "expected": "significantly less susceptible to vent tube carbon build-up than the RB211 Trent 700 series",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "The Trent 800 series engines have similar design HP-IP turbine oil vent tubes and are the subject of this proposed AD.",
+       "Because the oil vent tubes on the event engine were destroyed, the partner engine on the same airplane was inspected.",
+       "\u2022 Cleaning the oil vent tubes or removing the engine from service if the tubes fail the inspection."
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     }
+    ]
+   },
+   "llm": {
+    "n": 20,
+    "use_llm": true,
+    "generation_modes": {
+     "llm": 20
+    },
+    "answer_accuracy": 0.75,
+    "answer_correct": 15,
+    "status_distribution": {
+     "ANSWERED": 18,
+     "ABSTAINED": 2
+    },
+    "citations_checked": 74,
+    "citations_valid": 74,
+    "citation_validity": 1.0,
+    "invalid_citations": [],
+    "claims_generated": 24,
+    "claims_verified": 24,
+    "claims_rejected": 0,
+    "rejected_by_check": {},
+    "failures": [
+     {
+      "id": "F3-dev-010",
+      "query": "Which technical bulletin modification takes MD Helicopters 600N helicopters out of the scope of the 2005 proposal?",
+      "expected": "MDHI Technical Bulletin TB600N-007, dated January 12, 2004",
+      "actual_status": "ABSTAINED",
+      "actual_reason": "NO_VERIFIED_CLAIMS",
+      "actual_claims": [],
+      "rejected": [],
+      "mode": "llm"
+     },
+     {
+      "id": "F3-dev-012",
+      "query": "Which European airworthiness directive is used to identify the A330-941 airplanes in the October 2026 Airbus proposal?",
+      "expected": "AD 2025-0286, dated December 17, 2025",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "EASA issued AD 2024-0213, dated November 14, 2024 (EASA AD 2024-0213), (which corresponds to FAA AD 2025-17-06) to correct an unsafe condition."
+      ],
+      "rejected": [],
+      "mode": "llm"
+     },
+     {
+      "id": "F3-dev-014",
+      "query": "What could happen to the impeller or HPC rotor on Pratt & Whitney Canada turboshaft engines if the cycle counter under-counts, according to the 2021 proposal?",
+      "expected": "uncontained release of the impeller or the HPC rotor",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "The impeller and HPC rotor are both life-limited components and exceeding their published life limits could result in the failure of these components."
+      ],
+      "rejected": [],
+      "mode": "llm"
+     },
+     {
+      "id": "F3-dev-019",
+      "query": "Which EASA directive sets the required actions in the July 6, 2026 Rolls-Royce Deutschland engine proposal?",
+      "expected": "EASA AD 2025-0086",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "(2) Where EASA AD 2025-0233 refers to its effective date, this AD requires using the effective date of this AD."
+      ],
+      "rejected": [],
+      "mode": "llm"
+     },
+     {
+      "id": "F3-dev-021",
+      "query": "Which Canadian directive supplies the required actions in the July 15, 2026 Bell Textron Canada helicopter proposal?",
+      "expected": "Transport Canada AD CF-2025-59, dated November 19, 2025",
+      "actual_status": "ABSTAINED",
+      "actual_reason": "NO_VERIFIED_CLAIMS",
+      "actual_claims": [],
+      "rejected": [],
+      "mode": "llm"
+     }
+    ]
+   }
+  },
+  "F7": {
+   "n_refusal": 30,
+   "n_answerable_sample": 20,
+   "abstention": {
+    "tp": 30,
+    "fp": 3,
+    "fn": 0,
+    "tn": 17,
+    "n": 50,
+    "precision": 0.9091,
+    "recall": 1.0,
+    "f1": 0.9524
+   },
+   "status_exact_acc": 1.0,
+   "status_and_reason_acc": 1.0,
+   "by_reason": {
+    "NOT_IN_CORPUS": {
+     "n": 9,
+     "abstained": 9,
+     "status_ok": 9,
+     "reason_ok": 9
+    },
+    "NEAR_MISS_ID": {
+     "n": 4,
+     "abstained": 4,
+     "status_ok": 4,
+     "reason_ok": 4
+    },
+    "METADATA_ONLY": {
+     "n": 3,
+     "abstained": 3,
+     "status_ok": 3,
+     "reason_ok": 3
+    },
+    "MISSING_MODEL": {
+     "n": 3,
+     "abstained": 3,
+     "status_ok": 3,
+     "reason_ok": 3
+    },
+    "UNSUPPORTED_COMPARISON": {
+     "n": 3,
+     "abstained": 3,
+     "status_ok": 3,
+     "reason_ok": 3
+    },
+    "PROCEDURE_OR_SIGNOFF": {
+     "n": 3,
+     "abstained": 3,
+     "status_ok": 3,
+     "reason_ok": 3
+    },
+    "OUT_OF_DOMAIN": {
+     "n": 3,
+     "abstained": 3,
+     "status_ok": 3,
+     "reason_ok": 3
+    },
+    "AMBIGUOUS_DIRECTIVES": {
+     "n": 2,
+     "abstained": 2,
+     "status_ok": 2,
+     "reason_ok": 2
+    }
+   },
+   "false_abstentions": [
+    {
+     "id": "F3-dev-002",
+     "status": "ABSTAINED",
+     "reason": "NO_VERIFIED_CLAIMS"
+    },
+    {
+     "id": "F3-dev-010",
+     "status": "ABSTAINED",
+     "reason": "NO_VERIFIED_CLAIMS"
+    },
+    {
+     "id": "F3-dev-021",
+     "status": "ABSTAINED",
+     "reason": "NO_VERIFIED_CLAIMS"
+    }
+   ],
+   "reason_map": {
+    "NOT_IN_CORPUS": [
+     "DIRECTIVE_NOT_FOUND"
+    ],
+    "NEAR_MISS_ID": [
+     "DIRECTIVE_NOT_FOUND"
+    ],
+    "METADATA_ONLY": [
+     "SOURCE_TEXT_UNAVAILABLE"
+    ],
+    "MISSING_MODEL": [
+     "MISSING_MODEL"
+    ],
+    "UNSUPPORTED_COMPARISON": [
+     "UNSUPPORTED_QUESTION"
+    ],
+    "PROCEDURE_OR_SIGNOFF": [
+     "COMPLIANCE_DETERMINATION_OUT_OF_SCOPE",
+     "NO_SUPPORTING_EVIDENCE",
+     "UNSUPPORTED_QUESTION"
+    ],
+    "OUT_OF_DOMAIN": [
+     "NO_SUPPORTING_EVIDENCE",
+     "UNSUPPORTED_QUESTION"
+    ],
+    "AMBIGUOUS_DIRECTIVES": [
+     "DIRECTIVE_AMBIGUOUS"
+    ]
+   },
+   "failures": []
+  }
+ },
+ "config": {
+  "MIN_TOP_DENSE_COSINE": 0.684,
+  "ANSWER_TOP_K": 8
+ },
+ "runtime_s": 67.6
+}

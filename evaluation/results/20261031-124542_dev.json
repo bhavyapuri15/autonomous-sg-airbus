@@ -1,0 +1,61 @@
+{
+ "split": "dev",
+ "timestamp": "2026-10-31T12:45:35",
+ "families": [
+  "F1"
+ ],
+ "llm_requested": false,
+ "metrics": {
+  "F1": {
+   "n": 1125,
+   "acc_at1": 0.9991,
+   "acc_at5": 1.0,
+   "by_kind": {
+    "citation_mid": {
+     "n": 142,
+     "acc_at1": 1.0,
+     "acc_at5": 1.0
+    },
+    "citation_start": {
+     "n": 291,
+     "acc_at1": 1.0,
+     "acc_at5": 1.0
+    },
+    "docket_exact": {
+     "n": 235,
+     "acc_at1": 0.9957,
+     "acc_at5": 1.0
+    },
+    "docket_variant": {
+     "n": 152,
+     "acc_at1": 1.0,
+     "acc_at5": 1.0
+    },
+    "docnum": {
+     "n": 305,
+     "acc_at1": 1.0,
+     "acc_at5": 1.0
+    }
+   },
+   "failures": [
+    {
+     "id": "F1-01-13183-docket_exact",
+     "query": "99-NE-46",
+     "expected": [
+      "01-13183"
+     ],
+     "actual": [
+      "00-11177",
+      "01-30952",
+      "01-13183"
+     ]
+    }
+   ]
+  }
+ },
+ "config": {
+  "MIN_TOP_DENSE_COSINE": 0.684,
+  "ANSWER_TOP_K": 8
+ },
+ "runtime_s": 7.1
+}
