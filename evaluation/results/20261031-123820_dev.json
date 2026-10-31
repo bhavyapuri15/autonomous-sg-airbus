@@ -1,0 +1,669 @@
+{
+ "split": "dev",
+ "timestamp": "2026-10-31T12:38:18",
+ "families": [
+  "F3",
+  "F7",
+  "CAL"
+ ],
+ "llm_requested": false,
+ "metrics": {
+  "F3": {
+   "extractive": {
+    "n": 20,
+    "use_llm": false,
+    "generation_modes": {
+     "none": 5,
+     "extractive": 15
+    },
+    "answer_accuracy": 0.25,
+    "answer_correct": 5,
+    "status_distribution": {
+     "NEEDS_MORE_INFORMATION": 5,
+     "ANSWERED": 14,
+     "ABSTAINED": 1
+    },
+    "citations_checked": 36,
+    "citations_valid": 36,
+    "citation_validity": 1.0,
+    "invalid_citations": [],
+    "claims_generated": 43,
+    "claims_verified": 36,
+    "claims_rejected": 7,
+    "rejected_by_check": {
+     "V6_ORDER_MISMATCH:0.75": 1,
+     "V6_ORDER_MISMATCH:0.83": 1,
+     "V6_ORDER_MISMATCH:0.77": 1,
+     "V6_ORDER_MISMATCH:0.73": 1,
+     "V6_ORDER_MISMATCH:0.85": 1,
+     "V7_RESERVED_TOPIC": 2
+    },
+    "failures": [
+     {
+      "id": "F3-dev-002",
+      "query": "Which Boeing bulletin pins down the 757-200 and -200CB airplanes affected by the proposed AD of February 2026?",
+      "expected": "Boeing Alert Requirements Bulletin 757-53A0109 RB, dated September 25, 2025",
+      "actual_status": "NEEDS_MORE_INFORMATION",
+      "actual_reason": "DIRECTIVE_AMBIGUOUS",
+      "actual_claims": [],
+      "rejected": [],
+      "mode": "none"
+     },
+     {
+      "id": "F3-dev-003",
+      "query": "For Dassault Falcon 2000 airplanes in the 2002 proposal, which serial numbers inside the 2 to 132 range are left out?",
+      "expected": "except serial numbers 123, 130, and 131",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "Dassault Model Falcon 2000 Series Airplanes",
+       "excluding those airplanes on which the actions specified in Dassault Service Bulletin F2000-A223, dated October 17, 2001, has been done.",
+       "The proposed rule would have required performing an inspection to determine the serial number on the identification plate on each of the three hydraulic shut-off valve (HSOV) actuators on the left-han"
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-005",
+      "query": "What part number of hoist wiring harness makes the 2015 MBB-BK 117 C-2 helicopter proposal apply?",
+      "expected": "B851M2063101",
+      "actual_status": "NEEDS_MORE_INFORMATION",
+      "actual_reason": "DIRECTIVE_AMBIGUOUS",
+      "actual_claims": [],
+      "rejected": [],
+      "mode": "none"
+     },
+     {
+      "id": "F3-dev-008",
+      "query": "Which supplemental type certificate must be installed on a Bell 206L-series helicopter for the September 2026 proposal to apply?",
+      "expected": "SR02684LA",
+      "actual_status": "NEEDS_MORE_INFORMATION",
+      "actual_reason": "DIRECTIVE_AMBIGUOUS",
+      "actual_claims": [],
+      "rejected": [],
+      "mode": "none"
+     },
+     {
+      "id": "F3-dev-010",
+      "query": "Which technical bulletin modification takes MD Helicopters 600N helicopters out of the scope of the 2005 proposal?",
+      "expected": "MDHI Technical Bulletin TB600N-007, dated January 12, 2004",
+      "actual_status": "ABSTAINED",
+      "actual_reason": "NO_VERIFIED_CLAIMS",
+      "actual_claims": [],
+      "rejected": [
+       [
+        "MD Helicopters, Inc., Model 600N Helicopters",
+        "V6_ORDER_MISMATCH:0.75"
+       ]
+      ],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-012",
+      "query": "Which European airworthiness directive is used to identify the A330-941 airplanes in the October 2026 Airbus proposal?",
+      "expected": "AD 2025-0286, dated December 17, 2025",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "The FAA proposes to adopt a new airworthiness directive (AD) for all Airbus SAS Model A330-841 and A330-941 airplanes.",
+       "The FAA proposes to adopt a new airworthiness directive (AD) for all Airbus SAS Model A330-243, A330-243F, A330-341, A330-342, A330-343, A330-841, and A330-941 airplanes;",
+       "The FAA proposes to adopt a new airworthiness directive (AD) for certain Airbus SAS Model A330-941 airplanes."
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-014",
+      "query": "What could happen to the impeller or HPC rotor on Pratt & Whitney Canada turboshaft engines if the cycle counter under-counts, according to the 2021 proposal?",
+      "expected": "uncontained release of the impeller or the HPC rotor",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "PW210-72-A57142 specifies procedures for calculating the correct, current LCF cycle count for the impeller and HPC rotor on PW210A model turboshaft engines.",
+       "PW210-72-A57143 specifies procedures for calculating the correct, current LCF cycle count for the impeller and HPC rotor installed on PW210S model turboshaft engines.",
+       "This AD was prompted by a report from the manufacturer that the Automated Damage Tracking System (ADTS) may under-count the number of cycles accrued by the impeller and the high-pressure compressor (H"
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-016",
+      "query": "What caused the loss of tail rotor control described in the September 2026 Airbus Helicopters Deutschland proposal?",
+      "expected": "a broken control rod of the yaw actuator",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "The unsafe condition, if not addressed, could result in loss of tail rotor controls and loss of control of the helicopter.",
+       "The FAA is issuing this AD to address a tail rotor blade remaining in service beyond its life limit, which could result in failure of that tail rotor blade and subsequent loss of control of the helico"
+      ],
+      "rejected": [
+       [
+        "The proposed actions were intended to prevent damage to the tail gearbox (TGB) control shaft and rod assembly bearing re",
+        "V6_ORDER_MISMATCH:0.83"
+       ]
+      ],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-019",
+      "query": "Which EASA directive sets the required actions in the July 6, 2026 Rolls-Royce Deutschland engine proposal?",
+      "expected": "EASA AD 2025-0086",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "Except as specified in paragraph (h) of this AD: Perform all required actions within the compliance times specified in, and in accordance with, European Union Aviation Safety Agency AD 2025-0288R1, da",
+       "Except as specified in paragraph (h) of this AD: Perform all required actions within the compliance times specified in, and in accordance with, European Union Aviation Safety Agency (EASA) AD 2024-013"
+      ],
+      "rejected": [
+       [
+        "(1) Where EASA AD 2025-0233 refers to July 12, 2024 [the effective date of EASA AD 2024-0122], this AD requires using Ja",
+        "V6_ORDER_MISMATCH:0.77"
+       ]
+      ],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-020",
+      "query": "When must an affected General Electric main fuel pump be taken off the engine under the June 3, 2026 proposal?",
+      "expected": "At the next engine shop visit after the effective date of this AD",
+      "actual_status": "NEEDS_MORE_INFORMATION",
+      "actual_reason": "DIRECTIVE_AMBIGUOUS",
+      "actual_claims": [],
+      "rejected": [],
+      "mode": "none"
+     },
+     {
+      "id": "F3-dev-021",
+      "query": "Which Canadian directive supplies the required actions in the July 15, 2026 Bell Textron Canada helicopter proposal?",
+      "expected": "Transport Canada AD CF-2025-59, dated November 19, 2025",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "Bell Helicopter Textron Canada: Docket No."
+      ],
+      "rejected": [
+       [
+        "This AD applies to Bell Textron Canada Limited (Bell) Model 505 helicopters, certified in any category, as identified in",
+        "V6_ORDER_MISMATCH:0.73"
+       ],
+       [
+        "Bell Textron Canada Limited (Type Certificate Previously Held by Bell Helicopter Textron Canada Limited) Helicopters",
+        "V6_ORDER_MISMATCH:0.85"
+       ]
+      ],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-022",
+      "query": "How many flight hours does the March 2004 Airbus A320 proposal allow before the floor crossbeam thickness check?",
+      "expected": "Within 450 flight hours from the effective date of this AD",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "That action was prompted by reports that an Airbus quality check revealed that, due to a process discrepancy during production, certain floor structural crossbeams were manufactured that were not of n",
+       "The DGAC advises that an Airbus quality check revealed that, due to a process discrepancy during production, certain floor structural crossbeams were manufactured that were not of nominal thickness an",
+       "This proposal would require a one-time ultrasonic inspection of certain floor crossbeams to determine if they are of nominal thickness;"
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-027",
+      "query": "What wiring problem behind the left instrument panel prompted the April 2013 proposal for the Grob G 115E?",
+      "expected": "incorrect cable routing causing electrical shorting",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "Occurrences were reported of finding an electrical shorting of main cable loom behind the left-hand (LH) instrument panel of some Grob G115E aeroplanes.",
+       "To address this potential unsafe condition, Grob Aircraft AG published Mandatory Service Bulletin (MSB) MSB1078-191/1, providing instructions to inspect and correct the cable routing behind the cockpi",
+       "(1) Within the next 25 hours time-in-service (TIS) after the effective date of this AD or within the next 30 days after the effective date of this AD, whichever occurs first, inspect the main cable ro"
+      ],
+      "rejected": [],
+      "mode": "extractive"
+     },
+     {
+      "id": "F3-dev-032",
+      "query": "Below what altitude does the terrain alerting defect on Honeywell helicopter ground proximity units apply, per the 2017 proposal?",
+      "expected": "under altitudes of 175-feet mean sea level (MSL)",
+      "actual_status": "NEEDS_MORE_INFORMATION",
+      "actual_reason": "DIRECTIVE_AMBIGUOUS",
+      "actual_claims": [],
+      "rejected": [],
+      "mode": "none"
+     },
+     {
+      "id": "F3-dev-038",
+      "query": "Why was the AmSafe seatbelt hook proposal pulled in 2019?",
+      "expected": "there is now an acceptable level of risk",
+      "actual_status": "ANSWERED",
+      "actual_reason": null,
+      "actual_claims": [
+       "For any seatbelt buckle half and connector half having a part number listed in Table 1 of paragraph \u201c1.1., Effectivity\u201d of AmSafe Safety Bulletin SB505960-01, Issue 5, dated August 6, 2018: Within 180",
+       "The NPRM was prompted by reports of multiple failed keepers on seatbelt hook assemblies."
+      ],
+      "rejected": [
+       [
+        "The NPRM proposed to require an inspection for affected parts, repetitive general visual inspections of the seatbelt hoo",
+        "V7_RESERVED_TOPIC"
+       ]
+      ],
+      "mode": "extractive"
+     }
+    ]
+   }
+  },
+  "F7": {
+   "n_refusal": 30,
+   "n_answerable_sample": 20,
+   "abstention": {
+    "tp": 27,
+    "fp": 6,
+    "fn": 3,
+    "tn": 14,
+    "n": 50,
+    "precision": 0.8182,
+    "recall": 0.9,
+    "f1": 0.8571
+   },
+   "status_exact_acc": 0.9,
+   "status_and_reason_acc": 0.8,
+   "by_reason": {
+    "NOT_IN_CORPUS": {
+     "n": 9,
+     "abstained": 9,
+     "status_ok": 9,
+     "reason_ok": 9
+    },
+    "NEAR_MISS_ID": {
+     "n": 4,
+     "abstained": 4,
+     "status_ok": 4,
+     "reason_ok": 4
+    },
+    "METADATA_ONLY": {
+     "n": 3,
+     "abstained": 3,
+     "status_ok": 3,
+     "reason_ok": 3
+    },
+    "MISSING_MODEL": {
+     "n": 3,
+     "abstained": 3,
+     "status_ok": 3,
+     "reason_ok": 1
+    },
+    "UNSUPPORTED_COMPARISON": {
+     "n": 3,
+     "abstained": 3,
+     "status_ok": 3,
+     "reason_ok": 3
+    },
+    "PROCEDURE_OR_SIGNOFF": {
+     "n": 3,
+     "abstained": 2,
+     "status_ok": 2,
+     "reason_ok": 2
+    },
+    "OUT_OF_DOMAIN": {
+     "n": 3,
+     "abstained": 3,
+     "status_ok": 3,
+     "reason_ok": 2
+    },
+    "AMBIGUOUS_DIRECTIVES": {
+     "n": 2,
+     "abstained": 0,
+     "status_ok": 0,
+     "reason_ok": 0
+    }
+   },
+   "false_abstentions": [
+    {
+     "id": "F3-dev-002",
+     "status": "NEEDS_MORE_INFORMATION",
+     "reason": "DIRECTIVE_AMBIGUOUS"
+    },
+    {
+     "id": "F3-dev-005",
+     "status": "NEEDS_MORE_INFORMATION",
+     "reason": "DIRECTIVE_AMBIGUOUS"
+    },
+    {
+     "id": "F3-dev-008",
+     "status": "NEEDS_MORE_INFORMATION",
+     "reason": "DIRECTIVE_AMBIGUOUS"
+    },
+    {
+     "id": "F3-dev-010",
+     "status": "ABSTAINED",
+     "reason": "NO_VERIFIED_CLAIMS"
+    },
+    {
+     "id": "F3-dev-020",
+     "status": "NEEDS_MORE_INFORMATION",
+     "reason": "DIRECTIVE_AMBIGUOUS"
+    },
+    {
+     "id": "F3-dev-032",
+     "status": "NEEDS_MORE_INFORMATION",
+     "reason": "DIRECTIVE_AMBIGUOUS"
+    }
+   ],
+   "reason_map": {
+    "NOT_IN_CORPUS": [
+     "DIRECTIVE_NOT_FOUND"
+    ],
+    "NEAR_MISS_ID": [
+     "DIRECTIVE_NOT_FOUND"
+    ],
+    "METADATA_ONLY": [
+     "SOURCE_TEXT_UNAVAILABLE"
+    ],
+    "MISSING_MODEL": [
+     "MISSING_MODEL"
+    ],
+    "UNSUPPORTED_COMPARISON": [
+     "UNSUPPORTED_QUESTION"
+    ],
+    "PROCEDURE_OR_SIGNOFF": [
+     "COMPLIANCE_DETERMINATION_OUT_OF_SCOPE",
+     "NO_SUPPORTING_EVIDENCE",
+     "UNSUPPORTED_QUESTION"
+    ],
+    "OUT_OF_DOMAIN": [
+     "NO_SUPPORTING_EVIDENCE",
+     "UNSUPPORTED_QUESTION"
+    ],
+    "AMBIGUOUS_DIRECTIVES": [
+     "DIRECTIVE_AMBIGUOUS"
+    ]
+   },
+   "failures": [
+    {
+     "id": "F7-dev-18-MISSING_MODEL",
+     "query": "Is my helicopter affected by the proposal for docket FAA-2012-1319?",
+     "expected": [
+      "NEEDS_MORE_INFORMATION",
+      "MISSING_MODEL"
+     ],
+     "actual": [
+      "NEEDS_MORE_INFORMATION",
+      "DIRECTIVE_AMBIGUOUS"
+     ]
+    },
+    {
+     "id": "F7-dev-19-MISSING_MODEL",
+     "query": "Am I required to comply with the proposed directive FAA-2007-27495?",
+     "expected": [
+      "NEEDS_MORE_INFORMATION",
+      "MISSING_MODEL"
+     ],
+     "actual": [
+      "NEEDS_MORE_INFORMATION",
+      "DIRECTIVE_AMBIGUOUS"
+     ]
+    },
+    {
+     "id": "F7-dev-25-PROCEDURE_OR_SIGNOFF",
+     "query": "Write the step-by-step torque values and sequence to replace the part, beyond what the AD says.",
+     "expected": [
+      "ABSTAINED",
+      "PROCEDURE_OR_SIGNOFF"
+     ],
+     "actual": [
+      "ANSWERED",
+      null
+     ]
+    },
+    {
+     "id": "F7-dev-27-OUT_OF_DOMAIN",
+     "query": "How do I fix a flat tyre on my bicycle?",
+     "expected": [
+      "ABSTAINED",
+      "OUT_OF_DOMAIN"
+     ],
+     "actual": [
+      "ABSTAINED",
+      "NO_VERIFIED_CLAIMS"
+     ]
+    },
+    {
+     "id": "F7-dev-29-AMBIGUOUS_DIRECTIVES",
+     "query": "Summarise the proposed AD about the cracks, whichever one you think I mean.",
+     "expected": [
+      "NEEDS_MORE_INFORMATION",
+      "AMBIGUOUS_DIRECTIVES"
+     ],
+     "actual": [
+      "ANSWERED",
+      null
+     ]
+    },
+    {
+     "id": "F7-dev-30-AMBIGUOUS_DIRECTIVES",
+     "query": "What does the Airbus proposal require, and does it differ from the Boeing one?",
+     "expected": [
+      "NEEDS_MORE_INFORMATION",
+      "AMBIGUOUS_DIRECTIVES"
+     ],
+     "actual": [
+      "ANSWERED",
+      null
+     ]
+    }
+   ]
+  },
+  "calibration": {
+   "current_threshold": 0.6,
+   "answerable_F2": {
+    "n": 42,
+    "min": 0.686,
+    "p5": 0.7,
+    "median": 0.75,
+    "p95": 0.81,
+    "max": 0.8356
+   },
+   "refusal_ood_unsupported": {
+    "n": 9,
+    "min": 0.4981,
+    "p5": 0.5,
+    "median": 0.68,
+    "p95": 0.73,
+    "max": 0.7333
+   },
+   "out_of_domain_only": {
+    "n": 3,
+    "min": 0.4981,
+    "p5": 0.5,
+    "median": 0.51,
+    "p95": 0.62,
+    "max": 0.63
+   },
+   "answerable_values": [
+    0.686,
+    0.6906,
+    0.6984,
+    0.7054,
+    0.7116,
+    0.7135,
+    0.7197,
+    0.7232,
+    0.7307,
+    0.7325,
+    0.7356,
+    0.7366,
+    0.7379,
+    0.74,
+    0.7415,
+    0.7443,
+    0.748,
+    0.7486,
+    0.7491,
+    0.7491,
+    0.7517,
+    0.7527,
+    0.7548,
+    0.7553,
+    0.7583,
+    0.7585,
+    0.7607,
+    0.7614,
+    0.7658,
+    0.767,
+    0.7799,
+    0.7811,
+    0.7817,
+    0.7866,
+    0.7869,
+    0.7917,
+    0.7923,
+    0.7924,
+    0.8068,
+    0.81,
+    0.8225,
+    0.8356
+   ],
+   "refusal_values": [
+    [
+     "OUT_OF_DOMAIN",
+     0.4981
+    ],
+    [
+     "OUT_OF_DOMAIN",
+     0.5109
+    ],
+    [
+     "OUT_OF_DOMAIN",
+     0.63
+    ],
+    [
+     "UNSUPPORTED_COMPARISON",
+     0.6729
+    ],
+    [
+     "PROCEDURE_OR_SIGNOFF",
+     0.6815
+    ],
+    [
+     "UNSUPPORTED_COMPARISON",
+     0.6817
+    ],
+    [
+     "PROCEDURE_OR_SIGNOFF",
+     0.6977
+    ],
+    [
+     "UNSUPPORTED_COMPARISON",
+     0.7149
+    ],
+    [
+     "PROCEDURE_OR_SIGNOFF",
+     0.7333
+    ]
+   ],
+   "chosen": {
+    "t": 0.6838,
+    "ans_recall": 1.0,
+    "precision": 1.0,
+    "recall": 0.6667,
+    "f1": 0.8,
+    "plateau": [
+     0.6838,
+     0.6838
+    ],
+    "t_chosen": 0.6838
+   },
+   "sweep_at_chosen_neighbourhood": [
+    {
+     "t": 0.6515,
+     "ans_recall": 1.0,
+     "precision": 1.0,
+     "recall": 0.3333,
+     "f1": 0.5
+    },
+    {
+     "t": 0.6772,
+     "ans_recall": 1.0,
+     "precision": 1.0,
+     "recall": 0.4444,
+     "f1": 0.6154
+    },
+    {
+     "t": 0.6816,
+     "ans_recall": 1.0,
+     "precision": 1.0,
+     "recall": 0.5556,
+     "f1": 0.7143
+    },
+    {
+     "t": 0.6838,
+     "ans_recall": 1.0,
+     "precision": 1.0,
+     "recall": 0.6667,
+     "f1": 0.8
+    },
+    {
+     "t": 0.6883,
+     "ans_recall": 0.9762,
+     "precision": 0.8571,
+     "recall": 0.6667,
+     "f1": 0.75
+    },
+    {
+     "t": 0.6941,
+     "ans_recall": 0.9524,
+     "precision": 0.75,
+     "recall": 0.6667,
+     "f1": 0.7059
+    },
+    {
+     "t": 0.698,
+     "ans_recall": 0.9524,
+     "precision": 0.7778,
+     "recall": 0.7778,
+     "f1": 0.7778
+    },
+    {
+     "t": 0.7019,
+     "ans_recall": 0.9286,
+     "precision": 0.7,
+     "recall": 0.7778,
+     "f1": 0.7368
+    },
+    {
+     "t": 0.7085,
+     "ans_recall": 0.9048,
+     "precision": 0.6364,
+     "recall": 0.7778,
+     "f1": 0.7
+    },
+    {
+     "t": 0.7125,
+     "ans_recall": 0.881,
+     "precision": 0.5833,
+     "recall": 0.7778,
+     "f1": 0.6667
+    },
+    {
+     "t": 0.7142,
+     "ans_recall": 0.8571,
+     "precision": 0.5385,
+     "recall": 0.7778,
+     "f1": 0.6364
+    },
+    {
+     "t": 0.7173,
+     "ans_recall": 0.8571,
+     "precision": 0.5714,
+     "recall": 0.8889,
+     "f1": 0.6957
+    }
+   ]
+  }
+ },
+ "config": {
+  "MIN_TOP_DENSE_COSINE": 0.6,
+  "ANSWER_TOP_K": 8
+ },
+ "runtime_s": 2.3
+}
