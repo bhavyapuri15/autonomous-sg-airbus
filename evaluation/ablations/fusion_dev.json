@@ -1,0 +1,322 @@
+{
+ "commit": "031fce0",
+ "family": "F2",
+ "modes": {
+  "bm25_only": {
+   "by_category": {
+    "ACTIONS": {
+     "chunk_recall_at5": 0.6667,
+     "doc_mrr_at10": 0.5417,
+     "doc_recall_at5": 0.8333,
+     "n": 6
+    },
+    "APPL": {
+     "chunk_recall_at5": 0.8462,
+     "doc_mrr_at10": 0.7802,
+     "doc_recall_at5": 0.8462,
+     "n": 13
+    },
+    "DISC": {
+     "chunk_recall_at5": 1.0,
+     "doc_mrr_at10": 0.75,
+     "doc_recall_at5": 1.0,
+     "n": 6
+    },
+    "PARTS": {
+     "chunk_recall_at5": 1.0,
+     "doc_mrr_at10": 0.6667,
+     "doc_recall_at5": 1.0,
+     "n": 3
+    },
+    "SUMMARY": {
+     "chunk_recall_at5": 1.0,
+     "doc_mrr_at10": 0.8333,
+     "doc_recall_at5": 1.0,
+     "n": 3
+    },
+    "UNSAFE": {
+     "chunk_recall_at5": 0.75,
+     "doc_mrr_at10": 0.875,
+     "doc_recall_at5": 1.0,
+     "n": 4
+    },
+    "WITHDRAW": {
+     "chunk_recall_at5": 0.7143,
+     "doc_mrr_at10": 1.0,
+     "doc_recall_at5": 1.0,
+     "n": 7
+    }
+   },
+   "chunk_recall_at5": 0.8333,
+   "doc_mrr_at10": 0.7832,
+   "doc_recall_at5": 0.9286,
+   "failed_ids": [
+    "F2-dev-001",
+    "F2-dev-013",
+    "F2-dev-014",
+    "F2-dev-019",
+    "F2-dev-021",
+    "F2-dev-036",
+    "F2-dev-038"
+   ]
+  },
+  "dense_only": {
+   "by_category": {
+    "ACTIONS": {
+     "chunk_recall_at5": 0.5,
+     "doc_mrr_at10": 0.375,
+     "doc_recall_at5": 0.6667,
+     "n": 6
+    },
+    "APPL": {
+     "chunk_recall_at5": 0.3077,
+     "doc_mrr_at10": 0.5007,
+     "doc_recall_at5": 0.6923,
+     "n": 13
+    },
+    "DISC": {
+     "chunk_recall_at5": 1.0,
+     "doc_mrr_at10": 1.0,
+     "doc_recall_at5": 1.0,
+     "n": 6
+    },
+    "PARTS": {
+     "chunk_recall_at5": 1.0,
+     "doc_mrr_at10": 0.8333,
+     "doc_recall_at5": 1.0,
+     "n": 3
+    },
+    "SUMMARY": {
+     "chunk_recall_at5": 0.3333,
+     "doc_mrr_at10": 0.4444,
+     "doc_recall_at5": 0.6667,
+     "n": 3
+    },
+    "UNSAFE": {
+     "chunk_recall_at5": 0.5,
+     "doc_mrr_at10": 0.4167,
+     "doc_recall_at5": 1.0,
+     "n": 4
+    },
+    "WITHDRAW": {
+     "chunk_recall_at5": 1.0,
+     "doc_mrr_at10": 0.7857,
+     "doc_recall_at5": 1.0,
+     "n": 7
+    }
+   },
+   "chunk_recall_at5": 0.619,
+   "doc_mrr_at10": 0.6133,
+   "doc_recall_at5": 0.8333,
+   "failed_ids": [
+    "F2-dev-001",
+    "F2-dev-002",
+    "F2-dev-004",
+    "F2-dev-008",
+    "F2-dev-009",
+    "F2-dev-010",
+    "F2-dev-011",
+    "F2-dev-012",
+    "F2-dev-013",
+    "F2-dev-014",
+    "F2-dev-015",
+    "F2-dev-018",
+    "F2-dev-020",
+    "F2-dev-021",
+    "F2-dev-028",
+    "F2-dev-029"
+   ]
+  },
+  "rrf_k10": {
+   "by_category": {
+    "ACTIONS": {
+     "chunk_recall_at5": 0.5,
+     "doc_mrr_at10": 0.3085,
+     "doc_recall_at5": 0.6667,
+     "n": 6
+    },
+    "APPL": {
+     "chunk_recall_at5": 0.6923,
+     "doc_mrr_at10": 0.5853,
+     "doc_recall_at5": 0.7692,
+     "n": 13
+    },
+    "DISC": {
+     "chunk_recall_at5": 1.0,
+     "doc_mrr_at10": 1.0,
+     "doc_recall_at5": 1.0,
+     "n": 6
+    },
+    "PARTS": {
+     "chunk_recall_at5": 1.0,
+     "doc_mrr_at10": 0.8333,
+     "doc_recall_at5": 1.0,
+     "n": 3
+    },
+    "SUMMARY": {
+     "chunk_recall_at5": 0.3333,
+     "doc_mrr_at10": 0.5278,
+     "doc_recall_at5": 1.0,
+     "n": 3
+    },
+    "UNSAFE": {
+     "chunk_recall_at5": 0.75,
+     "doc_mrr_at10": 0.875,
+     "doc_recall_at5": 1.0,
+     "n": 4
+    },
+    "WITHDRAW": {
+     "chunk_recall_at5": 1.0,
+     "doc_mrr_at10": 0.9286,
+     "doc_recall_at5": 1.0,
+     "n": 7
+    }
+   },
+   "chunk_recall_at5": 0.7619,
+   "doc_mrr_at10": 0.7034,
+   "doc_recall_at5": 0.881,
+   "failed_ids": [
+    "F2-dev-001",
+    "F2-dev-010",
+    "F2-dev-012",
+    "F2-dev-013",
+    "F2-dev-014",
+    "F2-dev-018",
+    "F2-dev-019",
+    "F2-dev-021",
+    "F2-dev-028",
+    "F2-dev-029"
+   ]
+  },
+  "rrf_k200": {
+   "by_category": {
+    "ACTIONS": {
+     "chunk_recall_at5": 0.5,
+     "doc_mrr_at10": 0.331,
+     "doc_recall_at5": 0.6667,
+     "n": 6
+    },
+    "APPL": {
+     "chunk_recall_at5": 0.5385,
+     "doc_mrr_at10": 0.559,
+     "doc_recall_at5": 0.6923,
+     "n": 13
+    },
+    "DISC": {
+     "chunk_recall_at5": 1.0,
+     "doc_mrr_at10": 1.0,
+     "doc_recall_at5": 1.0,
+     "n": 6
+    },
+    "PARTS": {
+     "chunk_recall_at5": 1.0,
+     "doc_mrr_at10": 0.8333,
+     "doc_recall_at5": 1.0,
+     "n": 3
+    },
+    "SUMMARY": {
+     "chunk_recall_at5": 0.3333,
+     "doc_mrr_at10": 0.4815,
+     "doc_recall_at5": 0.6667,
+     "n": 3
+    },
+    "UNSAFE": {
+     "chunk_recall_at5": 0.75,
+     "doc_mrr_at10": 0.875,
+     "doc_recall_at5": 1.0,
+     "n": 4
+    },
+    "WITHDRAW": {
+     "chunk_recall_at5": 1.0,
+     "doc_mrr_at10": 0.9286,
+     "doc_recall_at5": 1.0,
+     "n": 7
+    }
+   },
+   "chunk_recall_at5": 0.7143,
+   "doc_mrr_at10": 0.6952,
+   "doc_recall_at5": 0.8333,
+   "failed_ids": [
+    "F2-dev-001",
+    "F2-dev-004",
+    "F2-dev-009",
+    "F2-dev-010",
+    "F2-dev-012",
+    "F2-dev-013",
+    "F2-dev-014",
+    "F2-dev-018",
+    "F2-dev-019",
+    "F2-dev-021",
+    "F2-dev-028",
+    "F2-dev-029"
+   ]
+  },
+  "rrf_k60": {
+   "by_category": {
+    "ACTIONS": {
+     "chunk_recall_at5": 0.5,
+     "doc_mrr_at10": 0.331,
+     "doc_recall_at5": 0.6667,
+     "n": 6
+    },
+    "APPL": {
+     "chunk_recall_at5": 0.5385,
+     "doc_mrr_at10": 0.559,
+     "doc_recall_at5": 0.6923,
+     "n": 13
+    },
+    "DISC": {
+     "chunk_recall_at5": 1.0,
+     "doc_mrr_at10": 1.0,
+     "doc_recall_at5": 1.0,
+     "n": 6
+    },
+    "PARTS": {
+     "chunk_recall_at5": 1.0,
+     "doc_mrr_at10": 0.8333,
+     "doc_recall_at5": 1.0,
+     "n": 3
+    },
+    "SUMMARY": {
+     "chunk_recall_at5": 0.3333,
+     "doc_mrr_at10": 0.4815,
+     "doc_recall_at5": 0.6667,
+     "n": 3
+    },
+    "UNSAFE": {
+     "chunk_recall_at5": 0.75,
+     "doc_mrr_at10": 0.875,
+     "doc_recall_at5": 1.0,
+     "n": 4
+    },
+    "WITHDRAW": {
+     "chunk_recall_at5": 1.0,
+     "doc_mrr_at10": 0.9286,
+     "doc_recall_at5": 1.0,
+     "n": 7
+    }
+   },
+   "chunk_recall_at5": 0.7143,
+   "doc_mrr_at10": 0.6952,
+   "doc_recall_at5": 0.8333,
+   "failed_ids": [
+    "F2-dev-001",
+    "F2-dev-004",
+    "F2-dev-009",
+    "F2-dev-010",
+    "F2-dev-012",
+    "F2-dev-013",
+    "F2-dev-014",
+    "F2-dev-018",
+    "F2-dev-019",
+    "F2-dev-021",
+    "F2-dev-028",
+    "F2-dev-029"
+   ]
+  }
+ },
+ "n": 42,
+ "note": "Post-hoc ablation after the locked run; dev only. The shipped system (rrf_k60) was not changed.",
+ "split": "dev",
+ "timestamp": "2026-11-02T18:11:16+00:00"
+}

@@ -1,14 +1,15 @@
 "use client";
 import Aurora from "@/components/reactbits/Aurora";
 import { PrimaryLink, SecondaryLink } from "./Buttons";
-import { useReducedMotion } from "./useReducedMotion";
+import { useHydrated, useReducedMotion } from "./useReducedMotion";
 
 export function FinalCta() {
   const reduce = useReducedMotion();
+  const hydrated = useHydrated();
   return (
     <section aria-labelledby="cta-heading" className="relative isolate overflow-hidden py-24 sm:py-32">
       <div aria-hidden className="cta-gradient absolute inset-0 -z-20" />
-      {!reduce && (
+      {hydrated && !reduce && (
         <div aria-hidden className="absolute inset-0 -z-10 opacity-40">
           <Aurora colorStops={["#0B3A8F", "#2563EB", "#22B8CF"]} amplitude={0.7} blend={0.6} speed={0.5} height={0.5} glow={0.35} mouseInteraction={false} opacity={0.7} />
         </div>

@@ -464,7 +464,18 @@ def dataset_history(conn, fr_docnum, doc, rows=None, recs=None):
                                             version=ver, is_latest=(st or "").lower() == "latest"))
         marked = [e for e in ents if e.is_latest]
     else:
-        rs = conn.execute("select record_id from organiser_index where docket_number=? order by record_id", (docket,)).fetchall()
+        # A withdrawal row may carry the NPRM's docket plus a "-W" suffix (e.g. 2003-CE-05-AD-W vs 2003-CE-05-AD); join the
+        # sibling's records when the sibling is also outside revision_chains. Flagged: a naming convention, not an organiser marker.
+        sib = docket[:-2] if docket.upper().endswith("-W") else docket + "-W"
+        group = [docket]
+        if (conn.execute("select 1 from organiser_index where docket_number=?", (sib,)).fetchone()
+                and not (_has(conn, "revision_chains")
+                         and conn.execute("select 1 from revision_chains where docket_number=?", (sib,)).fetchone())):
+            group.append(sib)
+            warns.append(f"Docket {docket} grouped with {sib} by the '-W' (withdrawal) suffix; this is an inferred link, "
+                         "not an organiser revision_chains marker.")
+        rs = conn.execute(f"select record_id from organiser_index where docket_number in ({','.join('?' * len(group))}) "
+                          "order by record_id", group).fetchall()
         for (rid,) in rs:
             ents.append(DatasetVersionEntry(record_id=rid, fr_docnum=oi_fr.get(rid), publish_date=oi_date.get(rid),
                                             doc_class=cls.get(oi_fr.get(rid))))

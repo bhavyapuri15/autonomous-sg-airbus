@@ -294,12 +294,16 @@ def run() -> dict:
     net = Net()
     docs = load_dataset_docs()
     dockets = sorted({d for doc in docs for d in doc["dockets"]})
-    rules, discarded = {}, []
+    rules, discarded, after_cutoff = {}, [], set()
     for dk in dockets:
         for hit in search_docket(net, dk):
             hd = normalize_dockets(hit.get("docket_ids"))
             if docket_key(dk) not in {docket_key(x) for x in hd}:
                 discarded.append({"queried": dk, "docnum": hit["document_number"], "docket_ids": hit.get("docket_ids")})
+                continue
+            # the FR keeps publishing rules on these dockets; freeze the lookup so a fresh build matches the evaluated corpus
+            if (hit.get("publication_date") or "") > config.FINAL_RULE_LOOKUP_CUTOFF:
+                after_cutoff.add(hit["document_number"])
                 continue
             rules.setdefault(hit["document_number"], hit)
     out_rules, texts, links = [], {}, []
@@ -347,6 +351,7 @@ def run() -> dict:
     config.FR_FINAL_RULES_DIR.mkdir(parents=True, exist_ok=True)
     (config.FR_FINAL_RULES_DIR / "discarded_hits.json").write_text(
         json.dumps(sorted(discarded, key=lambda d: (d["queried"], d["docnum"])), indent=1, sort_keys=True) + "\n")
-    result["_stats"] = {"dockets": len(dockets), "network_calls": net.calls, "discarded": len(discarded)}
+    result["_stats"] = {"dockets": len(dockets), "network_calls": net.calls, "discarded": len(discarded),
+                        "after_cutoff": sorted(after_cutoff)}
     result["_docs"] = docs
     return result

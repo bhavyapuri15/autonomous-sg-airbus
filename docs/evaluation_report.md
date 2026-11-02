@@ -184,4 +184,63 @@ All results in sections 2-7 were measured on the pre-fix corpus and are left as 
 | F12 stage accuracy | 1.0 (304) | 0.9934 (304) |
 | F6 revision status | 1.0 (20) | 1.0 (20) |
 
-All 10 F1/F12 misses are cases whose frozen gold names one of the two removed NPRM documents (2019-14901, 2022-20442); their docket queries now return the withdrawal notice. The case files and locked manifests were not regenerated; doing so changes locked F1/F2/F3 cases and needs an explicit decision. F8-08 (conflicting metadata) was built on the mis-mapped 2018-12886, whose two-row conflict was the bug itself; it now targets 2016-05517 (sheet pages 29148-29149 vs FR 81 FR 13303) and passes (F8 16/16). F2, F3, F7, F10, F13 and latency are unchanged on the fixed corpus.
+All 10 F1/F12 misses are cases whose frozen gold names one of the two removed NPRM documents (2019-14901, 2022-20442); their docket queries now return the withdrawal notice. The case files and locked manifests were not regenerated at that point; they were regenerated afterwards, see 9.1. F8-08 (conflicting metadata) was built on the mis-mapped 2018-12886, whose two-row conflict was the bug itself; it now targets 2016-05517 (sheet pages 29148-29149 vs FR 81 FR 13303) and passes (F8 16/16). F2, F3, F7, F10, F13 and latency are unchanged on the fixed corpus.
+
+### 9.1 Case files regenerated for the fixed corpus (31 Oct)
+The case generators were re-run against the fixed corpus (`generate_cases.py --manifest`, `generate_update_cases.py --manifest`)
+and both locked manifests were rewritten. This is a gold correction, not tuning: gold still comes only from the organiser sheet and
+the FR documents, never from system output, and **the locked split was not re-run** (the locked results in this report remain the
+pre-fix runs). What changed, with case ids ignored (ids are sequential, so insertions renumber later cases):
+
+- Partition: no existing document changed split or docket group. 4 documents left the corpus (the mis-mapped shared NPRMs) and 12 joined
+  it (the re-resolved withdrawal notices and the documents they replaced); each was assigned by the same hashed docket-group rule.
+- F1: cases on the 4 removed documents dropped, cases on the 12 new ones added (dev 1125 -> 1142, locked 414 -> 421); a docket query
+  now also accepts the withdrawal notice filed under the same docket.
+- F2/F3 locked: one passage (F2/F3-locked-013) gains an alternate, because the same SUMMARY text also appears in the newly mapped withdrawal
+  notice 2021-11813. Questions and answer spans are unchanged.
+- F10: only additions, for records that previously had no FR document (dev 492 -> 516, locked 188 -> 200).
+- F12: 2 proposed-rule stage cases on removed documents replaced by withdrawal-notice cases (dev 342 -> 348, locked 118 -> 120).
+- F6 (hand-written, dev): F6-dev-19 targeted 2019-14901, which left the corpus when NPRM-205 was mapped to its own withdrawal notice
+  2020-06503. Repointed to 2026-21298 (NPRM-002), the most recent dev organiser NPRM meeting the same no-evidence criteria, checked
+  against the document text.
+- F7, F11, F13 and all locked F7 cases are byte-identical.
+- `generate_cases.py --manifest` now hashes only its own families (F1, F2, F3, F7 plus the split map); F10-F13 stay in
+  `LOCKED_MANIFEST_UPDATE.sha256`.
+
+Dev run on the regenerated cases (`evaluation/results/20261031-161448_dev.json`):
+
+| Family | Frozen cases, fixed corpus (n) | Regenerated cases (n) |
+|---|---|---|
+| F1 exact-ID acc@1 | 0.9929 (1125) | 1.0 (1142) |
+| F12 stage accuracy | 0.9934 (304) | 1.0 (310) |
+| F10 record-ID acc@1 | 1.0 (492) | 0.9942 (513) |
+| F2 doc Recall@5 / MRR@10 | 0.8333 / 0.6952 (42) | 0.8333 / 0.6952 (42) |
+| F3 citation validity | 1.0 (90 citations) | 1.0 (90 citations) |
+| F6, F11, F13 | 1.0 | 1.0 |
+| F7 abstention F1 | 0.9677 | 0.9677 |
+| F8 | 16/16 | 16/16 |
+
+The 3 F10 misses are all NPRM-180 (canonical, unpadded and question forms). Its gold is parsed from the organiser link, which points to
+2021-13636, an NPRM on a different docket; the row's own docket and publish date identify 2021-13482, which the system returns. Before the
+fix this case scored 1.0 because the mis-mapping agreed with the bad link. The gold was not edited to match the system.
+
+## 10. Retrieval fusion ablation (dev F2, post-hoc, 3 Nov)
+`evaluation/ablate_fusion.py` re-scores the dev F2 cases (n=42) with each fusion input switched off in an in-memory copy of
+`hybrid_search.py`, using the same `run_f2` scorer. The shipped row (RRF k=60) reproduces the official dev F2 numbers, which validates
+the harness. Output: `evaluation/ablations/fusion_dev.json`. This was run after the locked evaluation, on dev only. **The shipped
+system was not changed.**
+
+| Mode | doc R@5 | doc MRR@10 | chunk R@5 |
+|---|---|---|---|
+| BM25 only | **0.9286** | **0.7832** | **0.8333** |
+| Dense only | 0.8333 | 0.6133 | 0.6190 |
+| RRF k=60 (shipped) | 0.8333 | 0.6952 | 0.7143 |
+| RRF k=10 | 0.8810 | 0.7034 | 0.7619 |
+| RRF k=200 | 0.8333 | 0.6952 | 0.7143 |
+
+- **BM25 alone outperforms the shipped fusion on this set.** Seven cases fail only under RRF: F2-dev-004, 009, 010, 012, 018, 028 and 029. Two fail only under BM25: F2-dev-036 and 038.
+- **The RRF-only failures hinge on exact identifiers.** They include "CFM56-7B27AE", "A340-642", "600N", "DA 40" and "AE 3007". BM25 matches these exactly, while the small quantized embedder ranks lookalike AD boilerplate from other directives above them, and equal-weight RRF lets that pull the right document down.
+- **This is not an artefact of copied wording.** Mean question/passage word-trigram overlap is 0.048, and 20 of 42 questions have none.
+- **No change was made.** The difference is 4 of 42 queries for doc R@5, on LLM-written questions, found after the locked run. Switching now would be tuning on dev with no held-out set left to confirm it.
+- **Where dense retrieval still matters.** It drives the abstention gate (best-hit cosine below 0.684 means NO_SUPPORTING_EVIDENCE).
+- **Next step.** Test a BM25-weighted fusion or BM25-first ranking on a fresh held-out set.

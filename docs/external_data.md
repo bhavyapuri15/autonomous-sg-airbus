@@ -23,7 +23,9 @@ It also lists both workbooks with their SHA256 values.
 
 ## Reproduce
 ```
-.venv/bin/python scripts/fetch_final_rules.py   # optional enrichment (network, cached after the first run)
+.venv/bin/python scripts/fetch_organiser_data.py  # both organiser workbooks (public Drive folder, SHA256-checked)
+.venv/bin/python scripts/probe_sources.py         # source manifest + FR metadata (network, cached after the first run)
+.venv/bin/python scripts/fetch_final_rules.py     # enrichment (network, cached); rules after FINAL_RULE_LOOKUP_CUTOFF are skipped
 .venv/bin/python scripts/ingest.py              # download (cache-first) -> atomic DB build -> validation -> notes/reconciliation.md -> manifest
 .venv/bin/python scripts/build_manifest.py      # manifest only (no network)
 .venv/bin/python scripts/build_index.py         # search index (chunks, embeddings)

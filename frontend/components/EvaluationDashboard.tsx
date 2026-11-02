@@ -92,7 +92,7 @@ export function EvaluationDashboard({ runs }: { runs: EvalRun[] }) {
         <p className="mt-2 text-xs text-slate-600">One point per run that measured the metric; runs that did not include a family are omitted, never interpolated. Corpus and case files changed between runs, so differences are not a like-for-like trend.</p>
       </Card>
       <p className="text-xs text-slate-600" data-testid="corpus-note">
-        <Badge tone="blue">Note</Badge> The most recent dev run was measured after the 31 Oct corpus fix with frozen case files (see docs/evaluation_report.md, section 9).
+        <Badge tone="blue">Note</Badge> The most recent dev run was measured on the fixed corpus with case files regenerated for it (gold correction; the locked split was not re-run). The run before it used the fixed corpus with the older, frozen case files. See docs/evaluation_report.md, sections 9 and 9.1.
       </p>
     </div>
   );

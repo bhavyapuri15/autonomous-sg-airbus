@@ -298,7 +298,9 @@ def build_all(write=True):
 
 def write_manifest():
     lines = []
-    for p in sorted(S.LOCKED_DIR.glob("*.jsonl")) + [S.SPLIT_MAP]:
+    # only the families this script generates; F10-F13 have their own LOCKED_MANIFEST_UPDATE.sha256
+    own = ("f1_id_lookup", "f2_retrieval", "f3_grounded_qa", "f7_refusal")
+    for p in [S.LOCKED_DIR / f"{f}.jsonl" for f in sorted(own)] + [S.SPLIT_MAP]:
         lines.append(f"{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.relative_to(S.EVAL_DIR).as_posix()}")
     MANIFEST.write_text("\n".join(lines) + "\n")
 

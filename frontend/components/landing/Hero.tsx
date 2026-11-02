@@ -4,17 +4,18 @@ import Aurora from "@/components/reactbits/Aurora";
 import BlurText from "@/components/reactbits/BlurText";
 import StarBorder from "@/components/reactbits/StarBorder";
 import { PrimaryLink, SecondaryLink } from "./Buttons";
-import { useReducedMotion } from "./useReducedMotion";
+import { useHydrated, useReducedMotion } from "./useReducedMotion";
 
 const HEADLINE = "Aerospace Intelligence. Verified.";
 
 export function Hero() {
   const reduce = useReducedMotion();
+  const hydrated = useHydrated();
   return (
     <section id="top" className="relative isolate overflow-hidden pt-16">
       {/* Static gradient is always rendered: it is the base, the reduced-motion version and the WebGL fallback. */}
       <div aria-hidden className="hero-gradient absolute inset-0 -z-30" />
-      {!reduce && (
+      {hydrated && !reduce && (
         <div aria-hidden className="absolute inset-x-0 top-0 -z-20 h-[640px] opacity-70">
           <Aurora colorStops={["#0B3A8F", "#2563EB", "#22B8CF"]} amplitude={0.9} blend={0.6} speed={0.6} height={0.6} glow={0.5} mouseInteraction={false} opacity={0.8} />
         </div>

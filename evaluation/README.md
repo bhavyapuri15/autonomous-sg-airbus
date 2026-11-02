@@ -52,6 +52,10 @@ raises `PermissionError` for anything under `test_cases/locked/`; the future `ev
 manifest, so do not do that after tuning begins. Caveat: the author of the locked questions also saw dev passages and the corpus; the
 locked questions were written before any retrieval tuning existed.
 
+**Regeneration on 31 Oct (gold correction, not tuning):** after the corpus fix for legacy withdrawal rows, both generators were re-run
+with `--manifest` so the gold matches the corrected FR mapping. The locked split was not re-run. What changed and why is in
+`docs/evaluation_report.md` section 9.1. `generate_cases.py --manifest` hashes only F1/F2/F3/F7 and the split map.
+
 Tests: `.venv/bin/python -m pytest tests/test_eval_cases.py`.
 
 ## Update families F10-F13 (organiser clarifications of 31 Oct; added after the first locked run)

@@ -294,3 +294,30 @@ def test_applicability_basis_final_rule_doc():
     assert res.basis == "FINAL_RULE"
     assert res.label in ("Applicable under the published final rule", "Not applicable under the published final rule",
                          "Applicability not determined")
+
+
+def test_withdrawal_suffix_docket_joins_its_nprm(fx):
+    _oi(fx, "NPRM-1", "A", "T-1", "2020-01-01")
+    _oi(fx, "NPRM-2", None, "T-1-W", "2020-09-01")          # metadata-only withdrawal row filed under docket + "-W"
+    for h in (R.record_dataset_history(fx, "NPRM-2"), R.dataset_history(fx, "A", ("A", "NPRM", "organiser_sheet"))):
+        assert [e.record_id for e in h.history] == ["NPRM-1", "NPRM-2"] and h.latest_record_id == "NPRM-2"
+        assert any("'-W' (withdrawal) suffix" in w and "inferred" in w for w in h.warnings)
+    assert R.record_dataset_history(fx, "NPRM-2").dataset_status == "LATEST_IN_DATASET"
+    assert R.dataset_history(fx, "A", ("A", "NPRM", "organiser_sheet")).dataset_status == "SUPERSEDED_IN_DATASET"
+
+
+def test_withdrawal_suffix_not_joined_when_sibling_has_a_chain(fx):
+    _oi(fx, "NPRM-1", "A", "T-1", "2020-01-01")
+    _oi(fx, "NPRM-2", None, "T-1-W", "2020-09-01")
+    _chain(fx, "T-1", [("NPRM-1", "2020-01-01", "latest")])
+    h = R.record_dataset_history(fx, "NPRM-2")
+    assert [e.record_id for e in h.history] == ["NPRM-2"] and not any("suffix" in w for w in h.warnings)
+
+
+@needs_real
+def test_nprm_396_withdrawal_history_links_nprm_405():
+    from backend.config import DB_PATH
+    c = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
+    h = R.record_dataset_history(c, "NPRM-396")
+    assert [e.record_id for e in h.history] == ["NPRM-405", "NPRM-396"] and h.latest_record_id == "NPRM-396"
+    assert h.dataset_status == "LATEST_IN_DATASET" and any("inferred link" in w for w in h.warnings)

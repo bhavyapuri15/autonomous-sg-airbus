@@ -11,6 +11,7 @@ def main():
     res = fr.run()
     st = res["_stats"]
     print("dockets queried:", st["dockets"], "| discarded fuzzy hits:", st["discarded"])
+    print(f"published after the {fr.config.FINAL_RULE_LOOKUP_CUTOFF} cutoff (not ingested):", st["after_cutoff"] or "none")
     print("NETWORK CALLS:", st["network_calls"])
     print("rules by class:", dict(collections.Counter(r["doc_class"] for r in res["rules"])))
     docs = {d["docnum"]: d for d in res["_docs"]}

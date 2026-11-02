@@ -50,10 +50,18 @@ test.describe("landing page", () => {
   test("reduced motion renders the full headline immediately", async ({ browser }) => {
     const ctx = await browser.newContext({ reducedMotion: "reduce" });
     const page = await ctx.newPage();
+    // record whether an Aurora (WebGL) canvas is ever inserted, even for a single render pass
+    await page.addInitScript(() => {
+      (window as unknown as { auroraSeen: boolean }).auroraSeen = false;
+      new MutationObserver(() => {
+        if (document.querySelector("canvas.absolute.inset-0.block")) (window as unknown as { auroraSeen: boolean }).auroraSeen = true;
+      }).observe(document, { childList: true, subtree: true });
+    });
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Aerospace Intelligence. Verified.");
-    // the Aurora (WebGL) canvas is not mounted; StarBorder keeps its own 2D canvas but renders it statically
-    await expect(page.locator("#top canvas.absolute.inset-0.block")).toHaveCount(0);
+    await page.waitForLoadState("networkidle");
+    // StarBorder keeps its own 2D canvas but renders it statically; the Aurora canvas must never mount
+    expect(await page.evaluate(() => (window as unknown as { auroraSeen: boolean }).auroraSeen)).toBe(false);
     await ctx.close();
   });
 });
