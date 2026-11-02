@@ -2,6 +2,13 @@
 
 Airbus Challenge #4, Autonomous SG 2026.
 
+![AI search workspace: a verified answer for Piper PA-34-200 S/N 34-7250001, with the cited (c) Applicability quote highlighted in the Federal Register PDF](docs/screenshots/app_search_workspace.png)
+
+*Real output from the real corpus, not a mock-up.* Query: "Does this proposed AD apply to my airplane?" with docket FAA-2022-0222, model PA-34-200, serial 34-7250001.
+The answer shows the regulatory stage, proposed and final-rule applicability, and enforceability as separate fields. The cited quote is highlighted on the source PDF page.
+More screenshots: [applicability checker](docs/screenshots/app_applicability.png) · [directive explorer](docs/screenshots/app_directives.png) · [evaluation dashboard](docs/screenshots/app_evaluation.png) · [landing page](docs/screenshots/landing_full.png) · [mobile](docs/screenshots/mobile_search.png) · [all screenshots](docs/screenshots/).
+There is no hosted demo; run it locally with the [quick start](#5-quick-start-macos).
+
 ## 1. What it is
 A decision-support search engine over the organisers' 431 FAA airworthiness directive (AD) *proposals* (NPRMs and related Federal Register notices).
 
@@ -22,7 +29,7 @@ Numbers are from `notes/reconciliation.md` and the evaluation result files.
 | Public FR final rules found by an evidence-verified lookup | 75 rules, 272 pages |
 | Total indexed pages / chunks | 1,596 pages / 13,513 chunks |
 
-The organiser index workbook (`record_id`, `revision_chains`) is **being integrated** (see `docs/organiser_update_impact.md`). Until that lands, this README makes no claim about organiser `record_id` or chain data.
+The organiser index workbook (`record_id`, `revision_chains`) is integrated: all 431 `record_id`s are mapped to sheet rows (`positional_verified`), and the 99 chain dockets back the dataset history (`notes/reconciliation.md` §6, `docs/organiser_update_impact.md`).
 
 ## 3. Architecture
 ```
@@ -84,15 +91,25 @@ Read these results carefully.
 - **Dev scores are tuned.** Dev F1 = 1.0 followed the router fixes made after the baseline's failures. The F7 dev scores (including recall 1.0) are on data that was also used to calibrate the abstention threshold, so they are optimistic.
 - **Generalisation.** The dev to locked drops (F3 LLM 0.75 to 0.5789, F3 extractive 0.3 to 0.2105, F2 chunk Recall@5 0.7143 to 0.5556) are the honest generalisation picture. Eval sets are small (n=19 to 42 for F2/F3/F7).
 - **Citation validity.** Citation validity is measured as: the quote equals `doc_text[start:end]` and the FR page lies in the section's page range. It is not a claim that the answers are correct.
+- **Fusion ablation (dev, post-hoc).** BM25 alone beats the shipped RRF fusion on dev F2: doc R@5 0.9286 vs 0.8333, MRR@10 0.7832 vs 0.6952 (n=42). The RRF-only misses are exact-identifier questions. The system was left unchanged; see `docs/evaluation_report.md` §10 and `evaluation/ablate_fusion.py`.
 
-## 5. Quick start (macOS/Linux)
+## 5. Quick start (macOS)
+Needs Python 3.12, Node 20.9+, network access, and Google Chrome for the end-to-end tests. No API key and no login are needed.
 ```bash
 python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python scripts/ingest.py        # fetches public FR data; cache-first
-.venv/bin/python scripts/build_index.py
-bash scripts/run_api.sh                   # API on http://127.0.0.1:8000
-cd frontend && npm install && npm run dev # UI on http://localhost:3000
+.venv/bin/python scripts/fetch_organiser_data.py  # 2 organiser workbooks from the public Drive folder, SHA256-checked
+.venv/bin/python scripts/probe_sources.py         # resolve 431 rows to FR documents -> source manifest + FR metadata
+.venv/bin/python scripts/fetch_final_rules.py     # public final-rule lookup, frozen at FINAL_RULE_LOOKUP_CUTOFF
+.venv/bin/python scripts/ingest.py                # download FR XML + PDFs, build data/indexes/ad.sqlite
+.venv/bin/python scripts/build_index.py           # chunks + bge-small embeddings -> search index
+bash scripts/run_api.sh                           # API on http://127.0.0.1:8000
+cd frontend && npm ci && npm run dev              # UI on http://localhost:3000
 ```
+**Verified from a fresh clone** on 2 Nov 2026 (macOS 15.5, Apple M4) with an empty `data/` folder and no caches. The build had 0 download failures. Every evaluated table came out identical to the evaluated build: document text, pages, sections, relations, final rules and links, organiser index, revision chains, and the search-index chunk fingerprint. `pytest` passed 311 (1 skipped); vitest 36; Playwright 26.
+- **Allow about 1.5 hours the first time.** The FR steps make about 2,300 rate-limited requests (about 40 minutes), and embedding 13,574 chunks on CPU takes about 35 minutes. Re-runs are cache-first and take seconds.
+- **Keep the machine awake.** A sleeping laptop pauses the build. Wrapping the build in `caffeinate -i` helps, but on battery the Mac still sleeps when the lid closes.
+- **Final rules are frozen.** The FR keeps publishing final rules on these dockets; three appeared on 2 Nov 2026. `FINAL_RULE_LOOKUP_CUTOFF = "2026-10-31"` in `backend/config.py` keeps a fresh build identical to the corpus the results were measured on. `fetch_final_rules.py` lists any later rules it skipped.
+- Linux should work the same way but was not tested.
 UI routes: `/` landing page, `/dashboard`, `/search` (AI search workspace with the source viewer; accepts
 `?q=&directive=&model=&serial=&make=` to pre-fill and run), `/directives`, `/applicability`, `/evaluation`.
 The API allows CORS from port 3000 only.
@@ -106,9 +123,7 @@ cd frontend && SCREENSHOTS=1 npx playwright test e2e/screenshots.spec.ts --proje
 ```
 - `ANTHROPIC_API_KEY` is optional. Without it the extractive mode works (no LLM). `scripts/run_api.sh` loads a `.env` file if present.
 - The `data/` folders are git-ignored and are rebuilt by the scripts above.
-- `scripts/fetch_final_rules.py` (the final-rule lookup) is also in `scripts/`; `scripts/ingest.py` is documented to run the rule PDF download and validation step (`notes/revisions_report.md`).
 - The locked split is guarded: `evaluation/evaluate.py` refuses it without `--final`, and the locked result is already recorded. Do not re-run it.
-- Not re-verified for this README: a clean-machine run of the quick start.
 
 ## 6. Safety design
 - Applicability is never decided by the LLM. If any scope-restricting text is not parsed, the result is UNKNOWN, with the verbatim paragraph shown.

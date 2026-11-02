@@ -20,6 +20,9 @@ DB_PATH = INDEXES / "ad.sqlite"
 FR_API = "https://www.federalregister.gov/api/v1"
 HTTP_USER_AGENT = "autonomous-sg-airbus-hackathon-prototype/0.1 (research; contact via repo)"
 HTTP_SLEEP_S = 0.5
+# Final-rule lookup snapshot date (the evaluated corpus was fetched on this day). Rules the FR publishes later on the same
+# dockets are skipped so a fresh build reproduces the evaluated corpus; raise it deliberately to refresh, then re-run evaluation.
+FINAL_RULE_LOOKUP_CUTOFF = "2026-10-31"
 
 # --- answer pipeline (API agent) ---
 ANSWER_TOP_K = 8

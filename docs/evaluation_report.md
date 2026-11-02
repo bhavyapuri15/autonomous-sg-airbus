@@ -223,3 +223,24 @@ Dev run on the regenerated cases (`evaluation/results/20261031-161448_dev.json`)
 The 3 F10 misses are all NPRM-180 (canonical, unpadded and question forms). Its gold is parsed from the organiser link, which points to
 2021-13636, an NPRM on a different docket; the row's own docket and publish date identify 2021-13482, which the system returns. Before the
 fix this case scored 1.0 because the mis-mapping agreed with the bad link. The gold was not edited to match the system.
+
+## 10. Retrieval fusion ablation (dev F2, post-hoc, 3 Nov)
+`evaluation/ablate_fusion.py` re-scores the dev F2 cases (n=42) with each fusion input switched off in an in-memory copy of
+`hybrid_search.py`, using the same `run_f2` scorer. The shipped row (RRF k=60) reproduces the official dev F2 numbers, which validates
+the harness. Output: `evaluation/ablations/fusion_dev.json`. This was run after the locked evaluation, on dev only. **The shipped
+system was not changed.**
+
+| Mode | doc R@5 | doc MRR@10 | chunk R@5 |
+|---|---|---|---|
+| BM25 only | **0.9286** | **0.7832** | **0.8333** |
+| Dense only | 0.8333 | 0.6133 | 0.6190 |
+| RRF k=60 (shipped) | 0.8333 | 0.6952 | 0.7143 |
+| RRF k=10 | 0.8810 | 0.7034 | 0.7619 |
+| RRF k=200 | 0.8333 | 0.6952 | 0.7143 |
+
+- **BM25 alone outperforms the shipped fusion on this set.** Seven cases fail only under RRF: F2-dev-004, 009, 010, 012, 018, 028 and 029. Two fail only under BM25: F2-dev-036 and 038.
+- **The RRF-only failures hinge on exact identifiers.** They include "CFM56-7B27AE", "A340-642", "600N", "DA 40" and "AE 3007". BM25 matches these exactly, while the small quantized embedder ranks lookalike AD boilerplate from other directives above them, and equal-weight RRF lets that pull the right document down.
+- **This is not an artefact of copied wording.** Mean question/passage word-trigram overlap is 0.048, and 20 of 42 questions have none.
+- **No change was made.** The difference is 4 of 42 queries for doc R@5, on LLM-written questions, found after the locked run. Switching now would be tuning on dev with no held-out set left to confirm it.
+- **Where dense retrieval still matters.** It drives the abstention gate (best-hit cosine below 0.684 means NO_SUPPORTING_EVIDENCE).
+- **Next step.** Test a BM25-weighted fusion or BM25-first ranking on a fresh held-out set.
